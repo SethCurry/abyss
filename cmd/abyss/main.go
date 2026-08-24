@@ -1,0 +1,314 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/SethCurry/abyss/internal/agentconfig"
+	"github.com/SethCurry/abyss/internal/api"
+	"github.com/SethCurry/abyss/internal/erres"
+	"github.com/SethCurry/abyss/internal/runenv"
+	"github.com/moby/moby/api/types/container"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v3"
+)
+
+const (
+	defaultImage = "abyss:latest"
+	serverPort   = 8080
+)
+
+func main() {
+	logFile, err := openLogFile()
+	if err != nil {
+		panic(err)
+	}
+
+	defer logFile.Close()
+
+	logOut := io.MultiWriter(logFile, os.Stderr)
+	logger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
+	log.Logger = logger
+
+	cmd := &cli.Command{
+		Name:  "abyss",
+		Usage: "Agent Runtime Environment(s)",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "log-level",
+				Aliases: []string{"l"},
+				Usage:   "log level (trace, debug, info, warn, error, fatal, disabled)",
+				Value:   "debug",
+				Sources: cli.EnvVars("ABYSS_LOG_LEVEL"),
+			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			level, err := zerolog.ParseLevel(cmd.String("log-level"))
+			if err != nil {
+				return nil, fmt.Errorf("invalid log level %q: %w", cmd.String("log-level"), err)
+			}
+			logger = logger.Level(level)
+			log.Logger = logger
+			return ctx, nil
+		},
+		Commands: []*cli.Command{
+			{
+				Name:    "client",
+				Aliases: []string{"c"},
+				Usage:   "run the stdio -> websocket ACP proxy",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "config",
+						Aliases:  []string{"f"},
+						Usage:    "path to the agent configuration YAML file",
+						Required: true,
+					},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					configPath := cmd.String("config")
+					agentCfg, err := agentconfig.FromYAMLFile(configPath)
+					if err != nil {
+						logger.Error().Err(err).Str("config_path", configPath).Msg("failed to load agent config")
+						return err
+					}
+					logger.Debug().
+						Str("config_path", configPath).
+						Str("image", agentCfg.Docker.Image).
+						Strs("agent_command", agentCfg.Docker.AgentCommand).
+						Msg("starting Docker agent")
+					return runClient(ctx, agentCfg, logger)
+				},
+			},
+			{
+				Name:    "server",
+				Aliases: []string{"s"},
+				Usage:   "run the websocket -> stdio ACP proxy",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:    "addr",
+						Aliases: []string{"a"},
+						Usage:   "address to listen on",
+						Value:   ":8080",
+					},
+					&cli.StringSliceFlag{
+						Name:     "agent",
+						Aliases:  []string{"g"},
+						Usage:    "agent command to spawn (command followed by its args)",
+						Required: true,
+					},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					agentCmd := cmd.StringSlice("agent")
+					logger.Debug().Strs("agent_command", agentCmd).Msg("starting agent and websocket server")
+					server := api.NewACPWebsocketServer(logger)
+					return server.Serve(ctx, cmd.String("addr"), agentCmd)
+				},
+			},
+		},
+	}
+
+	err = cmd.Run(context.Background(), os.Args)
+	if err != nil {
+		if humanErr, ok := errors.AsType[erres.HumanError](err); ok {
+			logger.Error().Str("error", humanErr.HumanError()).Msg("command failed")
+		} else {
+			logger.Error().Err(err).Msg("command failed")
+		}
+	}
+}
+
+// newFileLogger returns a zerolog.Logger configured to write debug-level logs
+// to ~/.local/share/abyss/abyss.log, creating the directory if necessary.
+func openLogFile() (io.WriteCloser, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	logDir := filepath.Join(home, ".local", "var", "abyss")
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to make parent directories of %q: %w", logDir, err)
+	}
+
+	logFilePath := filepath.Join(logDir, "abyss.log")
+
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("failed open log file %q: %w", logFilePath, err)
+	}
+
+	return logFile, nil
+}
+
+// runClient starts a Docker container running the abyss server command and
+// bridges it to a client over stdio.
+func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
+	docker, err := runenv.NewDockerClient()
+	if err != nil {
+		return err
+	}
+	defer docker.Close()
+
+	image := cfg.Docker.Image
+	if image == "" {
+		image = defaultImage
+	}
+	agent := cfg.Docker.AgentCommand
+
+	agentArgs := make([]string, len(agent)*2)
+
+	for k, v := range agent {
+		startIndex := k * 2
+		agentArgs[startIndex] = "--agent"
+		agentArgs[startIndex+1] = v
+	}
+
+	config := &container.Config{
+		Cmd: append([]string{"server"}, agentArgs...),
+	}
+
+	hostConfig := docker.ApplyHostMounts(&cfg.Docker, nil)
+
+	endpoint, err := docker.StartContainer(ctx, image, config, hostConfig, "", serverPort, 0)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to start container")
+		return err
+	}
+
+	if err := copyFiles(ctx, docker, endpoint.ContainerID, cfg.CopyFiles, logger); err != nil {
+		logger.Error().Err(err).Msg("failed to copy files into container")
+		return err
+	}
+
+	if err := runSetupScripts(ctx, docker, endpoint.ContainerID, cfg.SetupScripts, logger); err != nil {
+		logger.Error().Err(err).Msg("failed to run setup scripts in container")
+		return err
+	}
+
+	time.Sleep(time.Second)
+
+	wsURL := "ws://" + endpoint.String()
+	logger.Info().
+		Str("url", wsURL).
+		Str("container_id", endpoint.ContainerID).
+		Msg("connecting to agent container")
+
+	if err := api.RunClient(ctx, wsURL, logger); err != nil {
+		logger.Error().Err(err).Msg("client disconnected with error")
+	}
+
+	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
+	if stopErr := docker.StopContainer(ctx, endpoint.ContainerID, 10*time.Second); stopErr != nil {
+		logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
+		return stopErr
+	}
+
+	return nil
+}
+
+// runSetupScripts copies each setup script declared in the agent config into
+// the running container and executes it with bash. Scripts with Type "inline"
+// use Source as the script contents; scripts with Type "file" read the contents
+// from the host path in Source. Each script is written to a temporary path
+// inside the container, made executable, and run before the agent starts.
+func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, containerID string, scripts []agentconfig.SetupScriptsConfig, logger zerolog.Logger) error {
+	for i, s := range scripts {
+		var content []byte
+
+		switch s.Type {
+		case "inline", "":
+			content = []byte(s.Source)
+		case "file":
+			info, err := os.Stat(s.Source)
+			if err != nil {
+				logger.Error().Err(err).Str("source", s.Source).Msg("failed to stat setup script source")
+				return fmt.Errorf("stat setup script source %q: %w", s.Source, err)
+			}
+			if info.IsDir() {
+				logger.Error().Str("source", s.Source).Msg("setup script source is a directory")
+				return fmt.Errorf("setup script source %q is a directory, only files are supported", s.Source)
+			}
+			content, err = os.ReadFile(s.Source)
+			if err != nil {
+				logger.Error().Err(err).Str("source", s.Source).Msg("failed to read setup script source")
+				return fmt.Errorf("read setup script source %q: %w", s.Source, err)
+			}
+		default:
+			logger.Error().Str("type", s.Type).Msg("unsupported setup script type")
+			return fmt.Errorf("unsupported setup script type %q", s.Type)
+		}
+
+		target := fmt.Sprintf("/tmp/abyss-setup-%d.sh", i)
+		if err := docker.CopyFileToContainer(ctx, containerID, content, target, 0o755); err != nil {
+			logger.Error().Err(err).Str("target", target).Msg("failed to copy setup script into container")
+			return fmt.Errorf("copy setup script to %q: %w", target, err)
+		}
+
+		logger.Debug().Str("target", target).Str("type", s.Type).Msg("executing setup script in container")
+		stdout, stderr, err := docker.ExecBash(ctx, containerID, fmt.Sprintf("chmod +x %s && bash %s", target, target))
+		if err != nil {
+			logger.Error().
+				Err(err).
+				Str("target", target).
+				Str("stdout", stdout).
+				Str("stderr", stderr).
+				Msg("setup script failed")
+			return fmt.Errorf("setup script %q failed: %w", target, err)
+		}
+
+		logger.Debug().Str("target", target).Str("stdout", stdout).Str("stderr", stderr).Msg("setup script completed")
+	}
+
+	return nil
+}
+
+// copyFiles copies each file declared in the agent config into the running
+// container. Files with Type "inline" use Source as the file contents; files
+// with Type "path" read the contents from the host path in Source. Each file
+// is written to its Target path inside the container, creating parent
+// directories as needed.
+func copyFiles(ctx context.Context, docker *runenv.DockerClient, containerID string, files []agentconfig.FileCopyConfig, logger zerolog.Logger) error {
+	for _, f := range files {
+		var content []byte
+		var mode os.FileMode = 0o644
+
+		switch f.Type {
+		case "inline":
+			content = []byte(f.Source)
+		case "path":
+			info, err := os.Stat(f.Source)
+			if err != nil {
+				logger.Error().Err(err).Str("source", f.Source).Msg("failed to stat copy file source")
+				return fmt.Errorf("stat copy file source %q: %w", f.Source, err)
+			}
+			if info.IsDir() {
+				logger.Error().Str("source", f.Source).Msg("copy file source is a directory")
+				return fmt.Errorf("copy file source %q is a directory, only files are supported", f.Source)
+			}
+			mode = info.Mode()
+			content, err = os.ReadFile(f.Source)
+			if err != nil {
+				logger.Error().Err(err).Str("source", f.Source).Msg("failed to read copy file source")
+				return fmt.Errorf("read copy file source %q: %w", f.Source, err)
+			}
+		default:
+			logger.Error().Str("type", f.Type).Msg("unsupported copy file type")
+			return fmt.Errorf("unsupported copy file type %q for target %q", f.Type, f.Target)
+		}
+
+		if err := docker.CopyFileToContainer(ctx, containerID, content, f.Target, mode); err != nil {
+			logger.Error().Err(err).Str("target", f.Target).Msg("failed to copy file into container")
+			return fmt.Errorf("copy file to %q: %w", f.Target, err)
+		}
+
+		logger.Debug().Str("target", f.Target).Str("type", f.Type).Msg("copied file into container")
+	}
+
+	return nil
+}

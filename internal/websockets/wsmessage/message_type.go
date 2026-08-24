@@ -1,0 +1,74 @@
+package wsmessage
+
+type MessageType int
+
+const (
+	MessageTypeNotExist MessageType = iota
+
+	// Client request/response types (websocket_client.go)
+	RequestPermissionRequestType
+	RequestPermissionResponseType
+	WriteTextFileRequestType
+	WriteTextFileResponseType
+	ReadTextFileRequestType
+	ReadTextFileResponseType
+	CreateTerminalRequestType
+	CreateTerminalResponseType
+	TerminalOutputRequestType
+	TerminalOutputResponseType
+	ReleaseTerminalRequestType
+	ReleaseTerminalResponseType
+	WaitForTerminalExitRequestType
+	WaitForTerminalExitResponseType
+	KillTerminalRequestType
+	KillTerminalResponseType
+	SessionNotificationType
+
+	// Agent request/response types (websocket_agent.go)
+	SetSessionModeRequestType
+	SetSessionModeResponseType
+	UnstableForkSessionRequestType
+	UnstableForkSessionResponseType
+	ListSessionsRequestType
+	ListSessionsResponseType
+	ResumeSessionRequestType
+	ResumeSessionResponseType
+	SetSessionConfigOptionRequestType
+	SetSessionConfigOptionResponseType
+	LogoutRequestType
+	LogoutResponseType
+	UnstableCloseNesRequestType
+	UnstableCloseNesResponseType
+	UnstableStartNesRequestType
+	UnstableStartNesResponseType
+	UnstableSuggestNesRequestType
+	UnstableSuggestNesResponseType
+	UnstableAcceptNesNotificationType
+	UnstableRejectNesNotificationType
+	UnstableDidChangeDocumentNotificationType
+	UnstableDidCloseDocumentNotificationType
+	UnstableDidFocusDocumentNotificationType
+	UnstableDidOpenDocumentNotificationType
+	UnstableDidSaveDocumentNotificationType
+	UnstableDisableProviderRequestType
+	UnstableDisableProviderResponseType
+	UnstableListProvidersRequestType
+	UnstableListProvidersResponseType
+	UnstableSetProviderRequestType
+	UnstableSetProviderResponseType
+	UnstableDeleteSessionRequestType
+	UnstableDeleteSessionResponseType
+	CloseSessionRequestType
+	CloseSessionResponseType
+	InitializeRequestType
+	InitializeResponseType
+	NewSessionRequestType
+	NewSessionResponseType
+	AuthenticateRequestType
+	AuthenticateResponseType
+	LoadSessionRequestType
+	LoadSessionResponseType
+	PromptRequestType
+	PromptResponseType
+	CancelNotificationType
+)

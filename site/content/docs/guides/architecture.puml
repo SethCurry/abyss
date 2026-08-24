@@ -1,0 +1,14 @@
+@startuml
+
+title Abyss Architecture
+
+node DockerContainer {
+    [Underlying Agent]
+    [abyss Agent Proxy]
+}
+
+[ACP Client] --> [abyss Client Proxy] : stdio
+[abyss Client Proxy] --> [abyss Agent Proxy] : Websocket
+[abyss Agent Proxy] --> [Underlying Agent] : stdio
+
+@enduml

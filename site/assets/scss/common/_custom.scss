@@ -1,0 +1,20 @@
+// Put your custom SCSS code here
+
+@font-face {
+    font-family: 'Creepster';
+    src: url("/font/Creepster-Regular.ttf") format('truetype');
+}
+
+.creepster {
+  font-family: 'Creepster';
+}
+
+.bg-img {
+  background-image: url("/img/siphonophore.jpeg");
+  background-position: 0 0;
+  width: 100%;
+  height: 50vh;
+  margin-top: -20rem;
+  background-size: cover;
+  box-shadow: 0 0 200px rgba(0,0,0,0.9) inset;
+  z-index: -1; }
