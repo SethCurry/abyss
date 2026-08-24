@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
+	"github.com/SethCurry/abyss/internal/websockets/wsmultiplex"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -13,7 +14,7 @@ import (
 
 type WebsocketAgentClient struct {
 	logger  zerolog.Logger
-	ws      *wsConn
+	ws      *wsmultiplex.Conn
 	acpConn *acp.ClientSideConnection
 }
 
@@ -24,7 +25,7 @@ var _ acp.Client = (*WebsocketAgentClient)(nil)
 func NewWebsocketAgentClient(conn *websocket.Conn, logger zerolog.Logger) *WebsocketAgentClient {
 	return &WebsocketAgentClient{
 		logger: logger,
-		ws:     newWSConn(conn, logger),
+		ws:     wsmultiplex.NewConn(conn, logger),
 	}
 }
 
@@ -36,7 +37,7 @@ func (e *WebsocketAgentClient) SetClientConnection(conn *acp.ClientSideConnectio
 
 func (e *WebsocketAgentClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
 	e.logger.Debug().Str("method", "RequestPermission").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.RequestPermissionResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.RequestPermissionResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "RequestPermission").Msg("request failed")
 		return acp.RequestPermissionResponse{}, err
@@ -53,7 +54,7 @@ func (e *WebsocketAgentClient) SessionUpdate(ctx context.Context, params acp.Ses
 	if err != nil {
 		return err
 	}
-	if err := e.ws.notify(wsmessage.SessionNotificationType, data); err != nil {
+	if err := e.ws.Notify(wsmessage.SessionNotificationType, data); err != nil {
 		e.logger.Error().Err(err).Str("method", "SessionUpdate").Msg("notification failed")
 		return err
 	}
@@ -62,7 +63,7 @@ func (e *WebsocketAgentClient) SessionUpdate(ctx context.Context, params acp.Ses
 
 func (e *WebsocketAgentClient) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
 	e.logger.Debug().Str("method", "WriteTextFile").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.WriteTextFileResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.WriteTextFileResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "WriteTextFile").Msg("request failed")
 		return acp.WriteTextFileResponse{}, err
@@ -72,7 +73,7 @@ func (e *WebsocketAgentClient) WriteTextFile(ctx context.Context, params acp.Wri
 
 func (e *WebsocketAgentClient) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
 	e.logger.Debug().Str("method", "ReadTextFile").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.ReadTextFileResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.ReadTextFileResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "ReadTextFile").Msg("request failed")
 		return acp.ReadTextFileResponse{}, err
@@ -82,7 +83,7 @@ func (e *WebsocketAgentClient) ReadTextFile(ctx context.Context, params acp.Read
 
 func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
 	e.logger.Debug().Str("method", "CreateTerminal").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.CreateTerminalResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.CreateTerminalResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "CreateTerminal").Msg("request failed")
 		return acp.CreateTerminalResponse{}, err
@@ -92,7 +93,7 @@ func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.Cr
 
 func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
 	e.logger.Debug().Str("method", "TerminalOutput").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.TerminalOutputResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.TerminalOutputResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "TerminalOutput").Msg("request failed")
 		return acp.TerminalOutputResponse{}, err
@@ -102,7 +103,7 @@ func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.Te
 
 func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
 	e.logger.Debug().Str("method", "ReleaseTerminal").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.ReleaseTerminalResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.ReleaseTerminalResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "ReleaseTerminal").Msg("request failed")
 		return acp.ReleaseTerminalResponse{}, err
@@ -112,7 +113,7 @@ func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.R
 
 func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
 	e.logger.Debug().Str("method", "WaitForTerminalExit").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.WaitForTerminalExitResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.WaitForTerminalExitResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "WaitForTerminalExit").Msg("request failed")
 		return acp.WaitForTerminalExitResponse{}, err
@@ -123,7 +124,7 @@ func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params a
 // KillTerminal implements acp.Client.
 func (e *WebsocketAgentClient) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
 	e.logger.Debug().Str("method", "KillTerminal").Msg("handling request")
-	resp, err := e.ws.request(ctx, messageTypeFor(params), params, wsmessage.KillTerminalResponseType)
+	resp, err := e.ws.Request(ctx, messageTypeFor(params), params, wsmessage.KillTerminalResponseType)
 	if err != nil {
 		e.logger.Error().Err(err).Str("method", "KillTerminal").Msg("request failed")
 		return acp.KillTerminalResponse{}, err
@@ -134,7 +135,7 @@ func (e *WebsocketAgentClient) KillTerminal(ctx context.Context, params acp.Kill
 // Serve runs the demultiplexing read loop, forwarding agent requests received
 // over the websocket to the agent over stdio.
 func (e *WebsocketAgentClient) Serve(ctx context.Context) error {
-	return e.ws.serve(ctx, e.handleIncoming)
+	return e.ws.Serve(ctx, e.handleIncoming)
 }
 
 // handleIncoming forwards an agent request or notification received over the
@@ -202,7 +203,7 @@ func (e *WebsocketAgentClient) handleIncoming(ctx context.Context, mt wsmessage.
 
 // serveRequest unmarshals a request, forwards it to the peer over stdio, and
 // writes the response back over the websocket with the original correlation ID.
-func serveRequest[T any, R any](w *wsConn, ctx context.Context, id uint32, data []byte, respType wsmessage.MessageType, fn func(context.Context, T) (R, error)) error {
+func serveRequest[T any, R any](w *wsmultiplex.Conn, ctx context.Context, id uint32, data []byte, respType wsmessage.MessageType, fn func(context.Context, T) (R, error)) error {
 	var req T
 	if err := json.Unmarshal(data, &req); err != nil {
 		return err
@@ -215,7 +216,7 @@ func serveRequest[T any, R any](w *wsConn, ctx context.Context, id uint32, data 
 	if err != nil {
 		return err
 	}
-	return w.writeMessage(respType, id, respData)
+	return w.WriteMessage(respType, id, respData)
 }
 
 // serveNotification unmarshals a notification and forwards it to the peer over

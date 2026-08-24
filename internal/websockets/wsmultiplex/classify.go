@@ -1,14 +1,21 @@
-package api
+package wsmultiplex
 
 import (
-	"testing"
-
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 )
 
-func TestClassifyMessage(t *testing.T) {
-	requestTypes := []wsmessage.MessageType{
-		wsmessage.RequestPermissionRequestType,
+type messageKind int
+
+const (
+	kindRequest messageKind = iota
+	kindResponse
+	kindNotification
+)
+
+// classifyMessage returns the kind of a MessageType.
+func classifyMessage(mt wsmessage.MessageType) messageKind {
+	switch mt {
+	case wsmessage.RequestPermissionRequestType,
 		wsmessage.WriteTextFileRequestType,
 		wsmessage.ReadTextFileRequestType,
 		wsmessage.CreateTerminalRequestType,
@@ -34,11 +41,9 @@ func TestClassifyMessage(t *testing.T) {
 		wsmessage.NewSessionRequestType,
 		wsmessage.AuthenticateRequestType,
 		wsmessage.LoadSessionRequestType,
-		wsmessage.PromptRequestType,
-	}
-
-	responseTypes := []wsmessage.MessageType{
-		wsmessage.RequestPermissionResponseType,
+		wsmessage.PromptRequestType:
+		return kindRequest
+	case wsmessage.RequestPermissionResponseType,
 		wsmessage.WriteTextFileResponseType,
 		wsmessage.ReadTextFileResponseType,
 		wsmessage.CreateTerminalResponseType,
@@ -64,34 +69,9 @@ func TestClassifyMessage(t *testing.T) {
 		wsmessage.NewSessionResponseType,
 		wsmessage.AuthenticateResponseType,
 		wsmessage.LoadSessionResponseType,
-		wsmessage.PromptResponseType,
-	}
-
-	notificationTypes := []wsmessage.MessageType{
-		wsmessage.SessionNotificationType,
-		wsmessage.UnstableAcceptNesNotificationType,
-		wsmessage.UnstableRejectNesNotificationType,
-		wsmessage.UnstableDidChangeDocumentNotificationType,
-		wsmessage.UnstableDidCloseDocumentNotificationType,
-		wsmessage.UnstableDidFocusDocumentNotificationType,
-		wsmessage.UnstableDidOpenDocumentNotificationType,
-		wsmessage.UnstableDidSaveDocumentNotificationType,
-		wsmessage.CancelNotificationType,
-	}
-
-	for _, mt := range requestTypes {
-		if got := classifyMessage(mt); got != kindRequest {
-			t.Errorf("classifyMessage(%d) = %v, want kindRequest", mt, got)
-		}
-	}
-	for _, mt := range responseTypes {
-		if got := classifyMessage(mt); got != kindResponse {
-			t.Errorf("classifyMessage(%d) = %v, want kindResponse", mt, got)
-		}
-	}
-	for _, mt := range notificationTypes {
-		if got := classifyMessage(mt); got != kindNotification {
-			t.Errorf("classifyMessage(%d) = %v, want kindNotification", mt, got)
-		}
+		wsmessage.PromptResponseType:
+		return kindResponse
+	default:
+		return kindNotification
 	}
 }

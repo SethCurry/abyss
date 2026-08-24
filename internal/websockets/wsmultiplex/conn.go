@@ -1,4 +1,4 @@
-package api
+package wsmultiplex
 
 import (
 	"context"
@@ -22,11 +22,11 @@ type wsResponse struct {
 	data []byte
 }
 
-// wsConn wraps a websocket connection and provides request/response
+// Conn wraps a websocket connection and provides request/response
 // correlation plus a demultiplexing read loop. A single reader goroutine
-// (serve) reads every message and routes responses to pending requests while
+// (Serve) reads every message and routes responses to pending requests while
 // forwarding requests and notifications to a handler.
-type wsConn struct {
+type Conn struct {
 	conn    *websocket.Conn
 	logger  zerolog.Logger
 	writeMu sync.Mutex
@@ -35,8 +35,10 @@ type wsConn struct {
 	pending map[uint32]chan wsResponse
 }
 
-func newWSConn(conn *websocket.Conn, logger zerolog.Logger) *wsConn {
-	return &wsConn{
+// NewConn wraps a websocket connection with request/response correlation and a
+// demultiplexing read loop.
+func NewConn(conn *websocket.Conn, logger zerolog.Logger) *Conn {
+	return &Conn{
 		conn:    conn,
 		logger:  logger.With().Str("from", "wsConn").Logger(),
 		pending: make(map[uint32]chan wsResponse),
@@ -45,7 +47,7 @@ func newWSConn(conn *websocket.Conn, logger zerolog.Logger) *wsConn {
 
 // writeMessage writes a MessageType- and correlation-ID-tagged JSON payload to
 // the websocket.
-func (w *wsConn) writeMessage(mt wsmessage.MessageType, id uint32, data []byte) error {
+func (w *Conn) WriteMessage(mt wsmessage.MessageType, id uint32, data []byte) error {
 	w.logger.Debug().Int("mt", int(mt)).Uint32("id", id).Msg("writeMessage")
 
 	buf := make([]byte, messageTypePrefixLen+len(data))
@@ -63,7 +65,7 @@ func (w *wsConn) writeMessage(mt wsmessage.MessageType, id uint32, data []byte) 
 
 // readMessage reads a MessageType- and correlation-ID-tagged JSON payload from
 // the websocket.
-func (w *wsConn) readMessage() (wsmessage.MessageType, uint32, []byte, error) {
+func (w *Conn) readMessage() (wsmessage.MessageType, uint32, []byte, error) {
 	_, data, err := w.conn.ReadMessage()
 	if err != nil {
 		return wsmessage.MessageTypeNotExist, 0, nil, err
@@ -77,8 +79,8 @@ func (w *wsConn) readMessage() (wsmessage.MessageType, uint32, []byte, error) {
 	return mt, id, data[messageTypePrefixLen:], nil
 }
 
-// request sends a request and waits for the matching response.
-func (w *wsConn) request(ctx context.Context, mt wsmessage.MessageType, req any, respType wsmessage.MessageType) (any, error) {
+// Request sends a request and waits for the matching response.
+func (w *Conn) Request(ctx context.Context, mt wsmessage.MessageType, req any, respType wsmessage.MessageType) (any, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -103,7 +105,7 @@ func (w *wsConn) request(ctx context.Context, mt wsmessage.MessageType, req any,
 		w.logger.Debug().Uint32("id", id).Msg("request pending removed")
 	}()
 
-	if err := w.writeMessage(mt, id, data); err != nil {
+	if err := w.WriteMessage(mt, id, data); err != nil {
 		w.logger.Error().Err(err).Uint32("id", id).Msg("request write failed")
 		return nil, err
 	}
@@ -122,16 +124,16 @@ func (w *wsConn) request(ctx context.Context, mt wsmessage.MessageType, req any,
 	}
 }
 
-// notify sends a notification (no response expected).
-func (w *wsConn) notify(mt wsmessage.MessageType, data []byte) error {
-	return w.writeMessage(mt, 0, data)
+// Notify sends a notification (no response expected).
+func (w *Conn) Notify(mt wsmessage.MessageType, data []byte) error {
+	return w.WriteMessage(mt, 0, data)
 }
 
-// serve runs the demultiplexing read loop. Responses are routed to pending
+// Serve runs the demultiplexing read loop. Responses are routed to pending
 // requests; requests are handled asynchronously (so a blocking stdio forward
 // does not stall the reader); notifications are handled inline to preserve
 // ordering.
-func (w *wsConn) serve(ctx context.Context, handler func(context.Context, wsmessage.MessageType, uint32, []byte) error) error {
+func (w *Conn) Serve(ctx context.Context, handler func(context.Context, wsmessage.MessageType, uint32, []byte) error) error {
 	for {
 		mt, id, data, err := w.readMessage()
 		if err != nil {

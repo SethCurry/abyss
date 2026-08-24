@@ -2,13 +2,36 @@
 
 title Abyss Architecture
 
-node DockerContainer {
+cloud Docker {
+  node Container {
     [Underlying Agent]
     [abyss Agent Proxy]
+  }
 }
 
 [ACP Client] --> [abyss Client Proxy] : stdio
 [abyss Client Proxy] --> [abyss Agent Proxy] : Websocket
+[abyss Client Proxy] --> [Docker] : Docker API
 [abyss Agent Proxy] --> [Underlying Agent] : stdio
+
+note right of "abyss Client Proxy"
+  Handles creating the container,
+  copying files, executing setup scripts,
+  and proxying the client side of the
+  ACP connection.
+endnote
+
+note right of "abyss Agent Proxy"
+  Proxies the agent side of the ACP
+  connection, and provides an integration
+  point for centrally managed tools
+  in organizations.
+endnote
+
+note right of "Underlying Agent"
+  Bring your own agent, abyss doesn't
+  care what you use and doesn't even
+  bundle an agent.
+endnote
 
 @enduml

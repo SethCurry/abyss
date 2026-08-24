@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
+	"github.com/SethCurry/abyss/internal/websockets/wsmultiplex"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -14,7 +15,7 @@ import (
 type WebsocketAgent struct {
 	logger zerolog.Logger
 	conn   *acp.AgentSideConnection
-	ws     *wsConn
+	ws     *wsmultiplex.Conn
 }
 
 var (
@@ -28,7 +29,7 @@ var (
 func NewWebsocketAgent(conn *websocket.Conn, logger zerolog.Logger) *WebsocketAgent {
 	return &WebsocketAgent{
 		logger: logger,
-		ws:     newWSConn(conn, logger),
+		ws:     wsmultiplex.NewConn(conn, logger),
 	}
 }
 
@@ -36,7 +37,7 @@ func NewWebsocketAgent(conn *websocket.Conn, logger zerolog.Logger) *WebsocketAg
 // response, returning the unmarshaled response value.
 func roundTrip[T wsmessage.ACPMessageType, R wsmessage.ACPMessageType](w *WebsocketAgent, ctx context.Context, req T, respType wsmessage.MessageType) (R, error) {
 	var zero R
-	resp, err := w.ws.request(ctx, messageTypeFor(req), req, respType)
+	resp, err := w.ws.Request(ctx, messageTypeFor(req), req, respType)
 	if err != nil {
 		return zero, err
 	}
@@ -53,7 +54,7 @@ func notify[T wsmessage.ACPMessageType](w *WebsocketAgent, ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	return w.ws.notify(messageTypeFor(req), data)
+	return w.ws.Notify(messageTypeFor(req), data)
 }
 
 // SetSessionMode implements acp.Agent.
@@ -331,7 +332,7 @@ func (w *WebsocketAgent) Prompt(ctx context.Context, params acp.PromptRequest) (
 // Serve runs the demultiplexing read loop, forwarding client capability
 // requests received over the websocket to the client over stdio.
 func (w *WebsocketAgent) Serve(ctx context.Context) error {
-	return w.ws.serve(ctx, w.handleIncoming)
+	return w.ws.Serve(ctx, w.handleIncoming)
 }
 
 // handleIncoming forwards a client capability request or notification received

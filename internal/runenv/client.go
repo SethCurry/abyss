@@ -2,7 +2,6 @@ package runenv
 
 import (
 	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,9 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/api/types/container"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
@@ -83,7 +80,7 @@ func (d *DockerClient) StartContainer(
 	name string,
 	containerPort uint16,
 	hostPort uint16,
-) (ContainerEndpoint, error) {
+) (*Container, ContainerEndpoint, error) {
 	d.logger.Debug().
 		Str("image", imageRef).
 		Str("name", name).
@@ -97,7 +94,7 @@ func (d *DockerClient) StartContainer(
 
 	port, ok := network.PortFrom(containerPort, network.TCP)
 	if !ok {
-		return ContainerEndpoint{}, fmt.Errorf("invalid container port %d", containerPort)
+		return nil, ContainerEndpoint{}, fmt.Errorf("invalid container port %d", containerPort)
 	}
 
 	if config == nil {
@@ -127,12 +124,12 @@ func (d *DockerClient) StartContainer(
 	})
 	if err != nil {
 		d.logger.Error().Err(err).Str("image", imageRef).Str("name", name).Msg("failed to create container")
-		return ContainerEndpoint{}, fmt.Errorf("create container: %w", err)
+		return nil, ContainerEndpoint{}, fmt.Errorf("create container: %w", err)
 	}
 
 	if _, err := d.client.ContainerStart(ctx, created.ID, client.ContainerStartOptions{}); err != nil {
 		d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to start container")
-		return ContainerEndpoint{}, fmt.Errorf("start container: %w", err)
+		return nil, ContainerEndpoint{}, fmt.Errorf("start container: %w", err)
 	}
 
 	// Resolve the actual host port in case Docker assigned one for us.
@@ -141,17 +138,17 @@ func (d *DockerClient) StartContainer(
 		inspected, err := d.client.ContainerInspect(ctx, created.ID, client.ContainerInspectOptions{})
 		if err != nil {
 			d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to inspect container")
-			return ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
+			return nil, ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
 		}
 
 		bindings := inspected.Container.NetworkSettings.Ports[port]
 		if len(bindings) == 0 {
-			return ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
+			return nil, ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
 		}
 
 		p, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
 		if err != nil {
-			return ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
+			return nil, ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
 		}
 		actualPort = uint16(p)
 	}
@@ -166,7 +163,7 @@ func (d *DockerClient) StartContainer(
 		Str("endpoint", endpoint.String()).
 		Msg("container started")
 
-	return endpoint, nil
+	return NewContainer(d.client, created.ID), endpoint, nil
 }
 
 // ApplyHostMounts populates hostConfig.Binds from the HostMounts declared in
@@ -214,161 +211,8 @@ func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig
 	return hostConfig
 }
 
-// StopContainer stops and removes the container identified by containerID.
-// It first sends a SIGTERM, waiting up to timeout for the container to exit,
-// then falls back to SIGKILL if it is still running. The container is removed
-// afterwards regardless of whether it exited on its own.
-func (d *DockerClient) StopContainer(ctx context.Context, containerID string, timeout time.Duration) error {
-	d.logger.Debug().Str("container_id", containerID).Msg("stopping container")
-
-	if _, err := d.client.ContainerStop(ctx, containerID, client.ContainerStopOptions{Signal: "SIGTERM", Timeout: ptr(int(timeout.Seconds()))}); err != nil {
-		d.logger.Warn().Err(err).Str("container_id", containerID).Msg("container stop failed, attempting remove")
-	}
-
-	if _, err := d.client.ContainerRemove(ctx, containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
-		d.logger.Error().Err(err).Str("container_id", containerID).Msg("failed to remove container")
-		return fmt.Errorf("remove container: %w", err)
-	}
-
-	d.logger.Debug().Str("container_id", containerID).Msg("container stopped and removed")
-	return nil
-}
-
 // ptr returns a pointer to v.
 func ptr[T any](v T) *T { return &v }
-
-// ExecBash runs script inside the container identified by containerID using
-// "bash -c". It returns the script's stdout and stderr. If the script exits
-// with a non-zero status, the returned error reports the exit code and the
-// output is still returned so callers can inspect it.
-func (d *DockerClient) ExecBash(ctx context.Context, containerID, script string) (stdout, stderr string, err error) {
-	d.logger.Debug().Str("container_id", containerID).Msg("executing bash script in container")
-
-	created, err := d.client.ExecCreate(ctx, containerID, client.ExecCreateOptions{
-		Cmd:          []string{"bash", "-c", script},
-		AttachStdout: true,
-		AttachStderr: true,
-	})
-	if err != nil {
-		d.logger.Error().Err(err).Str("container_id", containerID).Msg("failed to create exec")
-		return "", "", fmt.Errorf("create exec: %w", err)
-	}
-
-	attach, err := d.client.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
-	if err != nil {
-		d.logger.Error().Err(err).Str("container_id", containerID).Msg("failed to attach to exec")
-		return "", "", fmt.Errorf("attach to exec: %w", err)
-	}
-	defer attach.Close()
-
-	var out, errOut bytes.Buffer
-	if _, err := stdcopy.StdCopy(&out, &errOut, attach.Reader); err != nil {
-		d.logger.Error().Err(err).Str("container_id", containerID).Msg("failed to read exec output")
-		return "", "", fmt.Errorf("read exec output: %w", err)
-	}
-
-	inspect, err := d.client.ExecInspect(ctx, created.ID, client.ExecInspectOptions{})
-	if err != nil {
-		d.logger.Error().Err(err).Str("container_id", containerID).Msg("failed to inspect exec")
-		return "", "", fmt.Errorf("inspect exec: %w", err)
-	}
-
-	if inspect.ExitCode != 0 {
-		return out.String(), errOut.String(), fmt.Errorf("script exited with code %d", inspect.ExitCode)
-	}
-
-	return out.String(), errOut.String(), nil
-}
-
-// CopyToContainer copies the file or directory at hostPath into the container
-// identified by containerID, placing it under containerDir. Any parent
-// directories of containerDir that do not already exist inside the container are
-// created. The basename of hostPath is preserved, so a host path of
-// "/tmp/foo.txt" copied into "/opt/app" lands at "/opt/app/foo.txt".
-func (d *DockerClient) CopyToContainer(ctx context.Context, containerID, hostPath, containerDir string) error {
-	d.logger.Debug().
-		Str("container_id", containerID).
-		Str("host_path", hostPath).
-		Str("container_dir", containerDir).
-		Msg("copying path into container")
-
-	info, err := os.Stat(hostPath)
-	if err != nil {
-		return fmt.Errorf("stat host path %q: %w", hostPath, err)
-	}
-
-	// Ensure the destination directory exists inside the container before
-	// extracting the tar archive into it.
-	if _, _, err := d.ExecBash(ctx, containerID, fmt.Sprintf("mkdir -p %s", shellQuote(containerDir))); err != nil {
-		return fmt.Errorf("create container directory %q: %w", containerDir, err)
-	}
-
-	pr, pw := io.Pipe()
-	go func() {
-		pw.CloseWithError(buildTar(pw, hostPath, info))
-	}()
-
-	if _, err := d.client.CopyToContainer(ctx, containerID, client.CopyToContainerOptions{
-		DestinationPath: containerDir,
-		Content:         pr,
-	}); err != nil {
-		d.logger.Error().Err(err).
-			Str("container_id", containerID).
-			Str("host_path", hostPath).
-			Str("container_dir", containerDir).
-			Msg("failed to copy path into container")
-		return fmt.Errorf("copy %q into container %q: %w", hostPath, containerDir, err)
-	}
-
-	d.logger.Debug().
-		Str("container_id", containerID).
-		Str("host_path", hostPath).
-		Str("container_dir", containerDir).
-		Msg("copied path into container")
-	return nil
-}
-
-// CopyFileToContainer copies a single file's content into the container
-// identified by containerID, placing it at the exact containerPath. Parent
-// directories of containerPath are created as needed. content is the file's
-// bytes and mode sets the file permissions inside the container (only the
-// permission bits are used).
-func (d *DockerClient) CopyFileToContainer(ctx context.Context, containerID string, content []byte, containerPath string, mode os.FileMode) error {
-	dir := filepath.Dir(containerPath)
-	base := filepath.Base(containerPath)
-
-	d.logger.Debug().
-		Str("container_id", containerID).
-		Str("container_path", containerPath).
-		Int("size", len(content)).
-		Msg("copying file into container")
-
-	if _, _, err := d.ExecBash(ctx, containerID, fmt.Sprintf("mkdir -p %s", shellQuote(dir))); err != nil {
-		return fmt.Errorf("create container directory %q: %w", dir, err)
-	}
-
-	pr, pw := io.Pipe()
-	go func() {
-		pw.CloseWithError(writeContentTar(pw, content, base, mode))
-	}()
-
-	if _, err := d.client.CopyToContainer(ctx, containerID, client.CopyToContainerOptions{
-		DestinationPath: dir,
-		Content:         pr,
-	}); err != nil {
-		d.logger.Error().Err(err).
-			Str("container_id", containerID).
-			Str("container_path", containerPath).
-			Msg("failed to copy file into container")
-		return fmt.Errorf("copy file into container %q: %w", containerPath, err)
-	}
-
-	d.logger.Debug().
-		Str("container_id", containerID).
-		Str("container_path", containerPath).
-		Msg("copied file into container")
-	return nil
-}
 
 // writeContentTar writes a tar archive containing a single regular file entry
 // named name with the given content and permission bits from mode.
