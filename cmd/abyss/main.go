@@ -222,9 +222,9 @@ func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, container
 		var content []byte
 
 		switch s.Type {
-		case "inline", "":
+		case agentconfig.SetupScriptTypeInline, "":
 			content = []byte(s.Source)
-		case "file":
+		case agentconfig.SetupScriptTypeFile:
 			info, err := os.Stat(s.Source)
 			if err != nil {
 				logger.Error().Err(err).Str("source", s.Source).Msg("failed to stat setup script source")
@@ -240,7 +240,7 @@ func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, container
 				return fmt.Errorf("read setup script source %q: %w", s.Source, err)
 			}
 		default:
-			logger.Error().Str("type", s.Type).Msg("unsupported setup script type")
+			logger.Error().Str("type", string(s.Type)).Msg("unsupported setup script type")
 			return fmt.Errorf("unsupported setup script type %q", s.Type)
 		}
 
@@ -250,7 +250,7 @@ func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, container
 			return fmt.Errorf("copy setup script to %q: %w", target, err)
 		}
 
-		logger.Debug().Str("target", target).Str("type", s.Type).Msg("executing setup script in container")
+		logger.Debug().Str("target", target).Str("type", string(s.Type)).Msg("executing setup script in container")
 		stdout, stderr, err := container.ExecBash(ctx, fmt.Sprintf("chmod +x %s && bash %s", target, target))
 		if err != nil {
 			logger.Error().
@@ -279,9 +279,9 @@ func copyFiles(ctx context.Context, docker *runenv.DockerClient, container *rune
 		var mode os.FileMode = 0o644
 
 		switch f.Type {
-		case "inline":
+		case agentconfig.FileCopyTypeInline:
 			content = []byte(f.Source)
-		case "path":
+		case agentconfig.FileCopyTypePath:
 			info, err := os.Stat(f.Source)
 			if err != nil {
 				logger.Error().Err(err).Str("source", f.Source).Msg("failed to stat copy file source")
@@ -298,7 +298,7 @@ func copyFiles(ctx context.Context, docker *runenv.DockerClient, container *rune
 				return fmt.Errorf("read copy file source %q: %w", f.Source, err)
 			}
 		default:
-			logger.Error().Str("type", f.Type).Msg("unsupported copy file type")
+			logger.Error().Str("type", string(f.Type)).Msg("unsupported copy file type")
 			return fmt.Errorf("unsupported copy file type %q for target %q", f.Type, f.Target)
 		}
 
@@ -307,7 +307,7 @@ func copyFiles(ctx context.Context, docker *runenv.DockerClient, container *rune
 			return fmt.Errorf("copy file to %q: %w", f.Target, err)
 		}
 
-		logger.Debug().Str("target", f.Target).Str("type", f.Type).Msg("copied file into container")
+		logger.Debug().Str("target", f.Target).Str("type", string(f.Type)).Msg("copied file into container")
 	}
 
 	return nil
