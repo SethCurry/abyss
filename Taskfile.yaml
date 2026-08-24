@@ -6,9 +6,6 @@ tasks:
   test:
     cmds:
       - go test ./...
-  build-docker:
-    cmds:
-      - docker build -t abyss:latest .
   build-binary:
     cmds:
       - go build -o abyss ./cmd/abyss

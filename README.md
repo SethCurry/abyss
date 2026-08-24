@@ -3,6 +3,22 @@
 `abyss` is an _Agent Runtime Environment(s)_. The long-term goal is to provide a runtime platform
 for agents, in a similar way to what Docker provides for compute.
 
+`abyss` lets you create containers with copies or mounts of files from your desktop, talk to it
+through Zed (or any ACP client), and then remove the container when you're done.
+
+No more worrying about your agent finding the keys for the prod database on your desktop,
+or `rm -rf`'ing your entire desktop.
+
+## Status
+
+Abyss is very much MVP software that I am dogfooding myself.
+
+As such, releases are not currently offered, and the software may crash.
+
+I am targeting early September for an initial usable release.
+
+## Features
+
 It currently supports:
 
 - Starting a Docker container with your agent
