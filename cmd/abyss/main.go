@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
-	"github.com/SethCurry/abyss/internal/api"
+	"github.com/SethCurry/abyss/internal/api/agentapi"
 	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/runenv"
+	api "github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/moby/moby/api/types/container"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -106,8 +107,8 @@ func main() {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					agentCmd := cmd.StringSlice("agent")
 					logger.Debug().Strs("agent_command", agentCmd).Msg("starting agent and websocket server")
-					server := api.NewACPWebsocketServer(logger)
-					return server.Serve(ctx, cmd.String("addr"), agentCmd)
+					httpSrv := agentapi.NewServer(agentCmd)
+					return httpSrv.Serve(cmd.String("addr"))
 				},
 			},
 		},

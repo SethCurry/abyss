@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	github.com/coder/acp-go-sdk v0.13.5
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.1

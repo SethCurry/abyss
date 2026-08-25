@@ -163,7 +163,7 @@ func (d *DockerClient) StartContainer(
 		Str("endpoint", endpoint.String()).
 		Msg("container started")
 
-	return NewContainer(d.client, created.ID), endpoint, nil
+	return NewContainer(d, created.ID), endpoint, nil
 }
 
 // ApplyHostMounts populates hostConfig.Binds from the HostMounts declared in

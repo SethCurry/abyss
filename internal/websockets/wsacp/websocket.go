@@ -1,16 +1,8 @@
-package api
+package wsacp
 
 import (
-	"context"
-	"log/slog"
-	"net/http"
-	"os"
-	"os/exec"
-
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/coder/acp-go-sdk"
-	"github.com/gorilla/websocket"
-	"github.com/rs/zerolog"
 )
 
 // messageTypeFor returns the MessageType corresponding to the given ACP
@@ -146,99 +138,4 @@ func messageTypeFor[T wsmessage.ACPMessageType](msg T) wsmessage.MessageType {
 	}
 
 	return wsmessage.MessageTypeNotExist
-}
-
-type ACPWebsocketServer struct {
-	upgrader websocket.Upgrader
-	logger   zerolog.Logger
-}
-
-// NewACPWebsocketServer creates a websocket server that bridges incoming
-// websocket connections to freshly spawned agent processes over stdio.
-func NewACPWebsocketServer(logger zerolog.Logger) *ACPWebsocketServer {
-	return &ACPWebsocketServer{
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		},
-		logger: logger,
-	}
-}
-
-// Serve listens on addr and bridges each websocket connection to an agent
-// process spawned from agentCommand.
-func (s *ACPWebsocketServer) Serve(ctx context.Context, addr string, agentCommand []string) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		s.handleConnection(ctx, w, r, agentCommand)
-	})
-
-	server := &http.Server{Addr: addr, Handler: mux}
-
-	go func() {
-		<-ctx.Done()
-		_ = server.Shutdown(context.Background())
-	}()
-
-	s.logger.Info().Str("addr", addr).Msg("websocket server listening")
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return err
-	}
-	return nil
-}
-
-func (s *ACPWebsocketServer) handleConnection(ctx context.Context, w http.ResponseWriter, r *http.Request, agentCommand []string) {
-	conn, err := s.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		s.logger.Error().Err(err).Msg("failed to upgrade to websocket")
-		return
-	}
-	defer conn.Close()
-
-	if len(agentCommand) == 0 {
-		s.logger.Error().Msg("no agent command configured")
-		return
-	}
-
-	s.logger.Info().Strs("agent_command", agentCommand).Msg("spawning underlying agent")
-
-	args := append([]string{"-c"}, agentCommand...)
-
-	cmd := exec.CommandContext(ctx, "bash", args...)
-
-	cmd.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
-	cmd.Stderr = os.Stderr
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		s.logger.Error().Err(err).Msg("failed to open agent stdin")
-		return
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		s.logger.Error().Err(err).Msg("failed to open agent stdout")
-		return
-	}
-	if err := cmd.Start(); err != nil {
-		s.logger.Error().Err(err).Msg("failed to start agent")
-		return
-	}
-	defer func() {
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill()
-		}
-	}()
-
-	client := NewWebsocketAgentClient(conn, s.logger)
-	csc := acp.NewClientSideConnection(client, stdin, stdout)
-	csc.SetLogger(slog.Default())
-	client.SetClientConnection(csc)
-
-	go func() {
-		if err := client.Serve(ctx); err != nil {
-			s.logger.Error().Err(err).Msg("websocket bridge failed")
-		}
-		_ = conn.Close()
-	}()
-
-	<-csc.Done()
 }
