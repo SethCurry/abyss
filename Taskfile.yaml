@@ -23,6 +23,6 @@ tasks:
       - "**/*.puml"
     cmds:
       - ./scripts/build-diagrams.sh
-  build-docker-base:
+  docker:
     cmds:
-      - docker buildx build -f ./build/docker/base/Dockerfile .
+      - ./scripts/build-push-docker.sh

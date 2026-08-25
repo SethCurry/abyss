@@ -38,13 +38,17 @@ func main() {
 	log.Logger = logger
 
 	cmd := &cli.Command{
-		Name:  "abyss",
-		Usage: "Agent Runtime Environment(s)",
+		Name:        "abyss",
+		Usage:       "Agent Runtime Environment(s)",
+		ArgsUsage:   "",
+		Description: "Manage agents just like containers.",
+		Version:     "0.0.1a",
+		Authors:     []any{"Seth Curry"},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
 				Aliases: []string{"l"},
-				Usage:   "log level (trace, debug, info, warn, error, fatal, disabled)",
+				Usage:   "The level to log at.  One of trace, debug, info, warn, error, fatal, disabled",
 				Value:   "debug",
 				Sources: cli.EnvVars("ABYSS_LOG_LEVEL"),
 			},
@@ -62,12 +66,12 @@ func main() {
 			{
 				Name:    "client",
 				Aliases: []string{"c"},
-				Usage:   "run the stdio -> websocket ACP proxy",
+				Usage:   "Starts the client-side proxy, which will create its own server-side proxy container running your agent.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
 						Aliases:  []string{"f"},
-						Usage:    "path to the agent configuration YAML file",
+						Usage:    "The path to the agent configuration YAML file.",
 						Required: true,
 					},
 				},
@@ -89,18 +93,18 @@ func main() {
 			{
 				Name:    "server",
 				Aliases: []string{"s"},
-				Usage:   "run the websocket -> stdio ACP proxy",
+				Usage:   "Starts the agent-side proxy.  You should never need to manually invoke this.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "addr",
 						Aliases: []string{"a"},
-						Usage:   "address to listen on",
+						Usage:   "The address to run the HTTP server on.",
 						Value:   ":8080",
 					},
 					&cli.StringSliceFlag{
 						Name:     "agent",
 						Aliases:  []string{"g"},
-						Usage:    "agent command to spawn (command followed by its args)",
+						Usage:    "The agent command to run.  Specify this flag multiple times if there is more than one part to the command (e.g. \"npx my-package\" would be \"-g npx -g my-package\"",
 						Required: true,
 					},
 				},
