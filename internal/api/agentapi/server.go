@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
@@ -20,18 +21,21 @@ type RequestContext struct {
 	Response http.ResponseWriter
 }
 
+func contextCreator(w http.ResponseWriter, r *http.Request) *RequestContext {
+	return &RequestContext{
+		Logger:   log.Logger.With().Str("method", r.Method).Str("path", r.URL.Path).Logger(),
+		Request:  r,
+		Response: w,
+	}
+}
+
 func NewServer(agentCommand []string) *Server {
+	httpSrv := pacific.NewServer(contextCreator)
 	return &Server{
-		httpServer: pacific.NewServer(func(w http.ResponseWriter, r *http.Request) *RequestContext {
-			return &RequestContext{
-				Logger:   log.Logger.With().Str("method", r.Method).Str("path", r.URL.Path).Logger(),
-				Request:  r,
-				Response: w,
-			}
-		}),
-		upgrader: websocket.Upgrader{
-			// TODO this should probably actually check
-			CheckOrigin: func(r *http.Request) bool { return true },
+		httpServer: httpSrv,
+		upgrader: &websocket.Upgrader{
+			CheckOrigin:      func(r *http.Request) bool { return true },
+			HandshakeTimeout: time.Second * 30,
 		},
 		agentCommand: agentCommand,
 	}
@@ -39,7 +43,7 @@ func NewServer(agentCommand []string) *Server {
 
 type Server struct {
 	httpServer   *pacific.Server[*RequestContext]
-	upgrader     websocket.Upgrader
+	upgrader     *websocket.Upgrader
 	agentCommand []string
 }
 
@@ -51,6 +55,7 @@ func (s *Server) Serve(addr string) error {
 }
 
 func (s *Server) handleWebsocket(req *RequestContext) {
+	req.Logger.Error().Msg("handling a websocket conn")
 	conn, err := s.upgrader.Upgrade(req.Response, req.Request, nil)
 	if err != nil {
 		req.Logger.Error().Err(err).Msg("failed to upgrade to websocket")

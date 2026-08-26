@@ -43,7 +43,6 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 
 func NewServer[T any](contextCreator func(w http.ResponseWriter, r *http.Request) T) *Server[T] {
 	router := chi.NewRouter()
-	router.Use(LoggerMiddleware)
 	return &Server[T]{
 		router:     router,
 		getContext: contextCreator,

@@ -118,8 +118,8 @@ func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, con
 
 	// Ensure the destination directory exists inside the container before
 	// extracting the tar archive into it.
-	if _, _, err := d.ExecBash(ctx, fmt.Sprintf("mkdir -p %s", shellQuote(containerDir))); err != nil {
-		return fmt.Errorf("create container directory %q: %w", containerDir, err)
+	if stdout, stderr, err := d.ExecBash(ctx, fmt.Sprintf("mkdir -p %s", containerDir)); err != nil {
+		return fmt.Errorf("create container directory %q: %w.\nStdout: %q\nStderr: %q", containerDir, err, stdout, stderr)
 	}
 
 	pr, pw := io.Pipe()
@@ -159,8 +159,9 @@ func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, contai
 		Int("size", len(content)).
 		Msg("copying file into container")
 
-	if _, _, err := d.ExecBash(ctx, fmt.Sprintf("mkdir -p %s", shellQuote(dir))); err != nil {
-		return fmt.Errorf("create container directory %q: %w", dir, err)
+	if stdout, stderr, err := d.ExecBash(ctx, fmt.Sprintf("mkdir -p %s", dir)); err != nil {
+		d.logger.Error().Str("path", dir).Err(err).Str("stdout", stdout).Str("stderr", stderr).Msg("failed to create directory for copying files")
+		return fmt.Errorf("create container directory %q: %w.  Stdout: %q. Stderr: %q", dir, err, stdout, stderr)
 	}
 
 	pr, pw := io.Pipe()

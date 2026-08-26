@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	defaultImage = "abyss:latest"
+	defaultImage = "ghcr.io/sethcurry/abyss-pi:latest"
 	serverPort   = 8080
 )
 
@@ -43,7 +43,7 @@ func main() {
 		Usage:       "Agent Runtime Environment(s)",
 		ArgsUsage:   "",
 		Description: "Manage agents just like containers.",
-		Version:     "0.0.1a",
+		Version:     time.Now().Format(time.RFC3339),
 		Authors:     []any{"Seth Curry"},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -175,8 +175,11 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		agentArgs[startIndex+1] = v
 	}
 
+	joinedArgs := strings.Join(agentArgs, " ")
+
 	config := &container.Config{
-		Cmd: append([]string{"/usr/local/bin/abyss", "server"}, agentArgs...),
+		Entrypoint: []string{"/bin/bash", "-c"},
+		Cmd:        []string{"/usr/local/bin/abyss server " + joinedArgs},
 	}
 
 	hostConfig := docker.ApplyHostMounts(&cfg.Docker, nil)

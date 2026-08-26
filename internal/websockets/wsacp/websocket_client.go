@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/SethCurry/abyss/internal/websockets/wsmultiplex"
@@ -145,6 +146,19 @@ func (e *WebsocketAgentClient) handleIncoming(ctx context.Context, mt wsmessage.
 	case wsmessage.InitializeRequestType:
 		return serveRequest(e.ws, ctx, id, data, wsmessage.InitializeResponseType, e.acpConn.Initialize)
 	case wsmessage.NewSessionRequestType:
+		var req acp.NewSessionRequest
+
+		err := json.Unmarshal(data, &req)
+		if err != nil {
+			e.logger.Error().Err(err).Msg("failed to unmarshal NewPrompt to ensure cwd exists")
+		} else {
+			if _, err = os.Stat(req.Cwd); err != nil && os.IsNotExist(err) {
+				err = os.MkdirAll(req.Cwd, 0755)
+				if err != nil {
+					e.logger.Error().Err(err).Str("path", req.Cwd).Msg("failed to create directory for session")
+				}
+			}
+		}
 		return serveRequest(e.ws, ctx, id, data, wsmessage.NewSessionResponseType, e.acpConn.NewSession)
 	case wsmessage.PromptRequestType:
 		return serveRequest(e.ws, ctx, id, data, wsmessage.PromptResponseType, e.acpConn.Prompt)

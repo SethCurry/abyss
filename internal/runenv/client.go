@@ -235,10 +235,12 @@ func writeContentTar(w io.Writer, content []byte, name string, mode os.FileMode)
 	return nil
 }
 
-// buildTar writes a tar archive of src to w. The archive's entries are named
-// relative to src so that the basename of src becomes the top-level entry; this
-// matches what the Docker archive API expects when extracting into a
-// destination directory.
+// buildTar writes a tar archive of src to w. Entries are named relative to src
+// and prefixed with the basename of src, so the basename of src becomes the
+// top-level entry in the archive (e.g. /tmp/foo/sub/a.txt becomes "foo/sub/a.txt").
+// This preserves the nested directory structure when the archive is extracted
+// into a destination directory via the Docker archive API, matching the
+// semantics of `docker cp`.
 func buildTar(w io.Writer, src string, info os.FileInfo) error {
 	tw := tar.NewWriter(w)
 
@@ -256,6 +258,7 @@ func buildTar(w io.Writer, src string, info os.FileInfo) error {
 		return closeErr()
 	}
 
+	base := filepath.Base(src)
 	err := filepath.Walk(src, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -264,7 +267,18 @@ func buildTar(w io.Writer, src string, info os.FileInfo) error {
 		if err != nil {
 			return fmt.Errorf("rel path %q: %w", path, err)
 		}
-		name := filepath.ToSlash(rel)
+		rel = filepath.ToSlash(rel)
+
+		// Prefix every entry with the basename of src so that src is preserved
+		// as the top-level directory in the archive. Without this the contents
+		// of src are spread flat across the extraction destination and the
+		// nested directory structure rooted at src is lost.
+		var name string
+		if rel == "." {
+			name = base
+		} else {
+			name = base + "/" + rel
+		}
 		if fi.IsDir() {
 			name += "/"
 		}

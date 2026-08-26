@@ -1,6 +1,6 @@
 docker:
   # The name of the image to use
-  image: "ghcr.io/sethcurry/abyss-pi:latest"
+  image: "abyss-pi:latest"
 
   # A list of host mounts to bind mount into the container
   # You can specify relative paths, but they will be mounted
@@ -15,7 +15,10 @@ docker:
 copy_files:
   - type: "path"
     source: "~/.pi/agent"
-    target: "/.pi"
+    target: "/home/ubuntu/.pi"
+  - type: "path"
+    source: "~/.pi/agent"
+    target: "/root/.pi"
 
 host_mounts:
-    - "./"
+  - "./"
