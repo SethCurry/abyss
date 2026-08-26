@@ -1,0 +1,21 @@
+docker:
+  # The name of the image to use
+  image: "ghcr.io/sethcurry/abyss-pi:latest"
+
+  # A list of host mounts to bind mount into the container
+  # You can specify relative paths, but they will be mounted
+  # inside the container at the absolute path on your host machine
+  host_mounts:
+    - "."
+
+  # The command to run inside the container
+  agent_command:
+    - pi-acp
+
+copy_files:
+  - type: "path"
+    source: "~/.pi/agent"
+    target: "/.pi"
+
+host_mounts:
+    - "./"

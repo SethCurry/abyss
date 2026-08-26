@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/SethCurry/abyss/internal/websockets/wsmultiplex"
@@ -285,6 +286,13 @@ func (w *WebsocketAgent) Initialize(ctx context.Context, params acp.InitializeRe
 }
 
 func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRequest) (acp.NewSessionResponse, error) {
+	if _, err := os.Stat(params.Cwd); err != nil {
+		err = os.MkdirAll(params.Cwd, 0755)
+		if err != nil {
+			w.logger.Error().Err(err).Str("method", "NewSession").Msg("failed to create cwd")
+			return acp.NewSessionResponse{}, err
+		}
+	}
 	w.logger.Debug().Str("method", "NewSession").Msg("handling request")
 	resp, err := roundTrip[acp.NewSessionRequest, acp.NewSessionResponse](w, ctx, params, wsmessage.NewSessionResponseType)
 	if err != nil {

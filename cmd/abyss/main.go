@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
@@ -175,7 +176,7 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 	}
 
 	config := &container.Config{
-		Cmd: append([]string{"server"}, agentArgs...),
+		Cmd: append([]string{"/usr/local/bin/abyss", "server"}, agentArgs...),
 	}
 
 	hostConfig := docker.ApplyHostMounts(&cfg.Docker, nil)
@@ -198,7 +199,7 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 
 	time.Sleep(time.Second)
 
-	wsURL := "ws://" + endpoint.String()
+	wsURL := "ws://" + endpoint.String() + "/ws"
 	logger.Info().
 		Str("url", wsURL).
 		Str("container_id", endpoint.ContainerID).
@@ -208,11 +209,13 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		logger.Error().Err(err).Msg("client disconnected with error")
 	}
 
-	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
-	if stopErr := container.Stop(ctx, 10*time.Second); stopErr != nil {
-		logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
-		return stopErr
-	}
+	/*
+		logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
+		if stopErr := container.Stop(ctx, 10*time.Second); stopErr != nil {
+			logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
+			return stopErr
+		}
+	*/
 
 	return nil
 }
@@ -230,6 +233,14 @@ func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, container
 		case agentconfig.SetupScriptTypeInline, "":
 			content = []byte(s.Source)
 		case agentconfig.SetupScriptTypeFile:
+			if strings.HasPrefix(s.Source, "~") {
+				home, err := os.UserHomeDir()
+				if err != nil {
+					logger.Error().Err(err).Str("source", s.Source).Msg("failed to get user home directory")
+					return fmt.Errorf("get user home directory: %w", err)
+				}
+				s.Source = strings.Replace(s.Source, "~", home, 1)
+			}
 			info, err := os.Stat(s.Source)
 			if err != nil {
 				logger.Error().Err(err).Str("source", s.Source).Msg("failed to stat setup script source")
@@ -277,7 +288,10 @@ func runSetupScripts(ctx context.Context, docker *runenv.DockerClient, container
 // container. Files with Type "inline" use Source as the file contents; files
 // with Type "path" read the contents from the host path in Source. Each file
 // is written to its Target path inside the container, creating parent
-// directories as needed.
+// directories as needed. When a "path" entry points to a directory, the
+// directory is copied recursively into the container at Target, which is
+// treated as the destination directory (its parent directories are created as
+// needed).
 func copyFiles(ctx context.Context, docker *runenv.DockerClient, container *runenv.Container, files []agentconfig.FileCopyConfig, logger zerolog.Logger) error {
 	for _, f := range files {
 		var content []byte
@@ -287,14 +301,31 @@ func copyFiles(ctx context.Context, docker *runenv.DockerClient, container *rune
 		case agentconfig.FileCopyTypeInline:
 			content = []byte(f.Source)
 		case agentconfig.FileCopyTypePath:
+			if strings.HasPrefix(f.Source, "~") {
+				home, err := os.UserHomeDir()
+				if err != nil {
+					logger.Error().Err(err).Str("source", f.Source).Msg("failed to get user home directory")
+					return fmt.Errorf("get user home directory: %w", err)
+				}
+				f.Source = strings.Replace(f.Source, "~", home, 1)
+			}
+
 			info, err := os.Stat(f.Source)
 			if err != nil {
 				logger.Error().Err(err).Str("source", f.Source).Msg("failed to stat copy file source")
 				return fmt.Errorf("stat copy file source %q: %w", f.Source, err)
 			}
 			if info.IsDir() {
-				logger.Error().Str("source", f.Source).Msg("copy file source is a directory")
-				return fmt.Errorf("copy file source %q is a directory, only files are supported", f.Source)
+				// Recursively copy the directory into the container at Target.
+				// CopyFromHost creates Target (and any parents) inside the
+				// container before extracting, and preserves the directory
+				// structure relative to Source.
+				if err := container.CopyFromHost(ctx, container.ID(), f.Source, f.Target); err != nil {
+					logger.Error().Err(err).Str("source", f.Source).Str("target", f.Target).Msg("failed to copy directory into container")
+					return fmt.Errorf("copy directory %q to %q: %w", f.Source, f.Target, err)
+				}
+				logger.Debug().Str("target", f.Target).Str("type", string(f.Type)).Msg("copied directory into container")
+				continue
 			}
 			mode = info.Mode()
 			content, err = os.ReadFile(f.Source)

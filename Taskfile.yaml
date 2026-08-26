@@ -26,3 +26,6 @@ tasks:
   docker:
     cmds:
       - ./scripts/build-push-docker.sh
+  todo:
+    cmds:
+      - rg 'TODO'

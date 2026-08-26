@@ -18,5 +18,3 @@ RUN CGO_ENABLED=0 go build -o /out/abyss ./cmd/abyss
 FROM ubuntu:latest
 
 COPY --from=build /out/abyss /usr/local/bin/abyss
-
-ENTRYPOINT ["/usr/local/bin/abyss"]

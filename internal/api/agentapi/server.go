@@ -24,7 +24,9 @@ func NewServer(agentCommand []string) *Server {
 	return &Server{
 		httpServer: pacific.NewServer(func(w http.ResponseWriter, r *http.Request) *RequestContext {
 			return &RequestContext{
-				Logger: log.Logger.With().Str("method", r.Method).Str("path", r.URL.Path).Logger(),
+				Logger:   log.Logger.With().Str("method", r.Method).Str("path", r.URL.Path).Logger(),
+				Request:  r,
+				Response: w,
 			}
 		}),
 		upgrader: websocket.Upgrader{
@@ -63,11 +65,13 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 
 	req.Logger.Info().Strs("agent_command", s.agentCommand).Msg("spawning underlying agent")
 
-	args := append([]string{"-c"}, s.agentCommand...)
+	args := []string{}
+	if len(s.agentCommand) > 1 {
+		args = s.agentCommand[1:]
+	}
 
-	cmd := exec.CommandContext(req.Request.Context(), "bash", args...)
+	cmd := exec.CommandContext(req.Request.Context(), s.agentCommand[0], args...)
 
-	cmd.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()

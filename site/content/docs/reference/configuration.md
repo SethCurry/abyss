@@ -5,7 +5,7 @@ summary: ""
 date: 2023-09-07T16:13:18+02:00
 lastmod: 2023-09-07T16:13:18+02:00
 draft: false
-weight: 910
+weight: 1
 toc: true
 params:
   seo:
@@ -48,7 +48,7 @@ copy_files:
   - type: "inline"
     source: "nameserver 8.8.8.8"
     target: "/etc/resolv.conf"
-  - type: "file"
+  - type: "path"
     source: "./config/some-config.yml"
     target: "/etc/some-config.yml"
 ```
