@@ -181,11 +181,16 @@ func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig
 		return hostConfig
 	}
 
-	for _, hostPath := range cfg.HostMounts {
-		hostPath = filepath.Clean(hostPath)
+	for _, origHostPath := range cfg.HostMounts {
+		hostPath, err := filepath.Abs(filepath.Clean(origHostPath))
+		if err != nil {
+			d.logger.Err(err).Msg("failed to get absolute host path")
+			return nil
+		}
 
 		containerPath, err := filepath.Abs(hostPath)
 		if err != nil {
+			d.logger.Err(err).Msg("failed to get absolute container path")
 			return nil
 		}
 
