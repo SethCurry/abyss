@@ -6,19 +6,10 @@ docker:
   # You can specify relative paths, but they will be mounted
   # inside the container at the absolute path on your host machine
   host_mounts:
-    - "."
+    - source: "."
+    - source: "~/.pi"
+      destination: "/root/.pi"
 
   # The command to run inside the container
   agent_command:
     - pi-acp
-
-copy_files:
-  - type: "path"
-    source: "~/.pi/agent"
-    target: "/home/ubuntu/.pi"
-  - type: "path"
-    source: "~/.pi/agent"
-    target: "/root/.pi"
-
-host_mounts:
-  - "./"

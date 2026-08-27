@@ -67,6 +67,22 @@ func (d *DockerClient) Close() error {
 	return nil
 }
 
+func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary, error) {
+	resp, err := d.client.ContainerList(ctx, client.ContainerListOptions{
+		Filters: client.Filters{
+			"label": map[string]bool{
+				"abyss": true,
+			},
+		},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers: %w", err)
+	}
+
+	return resp.Items, nil
+}
+
 // StartContainer pulls imageRef (if necessary) and starts a container from it.
 // The container's containerPort is published to the host so the host can reach
 // it. hostPort selects the host port to bind; pass 0 to let Docker assign a
@@ -104,7 +120,7 @@ func (d *DockerClient) StartContainer(
 	config.ExposedPorts = network.PortSet{port: {}}
 	config.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	config.Labels = map[string]string{
-		"source": "abyss",
+		"abyss": "true",
 	}
 
 	if hostConfig == nil {
@@ -166,6 +182,24 @@ func (d *DockerClient) StartContainer(
 	return NewContainer(d, created.ID), endpoint, nil
 }
 
+func cleanPath(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to get user home directory to resolve ~: %w", err)
+		}
+
+		path = strings.Replace(path, "~", home, 1)
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path for %q: %w", path, err)
+	}
+
+	return filepath.Clean(absPath), nil
+}
+
 // ApplyHostMounts populates hostConfig.Binds from the HostMounts declared in
 // cfg. Each entry maps a host path to a container path using Docker's
 // "hostPath:containerPath" bind format. If hostConfig is nil a new HostConfig is
@@ -181,20 +215,24 @@ func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig
 		return hostConfig
 	}
 
-	for _, origHostPath := range cfg.HostMounts {
-		hostPath, err := filepath.Abs(filepath.Clean(origHostPath))
+	for _, mount := range cfg.HostMounts {
+		hostPath, err := cleanPath(mount.Source)
 		if err != nil {
 			d.logger.Err(err).Msg("failed to get absolute host path")
 			return nil
 		}
 
-		containerPath, err := filepath.Abs(hostPath)
-		if err != nil {
-			d.logger.Err(err).Msg("failed to get absolute container path")
-			return nil
-		}
+		var containerPath string
 
-		containerPath = filepath.Clean(containerPath)
+		if mount.Destination != "" {
+			containerPath, err = cleanPath(mount.Destination)
+			if err != nil {
+				d.logger.Err(err).Msg("failed to get absolute container path")
+				return nil
+			}
+		} else {
+			containerPath = hostPath
+		}
 
 		if !filepath.IsAbs(hostPath) {
 			d.logger.Warn().Str("host_path", hostPath).Str("container_path", containerPath).Msg("skipping non-absolute host mount")

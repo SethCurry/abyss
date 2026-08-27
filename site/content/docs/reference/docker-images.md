@@ -15,6 +15,9 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
+This is the master list of all of the Docker images I publish for Abyss to help you get started without
+needing to build your own Docker container first.
+
 <!-- TODO example of onboarding for each -->
 
 | Image | Agent | Description |

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 [-s <45|90>] [-p <string>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-p <string>]" 1>&2; exit 1; }
 
 do_push=0
 
-while getopts ":p:" o; do
+while getopts ":p:"; do
     case "${o}" in
         p)
             do_push=1

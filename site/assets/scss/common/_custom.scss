@@ -11,10 +11,45 @@
 
 .bg-img {
   background-image: url("/img/deep-sea-fish-banner.png");
-  background-position: 0 0;
+  background-position: 0vh -20vh;
   width: 100%;
-  height: 70vh;
+  height: 30vh;
   margin-top: -20rem;
   background-size: cover;
   box-shadow: 0 0 200px rgba(0,0,0,0.9) inset;
   z-index: -1; }
+
+.admonition {
+  border-radius: 1vw;
+  border: 1px solid white;
+  width: 100%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  overflow: hidden;
+}
+
+.admonition-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  width: 100%;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.admonition-body {
+  padding: 1em;
+  padding-right: 1em;
+  padding-bottom: 1em;
+}
+
+.admonition-warning {
+  background: rgba(229, 77, 46, 0.4);
+  border: 2px solid rgba(229, 77, 46, 1);
+}
+
+.admonition-warning-title {
+}
+
+.admonition-warning-body {
+  background: rgba(0, 0, 0, 0.5);
+}

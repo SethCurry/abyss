@@ -116,6 +116,35 @@ func main() {
 					return httpSrv.Serve(cmd.String("addr"))
 				},
 			},
+			{
+				Name:    "docker",
+				Aliases: []string{"d"},
+				Usage:   "Docker-related utilities.",
+				Commands: []*cli.Command{
+					{
+						Name:    "ps",
+						Aliases: []string{"p"},
+						Usage:   "List Abyss containers that are currently running.",
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							docker, err := runenv.NewDockerClient()
+							if err != nil {
+								return fmt.Errorf("failed to connect to docker: %w", err)
+							}
+
+							containers, err := docker.AbyssContainers(ctx)
+							if err != nil {
+								return fmt.Errorf("failed to list containers: %w", err)
+							}
+
+							for _, v := range containers {
+								joinedNames := strings.Join(v.Names, ", ")
+								fmt.Println(v.ID + ": " + joinedNames)
+							}
+							return nil
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -199,8 +228,6 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		logger.Error().Err(err).Msg("failed to run setup scripts in container")
 		return err
 	}
-
-	time.Sleep(time.Second)
 
 	wsURL := "ws://" + endpoint.String() + "/ws"
 	logger.Info().

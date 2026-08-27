@@ -1,0 +1,6 @@
+  <div class="admonition admonition-{{ .Get "type" }}">
+    <div class="admonition-title admonition-{{ .Get "type" }}-title">{{ .Get "title" }}</div>
+    <div class="admonition-body admonition-{{ .Get "type" }}-body">
+      {{ .Inner | markdownify }}
+    </div>
+  </div>

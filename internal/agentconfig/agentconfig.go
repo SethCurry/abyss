@@ -17,10 +17,15 @@ import (
  *  - These are just shims to apt-get/apk/etc
  */
 
+type HostMount struct {
+	Source      string `yaml:"source"`
+	Destination string `yaml:"destination"`
+}
+
 type DockerConfig struct {
-	Image        string   `yaml:"image"`
-	HostMounts   []string `yaml:"host_mounts"`
-	AgentCommand []string `yaml:"agent_command"`
+	Image        string      `yaml:"image"`
+	HostMounts   []HostMount `yaml:"host_mounts"`
+	AgentCommand []string    `yaml:"agent_command"`
 }
 
 type SetupScriptType string
