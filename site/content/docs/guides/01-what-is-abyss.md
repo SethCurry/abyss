@@ -49,6 +49,11 @@ Abyss handles creating and managing Docker containers running your agents, along
 over websocket.  The upshot is that your agent can run in an isolated container (or one day even on another computer)
 while neither your editor nor agent are aware.
 
+Abyss also intercepts native parts of ACP that would
+touch the host machine's filesystem or execute commands
+on the host machine
+ and runs them inside the container (you can disable this if you want).
+
 Abyss can also:
 
 - Stop and remove Docker containers when you disconnect from ACP

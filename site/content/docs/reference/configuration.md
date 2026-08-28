@@ -43,6 +43,18 @@ docker:
   # The command to run inside the container
   agent_command:
     - pi-acp
+# ACP controls ACP specific options
+acp:
+  tools_on_host:
+    # If this is true, ACP read/write file requests will be
+    # forwarded to the host to execute inside your ACP client.
+    # WARNING: This gives the AI a way to influence your PC
+    filesystem: true
+
+    # If this is true, ACP shell command requests will be
+    # forwarded to the host to execute inside your ACP client.
+    # WARNING: This gives the AI a way to influence your PC
+    terminal: true
 
 # Setup scripts are shell scripts that are run before the agent starts
 # They allow executing custom steps at run-time, for things that aren't
@@ -132,3 +144,30 @@ These are the fields for a `copy_files` block:
 | `type` | Yes | The type of the source for the file, either `path` or `inline`. |
 | `source` | Yes | The source of the file.  If `type` is `path` then `source` should be a path to the file.  If `type` is `inline`, then the contents of the file go directly into the YAML. |
 | `target` | Yes | Where to copy the files inside the container.  If any intermediary directories don't exist, they are automatically created with mode `0755`. |
+
+## `acp`
+
+### `tools_on_host`
+
+The tools_on_host block contains settings related to
+where ACP requests that interact with the filesystem
+or shell are sent.
+
+By default, Abyss intercepts these and executes them inside
+the container to keep your host machine safe.
+
+#### `filesystem`
+
+This setting controls whether ACP [`fs/read_text_file`](https://agentclientprotocol.com/protocol/v1/file-system#reading-files) requests
+and [`fs/write_text_file`](https://agentclientprotocol.com/protocol/v1/file-system#writing-files) requests
+are forwarded to the host to execute inside your ACP client.
+
+It is false by default, so those requests are intercepted by
+the Abyss server inside the container and executed there.
+
+#### `terminal`
+
+This setting controls whether [ACP terminal requests](https://agentclientprotocol.com/protocol/v1/terminals) are forwarded to the host to execute inside your ACP client.
+
+It is false by default, so those requests are intercepted by
+the Abyss server inside the container and executed there.

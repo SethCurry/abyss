@@ -28,24 +28,57 @@
         and Abyss takes care of managing the container for you.</p>
       <p>You can even manage separate agents, with separate containers and resources.  Swap seamlessly between them
         with Zed, or any of your other favorite ACP clients.</p>
+      <p>This config file is all you need to get started:</p>
+      </div>
+
+      <div class="expressive-code">
+        <figure class="frame not-content">
+        <figcaption class="header">
+          <span class="title"></span>
+        </figcaption>
+        <div class="highlight"><div class="copy"><button title="Copy to clipboard" class="btn-copy" aria-label="Clipboard button"><div></div></button></div><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">docker</span><span class="p">:</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># This is a pre-built image with Abyss and Pi pre-installed</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s2">"ghcr.io/sethcurry/abyss-pi:latest"</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># Abyss speaks ACP, so we invoke Pi via pi-acp</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">agent_command</span><span class="p">:</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">pi-acp</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="nt">host_mounts</span><span class="p">:</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># This mounts the current directory inside the container.</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># It doesn't take a target path because ACP sends a `cwd`</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># so we need the paths to line up between the host and</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># container</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s2">"./"</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># This mounts your .pi directory so that the agent has</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># API keys for your LLM, prior sessions, plugins, etc.</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># </span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># You can put this in the `copy_files` config section</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># which will prevent the LLM from modifying your config files</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># but your sessions won't end up on your host PC so the session</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="c"># files are lost when the container gets deleted.</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">  </span>- <span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s2">"~/.pi"</span><span class="w">
+      </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">destination</span><span class="p">:</span><span class="w"> </span><span class="s2">"/root/.pi"</span></span></span></code></pre></div>
+        </figure>
       </div>
       <div class="row justify-content-center text-center">
         <div class="col-lg-5">
           <div class="object-contain rounded-xl overflow-hidden">
               <img style="width: 100%" src="/img/ragebait/see-no-evil.png" />
           </div>
-          <h2 class="h4">See No Evil</h2>
+          <h2 class="h4">See No Evil</h2></p>
           <p>Keep secrets from your agent.  Abyss only makes things visible to your agent when you tell it to, otherwise your agent lives in the dark.</p>
         </div>
         <div class="col-lg-5">
           <img src="/img/ragebait/hear-no-evil.png" />
           <h2 class="h4">Hear No Evil</h2>
-          <p>Isolate your agent's networking, one day.  This feature isn't done, but I liked the styling.</p>
+          <p>Abyss intercepts ACP requests for filesystem and shell access and executes them inside the container.</p>
         </div>
         <div class="col-lg-5">
           <img src="/img/ragebait/fish-need-fingers-too.png" />
           <h2 class="h4">Speak No Evil</h2>
-          <p>Prevent your agent from leaking into production by keeping its greedy mitts off your production secrets.</p>
+          <p>Easily copy files, create bind mounts, and execute setup scripts all as part of your agent definition.</p>
         </div>
         <div class="col-lg-5">
           <h2 class="h4">Read the docs</h2>

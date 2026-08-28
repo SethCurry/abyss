@@ -17,6 +17,15 @@ import (
  *  - These are just shims to apt-get/apk/etc
  */
 
+type ToolsOnHostConfig struct {
+	Files    bool `yaml:"files"`
+	Terminal bool `yaml:"terminal"`
+}
+
+type ACPConfig struct {
+	ToolsOnHost ToolsOnHostConfig `yaml:"tools_on_host"`
+}
+
 type HostMount struct {
 	Source      string `yaml:"source"`
 	Destination string `yaml:"destination"`
@@ -94,6 +103,7 @@ type AgentConfig struct {
 	Docker       DockerConfig         `yaml:"docker"`
 	SetupScripts []SetupScriptsConfig `yaml:"setup_scripts"`
 	CopyFiles    []FileCopyConfig     `yaml:"copy_files"`
+	ACP          ACPConfig            `yaml:"acp"`
 }
 
 // FromYAMLFile reads the YAML file at the given path and unmarshals it

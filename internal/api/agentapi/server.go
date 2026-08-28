@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/coder/acp-go-sdk"
@@ -29,7 +30,7 @@ func contextCreator(w http.ResponseWriter, r *http.Request) *RequestContext {
 	}
 }
 
-func NewServer(agentCommand []string) *Server {
+func NewServer(agentCommand []string, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools) *Server {
 	httpSrv := pacific.NewServer(contextCreator)
 	return &Server{
 		httpServer: httpSrv,
@@ -37,14 +38,18 @@ func NewServer(agentCommand []string) *Server {
 			CheckOrigin:      func(r *http.Request) bool { return true },
 			HandshakeTimeout: time.Second * 30,
 		},
-		agentCommand: agentCommand,
+		agentCommand:  agentCommand,
+		terminalTools: terminalTools,
+		fileTools:     fileTools,
 	}
 }
 
 type Server struct {
-	httpServer   *pacific.Server[*RequestContext]
-	upgrader     *websocket.Upgrader
-	agentCommand []string
+	httpServer    *pacific.Server[*RequestContext]
+	upgrader      *websocket.Upgrader
+	agentCommand  []string
+	terminalTools *acptools.TerminalTools
+	fileTools     *acptools.FilesystemTools
 }
 
 // Serve listens on addr and bridges each websocket connection to an agent
@@ -99,7 +104,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 	}()
 
-	client := wsacp.NewWebsocketAgentClient(conn, req.Logger)
+	client := wsacp.NewWebsocketAgentClient(conn, s.terminalTools, s.fileTools, req.Logger)
 	csc := acp.NewClientSideConnection(client, stdin, stdout)
 	csc.SetLogger(slog.Default())
 	client.SetClientConnection(csc)

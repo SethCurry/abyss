@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/api/agentapi"
 	"github.com/SethCurry/abyss/internal/erres"
@@ -108,11 +109,34 @@ func main() {
 						Usage:    "The agent command to run.  Specify this flag multiple times if there is more than one part to the command (e.g. \"npx my-package\" would be \"-g npx -g my-package\"",
 						Required: true,
 					},
+					&cli.BoolFlag{
+						Name:    "local-terminal",
+						Aliases: []string{""},
+						Usage:   "Run terminal ACP commands on the client rather than this server",
+						Value:   false,
+					},
+					&cli.BoolFlag{
+						Name:    "local-filesystem",
+						Aliases: []string{""},
+						Usage:   "Run filesystem ACP commands on the client rather than this server",
+						Value:   false,
+					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					agentCmd := cmd.StringSlice("agent")
 					logger.Debug().Strs("agent_command", agentCmd).Msg("starting agent and websocket server")
-					httpSrv := agentapi.NewServer(agentCmd)
+
+					var localTerminal *acptools.TerminalTools
+					var localFilesystem *acptools.FilesystemTools
+
+					if cmd.Bool("local-terminal") {
+						localTerminal = acptools.NewTerminalTools(logger)
+					}
+					if cmd.Bool("local-filesystem") {
+						localFilesystem = acptools.NewFilesystemTools(logger)
+					}
+
+					httpSrv := agentapi.NewServer(agentCmd, localTerminal, localFilesystem)
 					return httpSrv.Serve(cmd.String("addr"))
 				},
 			},
@@ -202,6 +226,14 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		startIndex := k * 2
 		agentArgs[startIndex] = "--agent"
 		agentArgs[startIndex+1] = v
+	}
+
+	if cfg.ACP.ToolsOnHost.Files {
+		agentArgs = append(agentArgs, "--local-filesystem")
+	}
+
+	if cfg.ACP.ToolsOnHost.Terminal {
+		agentArgs = append(agentArgs, "--local-terminal")
 	}
 
 	joinedArgs := strings.Join(agentArgs, " ")
