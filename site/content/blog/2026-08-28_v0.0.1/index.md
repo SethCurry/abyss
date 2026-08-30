@@ -27,4 +27,4 @@ This is the initial release of Abyss with its initial feature set, including:
 - Copying files into the container
 - Executing setup scripts
 
-You can get a copy of the release at TODO add a link here
+You can get a copy of the release at from the [releases page](https://github.com/SethCurry/abyss/releases).

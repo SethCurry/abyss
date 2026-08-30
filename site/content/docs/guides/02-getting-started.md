@@ -21,7 +21,12 @@ Before you can use abyss, you'll need a few things:
 - Docker installed, with permissions to run containers
 - Authentication for your agent (API keys, or whatever your LLM requires) configured in Pi.
 
-Currently Pi is the only agent with pre-built images for you to use.
+## Grab A Release
+
+Releases are available on the [release page](https://github.com/SethCurry/abyss/releases).
+
+In the future when there are fewer features that need attention, I'll get it packaged up in
+Homebrew/apt/dnf/AUR/etc.
 
 ## Creating Your Configuration
 

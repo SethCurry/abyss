@@ -17,7 +17,10 @@ or `rm -rf`'ing your entire desktop.
 
 ## Status
 
-Abyss is very much MVP software that I am dogfooding myself.
+Abyss has had its first MVP release!
+
+You can grab a copy of the binary from the [releases page](https://github.com/SethCurry/abyss/releases),
+and Docker images are under Packages on the right of the project home.
 
 ## Features
 
