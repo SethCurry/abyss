@@ -54,6 +54,6 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-code.home-example span.line {
-    line-height: 0.7em;
+code.home-example > span.line {
+    line-height: 0.7em !important;
 }
