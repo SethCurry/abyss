@@ -24,7 +24,6 @@ func NewContainer(docker *DockerClient, containerID string) *Container {
 	}
 }
 
-// Container mediates
 type Container struct {
 	containerID string
 	client      *DockerClient
@@ -146,10 +145,7 @@ func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, con
 }
 
 // CopyFileFromHost copies a single file's content into the container
-// identified by containerID, placing it at the exact containerPath. Parent
-// directories of containerPath are created as needed. content is the file's
-// bytes and mode sets the file permissions inside the container (only the
-// permission bits are used).
+// identified by containerID. Parent directories of containerPath are created as needed.
 func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, containerPath string, mode os.FileMode) error {
 	dir := filepath.Dir(containerPath)
 	base := filepath.Base(containerPath)

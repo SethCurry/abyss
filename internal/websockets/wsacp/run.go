@@ -18,7 +18,12 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("failed to dial Docker websocket: %w", err)
 	}
-	defer conn.Close()
+	defer func() {
+		closeErr := conn.Close()
+		if closeErr != nil {
+			logger.Warn().Err(closeErr).Msg("failed to close client websocket connection")
+		}
+	}()
 
 	agent := NewWebsocketAgent(conn, logger)
 	asc := acp.NewAgentSideConnection(agent, os.Stdout, os.Stdin)
@@ -28,6 +33,7 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	// Run the demultiplexing read loop, forwarding client capability requests
 	// from the websocket to the client over stdio.
 	go func() {
+		//nolint:staticcheck
 		if err := agent.Serve(ctx); err != nil {
 			logger.Error().Err(err).Msg("websocket bridge failed")
 		}

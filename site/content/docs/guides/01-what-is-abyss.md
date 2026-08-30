@@ -2,8 +2,8 @@
 title: "What is abyss?"
 description: "Learn what abyss is, what problems it solves, and why you would want to use it."
 summary: ""
-date: 2023-09-07T16:04:48+02:00
-lastmod: 2023-09-07T16:04:48+02:00
+date: 2026-08-01T16:04:48+02:00
+lastmod: 2026-08-01T16:04:48+02:00
 draft: false
 weight: 1
 toc: true

@@ -37,19 +37,14 @@ type DockerConfig struct {
 	AgentCommand []string    `yaml:"agent_command"`
 }
 
+// SetupScriptType is an enum type.  It exists
+// solely so UnmarshalYAML can validate the type field.
 type SetupScriptType string
 
 const (
 	SetupScriptTypeFile   SetupScriptType = "file"
 	SetupScriptTypeInline SetupScriptType = "inline"
 )
-
-type SetupScriptsConfig struct {
-	// Type is either "inline" or "file"
-	Type SetupScriptType `yaml:"type"`
-	// Source is the script content or file path
-	Source string `yaml:"source"`
-}
 
 // UnmarshalYAML validates that the Type field is either "file" or "inline".
 func (t *SetupScriptType) UnmarshalYAML(value *yaml.Node) error {
@@ -67,21 +62,21 @@ func (t *SetupScriptType) UnmarshalYAML(value *yaml.Node) error {
 	}
 }
 
+type SetupScriptsConfig struct {
+	// Type is either "inline" or "file"
+	Type SetupScriptType `yaml:"type"`
+	// Source is the script content or file path
+	Source string `yaml:"source"`
+}
+
+// FileCopyType is an enum type.  It exists
+// solely so UnmarshalYAML can validate the type field.
 type FileCopyType string
 
 const (
 	FileCopyTypeInline FileCopyType = "inline"
 	FileCopyTypePath   FileCopyType = "path"
 )
-
-type FileCopyConfig struct {
-	// Type is currently either "inline" or "path"
-	Type FileCopyType `yaml:"type"`
-	// Source is the content or file path of the source
-	Source string `yaml:"source"`
-	// Target is the destination path on the agent
-	Target string `yaml:"target"`
-}
 
 // UnmarshalYAML validates that the Type field is either "inline" or "path".
 func (t *FileCopyType) UnmarshalYAML(value *yaml.Node) error {
@@ -97,6 +92,15 @@ func (t *FileCopyType) UnmarshalYAML(value *yaml.Node) error {
 	default:
 		return fmt.Errorf("invalid file copy type %q: must be %q or %q", s, FileCopyTypeInline, FileCopyTypePath)
 	}
+}
+
+type FileCopyConfig struct {
+	// Type is currently either "inline" or "path"
+	Type FileCopyType `yaml:"type"`
+	// Source is the content or file path of the source
+	Source string `yaml:"source"`
+	// Target is the destination path on the agent
+	Target string `yaml:"target"`
 }
 
 type AgentConfig struct {

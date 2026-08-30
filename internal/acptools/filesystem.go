@@ -17,6 +17,9 @@ func NewFilesystemTools(logger zerolog.Logger) *FilesystemTools {
 	}
 }
 
+// FilesystemTools implements the ACP ReadTextFile and WriteTextFile endpoints.
+// It is separate from TerminalTools to allow toggling local/remote execution
+// separately.
 type FilesystemTools struct {
 	logger zerolog.Logger
 }
@@ -32,7 +35,12 @@ func (e *FilesystemTools) WriteTextFile(ctx context.Context, params acp.WriteTex
 		e.logger.Error().Err(err).Str("method", "WriteTextFile").Msg("failed to create file")
 		return acp.WriteTextFileResponse{}, fmt.Errorf("failed to create or truncate %q: %w", path, err)
 	}
-	defer fd.Close()
+	defer func() {
+		closeErr := fd.Close()
+		if closeErr != nil {
+			e.logger.Error().Err(closeErr).Str("path", path).Msg("failed to close file")
+		}
+	}()
 
 	_, err = fd.Write([]byte(content))
 	if err != nil {
@@ -63,7 +71,12 @@ func (e *FilesystemTools) ReadTextFile(ctx context.Context, params acp.ReadTextF
 		e.logger.Error().Err(err).Str("method", "ReadTextFile").Msg("failed to open file")
 		return acp.ReadTextFileResponse{}, fmt.Errorf("failed to open %q: %w", params.Path, err)
 	}
-	defer fd.Close()
+	defer func() {
+		closeErr := fd.Close()
+		if closeErr != nil {
+			e.logger.Error().Err(closeErr).Str("path", params.Path).Msg("failed to close file after writing")
+		}
+	}()
 
 	scanner := bufio.NewScanner(fd)
 	for scanner.Scan() {

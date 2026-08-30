@@ -33,7 +33,12 @@ func main() {
 		panic(err)
 	}
 
-	defer logFile.Close()
+	defer func() {
+		defErr := logFile.Close()
+		if defErr != nil {
+			log.Error().Err(err).Msg("failed to close log file")
+		}
+	}()
 
 	logOut := io.MultiWriter(logFile, os.Stderr)
 	logger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
@@ -175,7 +180,7 @@ func main() {
 	err = cmd.Run(context.Background(), os.Args)
 	if err != nil {
 		if humanErr, ok := errors.AsType[erres.HumanError](err); ok {
-			logger.Error().Str("error", humanErr.HumanError()).Msg("command failed")
+			logger.Error().Err(err).Str("human_error", humanErr.HumanError()).Msg("command failed")
 		} else {
 			logger.Error().Err(err).Msg("command failed")
 		}
@@ -210,9 +215,14 @@ func openLogFile() (io.WriteCloser, error) {
 func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
-		return err
+		return erres.NewHumanError("Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?", err)
 	}
-	defer docker.Close()
+	defer func() {
+		closeErr := docker.Close()
+		if closeErr != nil {
+			logger.Error().Err(closeErr).Msg("failed to close Docker client")
+		}
+	}()
 
 	image := cfg.Docker.Image
 	if image == "" {

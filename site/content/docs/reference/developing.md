@@ -15,11 +15,19 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
-I'm currently using [acpx](https://github.com/openclaw/acpx) to test.  Testing in Zed is painful due to it tending to get "stuck"
-on certain kinds of failures, and Abyss not being stable enough to avoid those failures reliably so far.
+## Tasks
 
-You can install it with
+This project uses [task](https://taskfile.dev/) as its task runner.
+You can find a list of the tasks [here](https://github.com/SethCurry/abyss/blob/main/Taskfile.yaml).
+
+## The Site
+
+You can run the dev version of the site by installing Task above and running
 
 ```bash
-npm install -g acpx@latest
+task site
 ```
+
+Or you can just copy the bash command out of it.
+
+The docs are auto-rebuilt by Netlify on push, so you don't need to do anything to get changes live on the site.

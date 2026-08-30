@@ -182,6 +182,8 @@ func (d *DockerClient) StartContainer(
 	return NewContainer(d, created.ID), endpoint, nil
 }
 
+// cleanPath returns the absolute path for the given path,
+// including replacing a ~ as the first character with $HOME.
 func cleanPath(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		home, err := os.UserHomeDir()
@@ -367,17 +369,14 @@ func writeTarEntry(tw *tar.Writer, src, name string, fi os.FileInfo) error {
 	if err != nil {
 		return fmt.Errorf("open %q: %w", src, err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
+
 	if _, err := io.Copy(tw, f); err != nil {
 		return fmt.Errorf("copy %q into tar: %w", src, err)
 	}
 	return nil
-}
-
-// shellQuote wraps s in single quotes, escaping any embedded single quotes so
-// that the result can be used safely as a single shell argument.
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 
 // hostIP returns the address the host should use to reach the Docker daemon.
@@ -401,7 +400,7 @@ func (d *DockerClient) hostIP() string {
 }
 
 // pullImage ensures imageRef is present on the Docker host.
-func (d *DockerClient) pullImage(ctx context.Context, imageRef string) error {
+func (d *DockerClient) PullImage(ctx context.Context, imageRef string) error {
 	d.logger.Debug().Str("image", imageRef).Msg("pulling image")
 
 	resp, err := d.client.ImagePull(ctx, imageRef, client.ImagePullOptions{})
@@ -409,7 +408,12 @@ func (d *DockerClient) pullImage(ctx context.Context, imageRef string) error {
 		d.logger.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")
 		return fmt.Errorf("pull image %q: %w", imageRef, err)
 	}
-	defer resp.Close()
+	defer func() {
+		closeErr := resp.Close()
+		if closeErr != nil {
+			d.logger.Warn().Err(closeErr).Msg("failed to close ImagePull response")
+		}
+	}()
 
 	if err := resp.Wait(ctx); err != nil {
 		d.logger.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")

@@ -66,7 +66,12 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		req.Logger.Error().Err(err).Msg("failed to upgrade to websocket")
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		closeErr := conn.Close()
+		if closeErr != nil {
+			req.Logger.Warn().Err(closeErr).Msg("failed to close websocket connection")
+		}
+	}()
 
 	if len(s.agentCommand) == 0 {
 		req.Logger.Error().Msg("no agent command configured")
@@ -110,6 +115,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	client.SetClientConnection(csc)
 
 	go func() {
+		//nolint:staticcheck
 		if err := client.Serve(req.Request.Context()); err != nil {
 			req.Logger.Error().Err(err).Msg("websocket bridge failed")
 		}

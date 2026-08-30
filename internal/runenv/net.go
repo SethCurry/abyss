@@ -13,7 +13,9 @@ func FreePort() (uint16, error) {
 	if err != nil {
 		return 0, fmt.Errorf("find free port: %w", err)
 	}
-	defer l.Close()
+	defer func() {
+		_ = l.Close()
+	}()
 
 	addr, ok := l.Addr().(*net.TCPAddr)
 	if !ok {

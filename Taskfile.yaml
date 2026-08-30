@@ -23,9 +23,12 @@ tasks:
       - "**/*.puml"
     cmds:
       - ./scripts/build-diagrams.sh
-  docker:
+  build-docker:
     cmds:
       - ./scripts/build-push-docker.sh
   todo:
     cmds:
       - rg 'TODO'
+  lint:
+    cmds:
+      - golangci-lint run

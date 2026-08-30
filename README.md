@@ -1,5 +1,11 @@
 # abyss
 
+![Abyss Logo](./site/static/android-chrome-192x192.png)
+
+[![Code Quality](https://github.com/SethCurry/abyss/actions/workflows/go-test.yml/badge.svg)](https://github.com/SethCurry/abyss/actions/workflows/go-test.yml)
+
+Check out [the docs](https://abyss.scurry.io) for in-depth information.
+
 `abyss` is an _Agent Runtime Environment(s)_. The long-term goal is to provide a runtime platform
 for agents, in a similar way to what Docker provides for compute.
 
@@ -13,10 +19,6 @@ or `rm -rf`'ing your entire desktop.
 
 Abyss is very much MVP software that I am dogfooding myself.
 
-As such, releases are not currently offered, and the software may crash.
-
-I am targeting early September for an initial usable release.
-
 ## Features
 
 It currently supports:
@@ -26,6 +28,7 @@ It currently supports:
 - Running setup scripts before starting the agent
 - Bind-mounting directories from the host into the container
 - Copying files into the container (so agent edits don't impact your copy)
+- Intercepting ACP read/write file and terminal APIs so they run inside the container
 
 ## Vague and Unorganized TODO
 

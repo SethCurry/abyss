@@ -23,7 +23,7 @@ all of the aspects of your agent as well as the environment in which it runs.
 ```yaml
 docker:
   # The name of the image to use
-  image: "abyss:latest"
+  image: "ghcr.io/sethcurry/abyss-pi:latest"
 
   # A list of host mounts to bind mount into the container
   # You can specify relative paths, but they will be mounted
@@ -43,6 +43,7 @@ docker:
   # The command to run inside the container
   agent_command:
     - pi-acp
+
 # ACP controls ACP specific options
 acp:
   tools_on_host:
