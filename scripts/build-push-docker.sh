@@ -35,6 +35,8 @@ for i in ./build/docker/*; do
 
   if [ "$do_push" -eq 1 ]; then
     echo "Pushing $repo_url"
-    docker push "$repo_url" "$latest_url"
+    docker push "$repo_url"
+    echo "Pushing $latest_url"
+    docker push "$latest_url"
   fi
 done
