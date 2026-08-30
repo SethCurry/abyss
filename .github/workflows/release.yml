@@ -54,4 +54,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       - name: Build and push images
-        run: ./scripts/build-push-docker.sh -p
+        run: ./scripts/build-push-docker.sh -p ${{ github.ref_name }}
