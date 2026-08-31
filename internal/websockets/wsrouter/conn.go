@@ -7,9 +7,9 @@ import (
 
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 func newID() (string, error) {
@@ -21,9 +21,9 @@ func newID() (string, error) {
 	return gotUUID.String(), nil
 }
 
-func NewConn(wsConn *websocket.Conn, recvChan chan *protobyss.Container) *Conn {
+func NewConn(socket *Socket, recvChan chan SocketMessage) *Conn {
 	return &Conn{
-		socket:   NewSocket(wsConn),
+		socket:   socket,
 		sendChan: make(chan *protobyss.Container, 100),
 		recvChan: recvChan,
 		logger:   log.Logger,
@@ -33,29 +33,33 @@ func NewConn(wsConn *websocket.Conn, recvChan chan *protobyss.Container) *Conn {
 type Conn struct {
 	socket   *Socket
 	sendChan chan *protobyss.Container
-	recvChan chan *protobyss.Container
+	recvChan chan SocketMessage
 	logger   zerolog.Logger
 }
 
 func (c *Conn) writeLoop() {
 	for msg := range c.sendChan {
-		err := c.socket.WriteMessage(msg)
+		msgMarshalled, err := proto.Marshal(msg)
+		if err != nil {
+			c.logger.Error().Err(err).Msg("failed to marshal proto message")
+		}
+		err = c.socket.WriteMessage(1, msgMarshalled)
 		if err != nil {
 			c.logger.Error().Err(err).Msg("failed to write protobuf websocket")
 		}
 	}
 }
 
-func (c *Conn) readLoop() {
-	for {
-		msg, err := c.socket.ReadMessage()
-		if err != nil {
-			c.logger.Error().Err(err).Msg("failed to read websocket message")
-			continue
-		}
+func (c *Conn) Read() (*protobyss.Container, error) {
+	socketMsg := <-c.recvChan
+	msg := &protobyss.Container{}
 
-		c.recvChan <- msg
+	err := proto.Unmarshal(socketMsg.Content, msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal message: %w", err)
 	}
+
+	return msg, nil
 }
 
 func (c *Conn) Notify(messageID string, messageTypeID int32, message any) error {

@@ -90,9 +90,15 @@ func (r *Router) getMessageTypeByID(msgTypeID int32) (MessageType, error) {
 }
 
 func (r *Router) Serve() {
-	for msg := range r.conn.recvChan {
+	for {
+		msg, err := r.conn.Read()
+		if err != nil {
+			r.logger.Warn().Err(err).Msg("failed to read message from conn")
+		}
+
 		if msg.ResponseFor != "" {
 			r.responseWatcher.Handle(r, msg)
+			continue
 		}
 
 		messageType, err := r.getMessageTypeByID(msg.TypeId)
