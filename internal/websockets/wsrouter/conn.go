@@ -147,6 +147,10 @@ type Router struct {
 	waitingForResponse map[string]func(*protobyss.Container)
 }
 
+func (r *Router) RegisterMessage(msgType MessageType) {
+	r.messageTypes = append(r.messageTypes, msgType)
+}
+
 func (r *Router) Send(message any) error {
 	return r.Respond("", message)
 }
