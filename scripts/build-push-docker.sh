@@ -21,6 +21,7 @@ shift $((OPTIND-1))
 for i in ./build/docker/*; do
   image_name=$(basename $i)
   latest_url=""
+  dev_url="ghcr.io/sethcurry/abyss-$image_name:dev"
 
   if [ "$do_push" -eq 1 ]; then
     repo_url="ghcr.io/sethcurry/abyss-$image_name:$tag_name"
@@ -31,7 +32,7 @@ for i in ./build/docker/*; do
   fi
 
   echo "Building $repo_url"
-  docker buildx build --pull=false -t "$repo_url" -t "$latest_url" -f ./build/docker/$image_name/Dockerfile .
+  docker buildx build --pull=false -t "$dev_url" -t "$repo_url" -t "$latest_url" -f ./build/docker/$image_name/Dockerfile .
 
   if [ "$do_push" -eq 1 ]; then
     echo "Pushing $repo_url"
