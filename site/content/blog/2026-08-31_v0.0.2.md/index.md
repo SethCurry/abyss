@@ -4,7 +4,7 @@ description: "Abyss v0.0.2 release announcement"
 summary: "Abyss v0.0.2 release announcement"
 date: 2026-08-31T16:31:32+01:00
 lastmod: 2026-08-31T16:31:38+01:00
-draft: false
+draft: true
 weight: 50
 categories: []
 tags: []
