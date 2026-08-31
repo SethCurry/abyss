@@ -27,6 +27,12 @@ func proxyRoundTrip[T, P any](router *wsrouter.Router, params T) (P, error) {
 	return ret, nil
 }
 
+func NewProxiedACPAgent(router *wsrouter.Router) *ProxiedACPAgent {
+	return &ProxiedACPAgent{
+		router: router,
+	}
+}
+
 type ProxiedACPAgent struct {
 	router *wsrouter.Router
 }

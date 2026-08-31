@@ -7,6 +7,12 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+func NewProxiedACPClient(router *wsrouter.Router) *ProxiedACPClient {
+	return &ProxiedACPClient{
+		router: router,
+	}
+}
+
 type ProxiedACPClient struct {
 	router *wsrouter.Router
 }

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -24,8 +25,20 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 			logger.Warn().Err(closeErr).Msg("failed to close client websocket connection")
 		}
 	}()
+	acpConnChan := make(chan wsrouter.SocketMessage, 10)
 
-	agent := NewWebsocketAgent(conn, logger)
+	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
+		1: acpConnChan,
+	})
+	go socket.Run()
+
+	wsConn := wsrouter.NewConn(socket, acpConnChan)
+
+	router := wsrouter.NewRouter(wsConn)
+
+	proxiedAgent := NewProxiedACPAgent(router)
+
+	agent := NewWebsocketAgent(proxiedAgent, logger)
 	asc := acp.NewAgentSideConnection(agent, os.Stdout, os.Stdin)
 	asc.SetLogger(slog.Default())
 	agent.SetAgentConnection(asc)
@@ -34,9 +47,7 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	// from the websocket to the client over stdio.
 	go func() {
 		//nolint:staticcheck
-		if err := agent.Serve(ctx); err != nil {
-			logger.Error().Err(err).Msg("websocket bridge failed")
-		}
+		router.Serve()
 		_ = conn.Close()
 	}()
 

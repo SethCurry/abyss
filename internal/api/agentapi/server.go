@@ -10,6 +10,7 @@ import (
 	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
+	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -109,16 +110,25 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 	}()
 
-	client := wsacp.NewWebsocketAgentClient(conn, s.terminalTools, s.fileTools, req.Logger)
+	acpConnChan := make(chan wsrouter.SocketMessage, 10)
+
+	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
+		1: acpConnChan,
+	})
+	go socket.Run()
+
+	acpConn := wsrouter.NewConn(socket, acpConnChan)
+
+	router := wsrouter.NewRouter(acpConn)
+	underlying := wsacp.NewProxiedACPClient(router)
+
+	client := wsacp.NewWebsocketAgentClient(underlying, s.terminalTools, s.fileTools, req.Logger)
 	csc := acp.NewClientSideConnection(client, stdin, stdout)
 	csc.SetLogger(slog.Default())
 	client.SetClientConnection(csc)
 
 	go func() {
-		//nolint:staticcheck
-		if err := client.Serve(req.Request.Context()); err != nil {
-			req.Logger.Error().Err(err).Msg("websocket bridge failed")
-		}
+		router.Serve()
 		_ = conn.Close()
 	}()
 
