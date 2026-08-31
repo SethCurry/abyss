@@ -22,12 +22,16 @@ func newID() (string, error) {
 }
 
 func NewConn(socket *Socket, recvChan chan SocketMessage) *Conn {
-	return &Conn{
+	conn := &Conn{
 		socket:   socket,
 		sendChan: make(chan *protobyss.Container, 100),
 		recvChan: recvChan,
 		logger:   log.Logger,
 	}
+
+	go conn.writeLoop()
+
+	return conn
 }
 
 type Conn struct {
