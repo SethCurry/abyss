@@ -20,7 +20,7 @@ shift $((OPTIND-1))
 
 for i in ./build/docker/*; do
   image_name=$(basename $i)
-  latest_url=""
+  latest_url="abyss-$image_name:latest"
   dev_url="ghcr.io/sethcurry/abyss-$image_name:dev"
 
   if [ "$do_push" -eq 1 ]; then
