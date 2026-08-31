@@ -48,8 +48,6 @@ func (s *Socket) Run() {
 	}
 }
 
-// readMessage reads a MessageType- and correlation-ID-tagged JSON payload from
-// the websocket.
 func (s *Socket) ReadMessage() (*protobyss.Container, error) {
 	req := &protobyss.Container{}
 
