@@ -30,7 +30,6 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
 		1: acpConnChan,
 	})
-	go socket.Run()
 
 	wsConn := wsrouter.NewConn(socket, acpConnChan)
 

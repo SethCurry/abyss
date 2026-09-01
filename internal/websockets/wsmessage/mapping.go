@@ -204,7 +204,7 @@ var MessageTypeToMessage = map[MessageType]func() any{
 func UnmarshalMessage(mt MessageType, data []byte) (any, error) {
 	constructor, ok := MessageTypeToMessage[mt]
 	if !ok {
-		return nil, fmt.Errorf("unknown message type: %d", mt)
+		return nil, fmt.Errorf("unknown websocket message type: %d", mt)
 	}
 
 	target := constructor()

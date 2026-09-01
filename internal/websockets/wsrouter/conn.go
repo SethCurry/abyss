@@ -3,7 +3,6 @@ package wsrouter
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/google/uuid"
@@ -21,7 +20,7 @@ func newID() (string, error) {
 	return gotUUID.String(), nil
 }
 
-func NewConn(socket *Socket, recvChan chan SocketMessage) *Conn {
+func NewConn(socket ISocket, recvChan chan SocketMessage) *Conn {
 	conn := &Conn{
 		socket:   socket,
 		sendChan: make(chan *protobyss.Container, 100),
@@ -35,7 +34,7 @@ func NewConn(socket *Socket, recvChan chan SocketMessage) *Conn {
 }
 
 type Conn struct {
-	socket   *Socket
+	socket   ISocket
 	sendChan chan *protobyss.Container
 	recvChan chan SocketMessage
 	logger   zerolog.Logger
@@ -86,11 +85,4 @@ func (c *Conn) Respond(msgID string, requestID string, msgTypeID int32, message 
 	c.sendChan <- msg
 
 	return nil
-}
-
-type MessageType struct {
-	ID      int32
-	Type    reflect.Type
-	Handler func(*Router, *protobyss.Container) any
-	IsRPC   bool
 }

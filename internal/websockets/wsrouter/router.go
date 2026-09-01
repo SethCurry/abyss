@@ -9,10 +9,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type MessageType struct {
+	ID      int32
+	Type    reflect.Type
+	Handler func(*Router, *protobyss.Container) any
+	IsRPC   bool
+}
+
 func NewRouter(conn *Conn) *Router {
 	return &Router{
 		conn:            conn,
-		messageTypes:    []MessageType{},
 		logger:          log.Logger,
 		responseWatcher: NewResponseWatcher(),
 	}
@@ -25,8 +31,13 @@ type Router struct {
 	responseWatcher *ResponseWatcher
 }
 
-func (r *Router) RegisterMessage(msgType MessageType) {
-	r.messageTypes = append(r.messageTypes, msgType)
+func (r *Router) RegisterMessage(id int32, messageType any, handler func(*Router, *protobyss.Container) any, isRPC bool) {
+	r.messageTypes = append(r.messageTypes, MessageType{
+		ID:      id,
+		Type:    reflect.TypeOf(messageType),
+		Handler: handler,
+		IsRPC:   isRPC,
+	})
 }
 
 func (r *Router) Send(message any) error {
@@ -76,7 +87,7 @@ func (r *Router) getMessageTypeByType(msg any) (MessageType, error) {
 		}
 	}
 
-	return MessageType{}, fmt.Errorf("unknown message type %T", msg)
+	return MessageType{}, fmt.Errorf("unknown router message type %T", msg)
 }
 
 func (r *Router) getMessageTypeByID(msgTypeID int32) (MessageType, error) {

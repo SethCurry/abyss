@@ -2,6 +2,7 @@ package wsrouter
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/gorilla/websocket"
@@ -10,13 +11,24 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type ISocket interface {
+	ReadMessage() (*protobyss.Container, error)
+	WriteMessage(int, []byte) error
+}
+
 func NewSocket(conn *websocket.Conn, sendChans map[int]chan SocketMessage) *Socket {
-	return &Socket{
+	sock := &Socket{
 		conn:     conn,
 		logger:   log.Logger,
 		handlers: sendChans,
 	}
+
+	go sock.run()
+
+	return sock
 }
+
+var _ ISocket = &Socket{}
 
 type SocketMessage struct {
 	TypeID  int
@@ -24,12 +36,18 @@ type SocketMessage struct {
 }
 
 type Socket struct {
-	conn     *websocket.Conn
+	conn     IWebsocket
 	logger   zerolog.Logger
 	handlers map[int]chan SocketMessage
+	writeMut sync.Mutex
 }
 
-func (s *Socket) Run() {
+type IWebsocket interface {
+	ReadMessage() (int, []byte, error)
+	WriteMessage(int, []byte) error
+}
+
+func (s *Socket) run() {
 	for {
 		mt, content, err := s.conn.ReadMessage()
 		if err != nil {
@@ -65,5 +83,7 @@ func (s *Socket) ReadMessage() (*protobyss.Container, error) {
 }
 
 func (s *Socket) WriteMessage(mt int, data []byte) error {
+	s.writeMut.Lock()
+	defer s.writeMut.Unlock()
 	return s.conn.WriteMessage(mt, data)
 }

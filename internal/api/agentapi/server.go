@@ -115,7 +115,6 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
 		1: acpConnChan,
 	})
-	go socket.Run()
 
 	acpConn := wsrouter.NewConn(socket, acpConnChan)
 
