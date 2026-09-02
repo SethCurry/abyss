@@ -17,7 +17,7 @@ type ResponseWatcher struct {
 	mut      sync.Mutex
 }
 
-func (r *ResponseWatcher) Handle(router *Router, msg *protobyss.Container) {
+func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.Container) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 	if handler, ok := r.handlers[msg.ResponseFor]; ok {

@@ -12,26 +12,26 @@ import (
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
-	Handler func(*Router, *protobyss.Container) any
+	Handler func(*ACPRouter, *protobyss.Container) any
 	IsRPC   bool
 }
 
-func NewRouter(conn *Conn) *Router {
-	return &Router{
+func NewACPRouter(conn *Conn) *ACPRouter {
+	return &ACPRouter{
 		conn:            conn,
 		logger:          log.Logger,
 		responseWatcher: NewResponseWatcher(),
 	}
 }
 
-type Router struct {
+type ACPRouter struct {
 	messageTypes    []MessageType
 	conn            *Conn
 	logger          zerolog.Logger
 	responseWatcher *ResponseWatcher
 }
 
-func (r *Router) RegisterMessage(id int32, messageType any, handler func(*Router, *protobyss.Container) any, isRPC bool) {
+func (r *ACPRouter) RegisterMessage(id int32, messageType any, handler func(*ACPRouter, *protobyss.Container) any, isRPC bool) {
 	r.messageTypes = append(r.messageTypes, MessageType{
 		ID:      id,
 		Type:    reflect.TypeOf(messageType),
@@ -40,11 +40,11 @@ func (r *Router) RegisterMessage(id int32, messageType any, handler func(*Router
 	})
 }
 
-func (r *Router) Send(message any) error {
+func (r *ACPRouter) Send(message any) error {
 	return r.Respond("", message)
 }
 
-func (r *Router) Request(message any) (*Promise[*protobyss.Container], error) {
+func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error) {
 	msgID, err := newID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate message UUID: %w", err)
@@ -65,7 +65,7 @@ func (r *Router) Request(message any) (*Promise[*protobyss.Container], error) {
 	return prom, nil
 }
 
-func (r *Router) Respond(requestID string, message any) error {
+func (r *ACPRouter) Respond(requestID string, message any) error {
 	msgID, err := newID()
 	if err != nil {
 		return fmt.Errorf("failed to generate message UUID: %w", err)
@@ -79,7 +79,7 @@ func (r *Router) Respond(requestID string, message any) error {
 	return r.conn.Respond(msgID, requestID, msgType.ID, message)
 }
 
-func (r *Router) getMessageTypeByType(msg any) (MessageType, error) {
+func (r *ACPRouter) getMessageTypeByType(msg any) (MessageType, error) {
 	msgType := reflect.TypeOf(msg)
 	for _, v := range r.messageTypes {
 		if msgType == v.Type {
@@ -90,7 +90,7 @@ func (r *Router) getMessageTypeByType(msg any) (MessageType, error) {
 	return MessageType{}, fmt.Errorf("unknown router message type %T", msg)
 }
 
-func (r *Router) getMessageTypeByID(msgTypeID int32) (MessageType, error) {
+func (r *ACPRouter) getMessageTypeByID(msgTypeID int32) (MessageType, error) {
 	for _, v := range r.messageTypes {
 		if v.ID == msgTypeID {
 			return v, nil
@@ -100,7 +100,7 @@ func (r *Router) getMessageTypeByID(msgTypeID int32) (MessageType, error) {
 	return MessageType{}, fmt.Errorf("no message type with ID %d", msgTypeID)
 }
 
-func (r *Router) Serve() {
+func (r *ACPRouter) Serve() {
 	for {
 		msg, err := r.conn.Read()
 		if err != nil {

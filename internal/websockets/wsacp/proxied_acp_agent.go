@@ -9,7 +9,7 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
-func proxyRoundTrip[T, P any](router *wsrouter.Router, params T) (P, error) {
+func proxyRoundTrip[T, P any](router *wsrouter.ACPRouter, params T) (P, error) {
 	var ret P
 
 	prom, err := router.Request(params)
@@ -27,14 +27,14 @@ func proxyRoundTrip[T, P any](router *wsrouter.Router, params T) (P, error) {
 	return ret, nil
 }
 
-func NewProxiedACPAgent(router *wsrouter.Router) *ProxiedACPAgent {
+func NewProxiedACPAgent(router *wsrouter.ACPRouter) *ProxiedACPAgent {
 	return &ProxiedACPAgent{
 		router: router,
 	}
 }
 
 type ProxiedACPAgent struct {
-	router *wsrouter.Router
+	router *wsrouter.ACPRouter
 }
 
 // SetSessionMode implements acp.Agent.

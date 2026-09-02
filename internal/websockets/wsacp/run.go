@@ -2,14 +2,19 @@ package wsacp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
+	"reflect"
 
+	"github.com/SethCurry/abyss/internal/websockets/protobyss"
+	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // RunClient dials the websocket server at wsURL and bridges it to a client
@@ -33,7 +38,7 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 
 	wsConn := wsrouter.NewConn(socket, acpConnChan)
 
-	router := wsrouter.NewRouter(wsConn)
+	router := wsrouter.NewACPRouter(wsConn)
 
 	proxiedAgent := NewProxiedACPAgent(router)
 
@@ -53,4 +58,28 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	<-asc.Done()
 	logger.Info().Msg("agent closed connection")
 	return nil
+}
+
+func GenerateClientRoutes(proxiedAgent *WebsocketAgent) []wsrouter.MessageType {
+	return []wsrouter.MessageType{
+		{
+			ID:   int32(wsmessage.InitializeRequestType),
+			Type: reflect.TypeOf(acp.InitializeRequest{}),
+			Handler: func(router *wsrouter.ACPRouter, msg *protobyss.Container) any {
+				creator := wsmessage.MessageTypeToMessage[wsmessage.MessageType(msg.TypeId)]
+				newValue := creator()
+
+				err := json.Unmarshal(msg.Content, &newValue)
+				if err != nil {
+					log.Warn().Err(err).Msg("failed to unmarshal message")
+				}
+
+				if asInit, ok := newValue.(acp.InitializeRequest); ok {
+					proxiedAgent.Initialize(context.Background(), asInit)
+				}
+				return nil
+			},
+			IsRPC: true,
+		},
+	}
 }

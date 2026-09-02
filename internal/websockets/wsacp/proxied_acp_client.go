@@ -7,14 +7,14 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
-func NewProxiedACPClient(router *wsrouter.Router) *ProxiedACPClient {
+func NewProxiedACPClient(router *wsrouter.ACPRouter) *ProxiedACPClient {
 	return &ProxiedACPClient{
 		router: router,
 	}
 }
 
 type ProxiedACPClient struct {
-	router *wsrouter.Router
+	router *wsrouter.ACPRouter
 }
 
 func (e *ProxiedACPClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
