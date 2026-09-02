@@ -1,6 +1,7 @@
 package wsrouter
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -9,6 +10,14 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )
+
+func NewACPConn(conn IProtoRouter, handler func(*protobyss.Container)) *ACPConn {
+	return &ACPConn{
+		logger:    log.Logger,
+		protoConn: conn,
+		handler:   handler,
+	}
+}
 
 type ACPConn struct {
 	logger    zerolog.Logger
@@ -50,9 +59,8 @@ type MessageType struct {
 	IsRPC   bool
 }
 
-func NewACPRouter(conn *Conn) *ACPRouter {
+func NewACPRouter() *ACPRouter {
 	return &ACPRouter{
-		conn:            conn,
 		logger:          log.Logger,
 		responseWatcher: NewResponseWatcher(),
 	}
@@ -60,9 +68,13 @@ func NewACPRouter(conn *Conn) *ACPRouter {
 
 type ACPRouter struct {
 	messageTypes    []MessageType
-	conn            *Conn
+	conn            *ACPConn
 	logger          zerolog.Logger
 	responseWatcher *ResponseWatcher
+}
+
+func (r *ACPRouter) SetConn(conn *ACPConn) {
+	r.conn = conn
 }
 
 func (r *ACPRouter) RouteMessage(mt int, content []byte) {
@@ -108,7 +120,15 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error)
 
 	prom := r.responseWatcher.Register(msgID)
 
-	err = r.conn.Notify(msgID, msgType.ID, message)
+	jsonMarshalled, err := json.Marshal(message)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal message: %w", err)
+	}
+
+	err = r.conn.Send(&protobyss.Container{
+		MessageId: msgID,
+		TypeId:    msgType.ID,
+		Content:   jsonMarshalled})
 	if err != nil {
 		return nil, fmt.Errorf("failed to send RPC request: %w", err)
 	}
@@ -127,7 +147,16 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 		return err
 	}
 
-	return r.conn.Respond(msgID, requestID, msgType.ID, message)
+	marshalled, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal message: %w", err)
+	}
+
+	return r.conn.Send(&protobyss.Container{
+		MessageId: msgID,
+		TypeId:    msgType.ID,
+		Content:   marshalled,
+	})
 }
 
 func (r *ACPRouter) getMessageTypeByType(msg any) (MessageType, error) {

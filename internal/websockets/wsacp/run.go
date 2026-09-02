@@ -30,15 +30,10 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 			logger.Warn().Err(closeErr).Msg("failed to close client websocket connection")
 		}
 	}()
-	acpConnChan := make(chan wsrouter.SocketMessage, 10)
-
-	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
-		1: acpConnChan,
-	})
-
-	wsConn := wsrouter.NewConn(socket, acpConnChan)
-
-	router := wsrouter.NewACPRouter(wsConn)
+	socket := wsrouter.NewProtoRouter()
+	router := wsrouter.NewACPRouter()
+	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	router.SetConn(acpConn)
 
 	proxiedAgent := NewProxiedACPAgent(router)
 
@@ -51,8 +46,7 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	// from the websocket to the client over stdio.
 	go func() {
 		//nolint:staticcheck
-		router.Serve()
-		_ = conn.Close()
+		socket.Serve(conn)
 	}()
 
 	<-asc.Done()

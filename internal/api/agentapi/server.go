@@ -110,15 +110,10 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 	}()
 
-	acpConnChan := make(chan wsrouter.SocketMessage, 10)
-
-	socket := wsrouter.NewSocket(conn, map[int]chan wsrouter.SocketMessage{
-		1: acpConnChan,
-	})
-
-	acpConn := wsrouter.NewConn(socket, acpConnChan)
-
-	router := wsrouter.NewACPRouter(acpConn)
+	socket := wsrouter.NewProtoRouter()
+	router := wsrouter.NewACPRouter()
+	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	router.SetConn(acpConn)
 	underlying := wsacp.NewProxiedACPClient(router)
 
 	client := wsacp.NewWebsocketAgentClient(underlying, s.terminalTools, s.fileTools, req.Logger)
@@ -127,8 +122,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	client.SetClientConnection(csc)
 
 	go func() {
-		router.Serve()
-		_ = conn.Close()
+		socket.Serve(conn)
 	}()
 
 	<-csc.Done()
