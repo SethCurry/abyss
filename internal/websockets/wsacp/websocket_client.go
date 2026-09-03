@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
 )
@@ -14,6 +15,7 @@ type WebsocketAgentClient struct {
 	acpConn       *acp.ClientSideConnection
 	terminalTools *acptools.TerminalTools
 	fileTools     *acptools.FilesystemTools
+	router        *wsrouter.ACPRouter
 }
 
 var _ acp.Client = (*WebsocketAgentClient)(nil)
@@ -33,6 +35,7 @@ func NewWebsocketAgentClient(underlying *ProxiedACPClient, terminalTools *acptoo
 // agent requests received over the websocket to the agent over stdio.
 func (e *WebsocketAgentClient) SetClientConnection(conn *acp.ClientSideConnection) {
 	e.acpConn = conn
+	e.router.SetAgent(conn)
 }
 
 func (e *WebsocketAgentClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {

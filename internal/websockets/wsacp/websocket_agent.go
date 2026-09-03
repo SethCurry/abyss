@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
 )
@@ -12,6 +13,7 @@ type WebsocketAgent struct {
 	logger     zerolog.Logger
 	conn       *acp.AgentSideConnection
 	underlying *ProxiedACPAgent
+	router     *wsrouter.ACPRouter
 }
 
 var (
@@ -161,6 +163,7 @@ func (w *WebsocketAgent) CloseSession(ctx context.Context, params acp.CloseSessi
 func (w *WebsocketAgent) SetAgentConnection(conn *acp.AgentSideConnection) {
 	w.logger.Debug().Msg("agent connection set")
 	w.conn = conn
+	w.router.SetClient(conn)
 }
 
 func (w *WebsocketAgent) Initialize(ctx context.Context, params acp.InitializeRequest) (acp.InitializeResponse, error) {
