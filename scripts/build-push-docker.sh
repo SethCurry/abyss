@@ -32,6 +32,9 @@ for i in ./build/docker/*; do
   fi
 
   echo "Building $repo_url"
+  docker image rm "$dev_url"
+  docker image rm "$repo_url"
+  docker image rm "$latest_url"
   docker buildx build --pull=false -t "$dev_url" -t "$repo_url" -t "$latest_url" -f ./build/docker/$image_name/Dockerfile .
 
   if [ "$do_push" -eq 1 ]; then

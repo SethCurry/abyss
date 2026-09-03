@@ -47,7 +47,7 @@ func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 
 		sendTo, ok := s.handlers[mt]
 		if ok {
-			go sendTo(ProtoMessage{
+			sendTo(ProtoMessage{
 				TypeID:  mt,
 				Content: content,
 			})
