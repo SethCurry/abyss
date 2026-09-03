@@ -22,12 +22,13 @@ var _ acp.Client = (*WebsocketAgentClient)(nil)
 
 // NewWebsocketAgentClient creates a client-side ACP proxy that bridges a
 // websocket connection to an agent over stdio.
-func NewWebsocketAgentClient(underlying *ProxiedACPClient, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools, logger zerolog.Logger) *WebsocketAgentClient {
+func NewWebsocketAgentClient(underlying *ProxiedACPClient, router *wsrouter.ACPRouter, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools, logger zerolog.Logger) *WebsocketAgentClient {
 	return &WebsocketAgentClient{
 		logger:        logger,
 		underlying:    underlying,
 		terminalTools: terminalTools,
 		fileTools:     fileTools,
+		router:        router,
 	}
 }
 

@@ -34,10 +34,11 @@ func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	router.SetConn(acpConn)
+	socket.Handle(1, acpConn.Handle)
 
 	proxiedAgent := NewProxiedACPAgent(router)
 
-	agent := NewWebsocketAgent(proxiedAgent, logger)
+	agent := NewWebsocketAgent(proxiedAgent, router, logger)
 	asc := acp.NewAgentSideConnection(agent, os.Stdout, os.Stdin)
 	asc.SetLogger(slog.Default())
 	agent.SetAgentConnection(asc)

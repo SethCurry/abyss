@@ -28,9 +28,9 @@ type ACPConn struct {
 	handler   func(*protobyss.Container)
 }
 
-func (c *ACPConn) Handle(mt int, content []byte) {
+func (c *ACPConn) Handle(msg ProtoMessage) {
 	protoMsg := &protobyss.Container{}
-	err := proto.Unmarshal(content, protoMsg)
+	err := proto.Unmarshal(msg.Content, protoMsg)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("failed to unmarshal proto message")
 		return

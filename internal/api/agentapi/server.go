@@ -113,10 +113,11 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	socket := wsrouter.NewProtoRouter()
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	socket.Handle(1, acpConn.Handle)
 	router.SetConn(acpConn)
 	underlying := wsacp.NewProxiedACPClient(router)
 
-	client := wsacp.NewWebsocketAgentClient(underlying, s.terminalTools, s.fileTools, req.Logger)
+	client := wsacp.NewWebsocketAgentClient(underlying, router, s.terminalTools, s.fileTools, req.Logger)
 	csc := acp.NewClientSideConnection(client, stdin, stdout)
 	csc.SetLogger(slog.Default())
 	client.SetClientConnection(csc)

@@ -42,6 +42,7 @@ func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 		mt, content, err := s.conn.ReadMessage()
 		if err != nil {
 			s.logger.Error().Err(err).Msg("failed to read raw websocket message")
+			continue
 		}
 
 		sendTo, ok := s.handlers[mt]
