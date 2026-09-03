@@ -1,4 +1,4 @@
-package wsrouter
+package wsrouter_test
 
 // MockProtoRouter is a test double for IProtoRouter that records
 // written messages and registered handlers for inspection in tests.
