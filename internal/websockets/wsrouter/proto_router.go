@@ -30,15 +30,10 @@ type ProtoMessage struct {
 }
 
 type ProtoRouter struct {
-	conn     IWebsocket
+	conn     *websocket.Conn
 	logger   zerolog.Logger
 	handlers map[int]func(ProtoMessage)
 	writeMut sync.Mutex
-}
-
-type IWebsocket interface {
-	ReadMessage() (int, []byte, error)
-	WriteMessage(int, []byte) error
 }
 
 func (s *ProtoRouter) Serve(ws *websocket.Conn) {

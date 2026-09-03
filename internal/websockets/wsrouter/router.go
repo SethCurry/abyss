@@ -1,11 +1,14 @@
 package wsrouter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
 
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
+	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
+	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
@@ -66,32 +69,32 @@ func NewACPRouter() *ACPRouter {
 	}
 }
 
+// Agent is the set of ACP agent interfaces the router can dispatch to.
+type Agent interface {
+	acp.Agent
+	acp.AgentLoader
+	acp.AgentExperimental
+}
+
 type ACPRouter struct {
 	messageTypes    []MessageType
 	conn            *ACPConn
 	logger          zerolog.Logger
 	responseWatcher *ResponseWatcher
+	client          acp.Client
+	agent           Agent
 }
 
 func (r *ACPRouter) SetConn(conn *ACPConn) {
 	r.conn = conn
 }
 
-func (r *ACPRouter) RouteMessage(mt int, content []byte) {
-	protoMsg := &protobyss.Container{}
-	err := proto.Unmarshal(content, protoMsg)
-	if err != nil {
-		r.logger.Error().Err(err).Msg("failed to unmarshal proto message")
-		return
-	}
+func (r *ACPRouter) SetClient(client acp.Client) {
+	r.client = client
+}
 
-	msgType, err := r.getMessageTypeByID(protoMsg.TypeId)
-	if err != nil {
-		r.logger.Error().Err(err).Msg("failed to get message type")
-		return
-	}
-
-	msgType.Handler(r, protoMsg)
+func (r *ACPRouter) SetAgent(agent Agent) {
+	r.agent = agent
 }
 
 func (r *ACPRouter) Handle(id int32, messageType any, handler func(*ACPRouter, *protobyss.Container) any, isRPC bool) {
@@ -113,7 +116,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error)
 		return nil, fmt.Errorf("failed to generate message UUID: %w", err)
 	}
 
-	msgType, err := r.getMessageTypeByType(message)
+	msgType, err := wsmessage.GetMessageTypeByType(message)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +130,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error)
 
 	err = r.conn.Send(&protobyss.Container{
 		MessageId: msgID,
-		TypeId:    msgType.ID,
+		TypeId:    int32(msgType.TypeID),
 		Content:   jsonMarshalled})
 	if err != nil {
 		return nil, fmt.Errorf("failed to send RPC request: %w", err)
@@ -142,7 +145,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 		return fmt.Errorf("failed to generate message UUID: %w", err)
 	}
 
-	msgType, err := r.getMessageTypeByType(message)
+	msgType, err := wsmessage.GetMessageTypeByType(message)
 	if err != nil {
 		return err
 	}
@@ -153,48 +156,273 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 	}
 
 	return r.conn.Send(&protobyss.Container{
-		MessageId: msgID,
-		TypeId:    msgType.ID,
-		Content:   marshalled,
+		MessageId:   msgID,
+		ResponseFor: requestID,
+		TypeId:      int32(msgType.TypeID),
+		Content:     marshalled,
 	})
-}
-
-func (r *ACPRouter) getMessageTypeByType(msg any) (MessageType, error) {
-	msgType := reflect.TypeOf(msg)
-	for _, v := range r.messageTypes {
-		if msgType == v.Type {
-			return v, nil
-		}
-	}
-
-	return MessageType{}, fmt.Errorf("unknown router message type %T", msg)
-}
-
-func (r *ACPRouter) getMessageTypeByID(msgTypeID int32) (MessageType, error) {
-	for _, v := range r.messageTypes {
-		if v.ID == msgTypeID {
-			return v, nil
-		}
-	}
-
-	return MessageType{}, fmt.Errorf("no message type with ID %d", msgTypeID)
 }
 
 func (r *ACPRouter) ServeMessage(msg *protobyss.Container) {
 	if msg.ResponseFor != "" {
 		r.responseWatcher.Handle(r, msg)
+		return
 	}
 
-	messageType, err := r.getMessageTypeByID(msg.TypeId)
-	if err != nil {
-		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to find message by type ID")
-	}
-
-	resp := messageType.Handler(r, msg)
-	if messageType.IsRPC && resp != nil {
-		err := r.Respond(msg.MessageId, resp)
-		if err != nil {
-			r.logger.Warn().Err(err).Msg("failed to send response")
+	switch wsmessage.MessageType(msg.TypeId) {
+	// Client capability requests (agent -> client).
+	case wsmessage.RequestPermissionRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
 		}
+		handleRequest(r, msg, r.client.RequestPermission)
+	case wsmessage.WriteTextFileRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.WriteTextFile)
+	case wsmessage.ReadTextFileRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.ReadTextFile)
+	case wsmessage.CreateTerminalRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.CreateTerminal)
+	case wsmessage.TerminalOutputRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.TerminalOutput)
+	case wsmessage.ReleaseTerminalRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.ReleaseTerminal)
+	case wsmessage.WaitForTerminalExitRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.WaitForTerminalExit)
+	case wsmessage.KillTerminalRequestType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleRequest(r, msg, r.client.KillTerminal)
+	case wsmessage.SessionNotificationType:
+		if r.client == nil {
+			r.logger.Warn().Msg("no client configured")
+			return
+		}
+		handleNotification(r, msg, r.client.SessionUpdate)
+
+	// Agent requests (client -> agent).
+	case wsmessage.AuthenticateRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.Authenticate)
+	case wsmessage.InitializeRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.Initialize)
+	case wsmessage.LogoutRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.Logout)
+	case wsmessage.CancelNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.Cancel)
+	case wsmessage.CloseSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.CloseSession)
+	case wsmessage.ListSessionsRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.ListSessions)
+	case wsmessage.NewSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.NewSession)
+	case wsmessage.PromptRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.Prompt)
+	case wsmessage.ResumeSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.ResumeSession)
+	case wsmessage.SetSessionConfigOptionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.SetSessionConfigOption)
+	case wsmessage.SetSessionModeRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.SetSessionMode)
+	case wsmessage.LoadSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.LoadSession)
+
+	// Experimental agent requests (client -> agent).
+	case wsmessage.UnstableDidChangeDocumentNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableDidChangeDocument)
+	case wsmessage.UnstableDidCloseDocumentNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableDidCloseDocument)
+	case wsmessage.UnstableDidFocusDocumentNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableDidFocusDocument)
+	case wsmessage.UnstableDidOpenDocumentNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableDidOpenDocument)
+	case wsmessage.UnstableDidSaveDocumentNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableDidSaveDocument)
+	case wsmessage.UnstableAcceptNesNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableAcceptNes)
+	case wsmessage.UnstableCloseNesRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableCloseNes)
+	case wsmessage.UnstableRejectNesNotificationType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleNotification(r, msg, r.agent.UnstableRejectNes)
+	case wsmessage.UnstableStartNesRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableStartNes)
+	case wsmessage.UnstableSuggestNesRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableSuggestNes)
+	case wsmessage.UnstableDisableProviderRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableDisableProvider)
+	case wsmessage.UnstableListProvidersRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableListProviders)
+	case wsmessage.UnstableSetProviderRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableSetProvider)
+	case wsmessage.UnstableDeleteSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableDeleteSession)
+	case wsmessage.UnstableForkSessionRequestType:
+		if r.agent == nil {
+			r.logger.Warn().Msg("no agent configured")
+			return
+		}
+		handleRequest(r, msg, r.agent.UnstableForkSession)
+
+	default:
+		r.logger.Warn().Int32("type_id", msg.TypeId).Msg("unhandled message type")
+	}
+}
+
+func handleRequest[T, R any](r *ACPRouter, msg *protobyss.Container, fn func(context.Context, T) (R, error)) {
+	var params T
+	if err := json.Unmarshal(msg.Content, &params); err != nil {
+		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
+		return
+	}
+
+	resp, err := fn(context.Background(), params)
+	if err != nil {
+		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to handle request")
+		return
+	}
+
+	if err := r.Respond(msg.MessageId, resp); err != nil {
+		r.logger.Warn().Err(err).Msg("failed to send response")
+	}
+}
+
+func handleNotification[T any](r *ACPRouter, msg *protobyss.Container, fn func(context.Context, T) error) {
+	var params T
+	if err := json.Unmarshal(msg.Content, &params); err != nil {
+		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
+		return
+	}
+
+	if err := fn(context.Background(), params); err != nil {
+		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to handle notification")
 	}
 }
