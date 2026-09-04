@@ -283,13 +283,11 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		logger.Error().Err(err).Msg("client disconnected with error")
 	}
 
-	/*
-		logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
-		if stopErr := container.Stop(ctx, 10*time.Second); stopErr != nil {
-			logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
-			return stopErr
-		}
-	*/
+	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
+	if stopErr := container.Stop(ctx, 10*time.Second); stopErr != nil {
+		logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
+		return stopErr
+	}
 
 	return nil
 }

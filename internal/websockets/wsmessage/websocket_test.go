@@ -1,4 +1,4 @@
-package wsacp
+package wsmessage_test
 
 import (
 	"testing"

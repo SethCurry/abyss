@@ -10,11 +10,23 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// WebsocketAgent is the entrypoint for the ACP client like Zed.
+// It stores the Websocket-proxied connection to the real agent as
+// well as the real connection to the ACP client.
 type WebsocketAgent struct {
-	logger     zerolog.Logger
-	conn       *acp.AgentSideConnection
+	logger zerolog.Logger
+
+	// conn is the actual client connected over stdio
+	conn *acp.AgentSideConnection
+
+	// underlying is the websocket proxy to the container side of abyss
 	underlying *ProxiedACPAgent
-	router     *wsrouter.ACPRouter
+
+	// router is used for inbound messages
+	router *wsrouter.ACPRouter
+
+	// TODO we shouldn't have both underlying and router here
+	// The abstraction is leaking
 }
 
 var (
@@ -203,7 +215,7 @@ func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRe
 
 		w.UserMessage(context.Background(), string(newSession.SessionId), "Welcome to abyss!")
 	}()
-	return w.underlying.NewSession(ctx, params)
+	return newSession, nil
 }
 
 func (w *WebsocketAgent) Authenticate(ctx context.Context, params acp.AuthenticateRequest) (acp.AuthenticateResponse, error) {
