@@ -5,11 +5,13 @@ go 1.26.4
 require (
 	github.com/coder/acp-go-sdk v0.13.5
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.1
 	github.com/rs/zerolog v1.35.1
 	github.com/urfave/cli/v3 v3.11.0
+	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -271,6 +271,8 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		return err
 	}
 
+	time.Sleep(time.Second * 5)
+
 	wsURL := "ws://" + endpoint.String() + "/ws"
 	logger.Info().
 		Str("url", wsURL).

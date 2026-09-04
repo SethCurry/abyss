@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package protobyss;
+
+option go_package = "./protobyss";
+
+message Container {
+  int32 type_id = 1;
+  string message_id = 2;
+  string response_for = 3;
+  bytes content = 4;
+}

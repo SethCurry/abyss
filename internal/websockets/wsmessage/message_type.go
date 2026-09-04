@@ -1,6 +1,6 @@
 package wsmessage
 
-type MessageType int
+type MessageType int32
 
 const (
 	MessageTypeNotExist MessageType = iota

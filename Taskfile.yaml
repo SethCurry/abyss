@@ -7,6 +7,8 @@ tasks:
     cmds:
       - go test ./...
   build-binary:
+    deps:
+      - proto
     cmds:
       - go build -o abyss ./cmd/abyss
   build:
@@ -32,3 +34,6 @@ tasks:
   lint:
     cmds:
       - golangci-lint run
+  proto:
+    cmds:
+      - protoc -I=./schema/proto --go_out=./internal/websockets ./schema/proto/abyss.proto

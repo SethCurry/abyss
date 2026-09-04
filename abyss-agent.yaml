@@ -1,6 +1,6 @@
 docker:
   # The name of the image to use
-  image: "abyss-pi:latest"
+  image: "ghcr.io/sethcurry/abyss-pi:dev"
 
   # A list of host mounts to bind mount into the container
   # You can specify relative paths, but they will be mounted
