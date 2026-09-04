@@ -2,6 +2,7 @@ package pacific
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -63,4 +64,16 @@ func (s *Server[T]) AddRoute(method string, pattern string, handler func(T)) {
 
 func (s *Server[T]) Serve(listenAddr string) error {
 	return http.ListenAndServe(listenAddr, s.router)
+}
+
+// ServeTLS listens on addr and serves over TLS using the provided config.
+// The config's Certificates and ClientAuth fields must be set for mutual TLS.
+func (s *Server[T]) ServeTLS(listenAddr string, tlsConfig *tls.Config) error {
+	server := &http.Server{
+		Addr:      listenAddr,
+		Handler:   s.router,
+		TLSConfig: tlsConfig,
+	}
+
+	return server.ListenAndServeTLS("", "")
 }
