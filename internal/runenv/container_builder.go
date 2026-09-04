@@ -7,14 +7,18 @@ import (
 	"github.com/SethCurry/abyss/internal/types"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 )
 
+// ContainerConfig holds the Docker host and container configuration used to
+// build a container.
 type ContainerConfig struct {
 	Host     *container.HostConfig
 	Config   *container.Config
 	Endpoint *ContainerEndpoint
 }
 
+// Validate ensures the required host and container configs are present.
 func (c *ContainerConfig) Validate() *types.ValidationError {
 	if c.Host == nil {
 		return &types.ValidationError{Type: "missing", Field: "Host", Reason: "HostConfig is required"}
@@ -26,6 +30,7 @@ func (c *ContainerConfig) Validate() *types.ValidationError {
 	return nil
 }
 
+// WithImage returns a pre-build step that sets the container image.
 func WithImage(imgName string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		config.Config.Image = imgName
@@ -33,6 +38,7 @@ func WithImage(imgName string) ContainerPreBuildStep {
 	}
 }
 
+// WithEnv returns a pre-build step that appends an environment variable.
 func WithEnv(envString string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		config.Config.Env = append(config.Config.Env, envString)
@@ -41,6 +47,7 @@ func WithEnv(envString string) ContainerPreBuildStep {
 	}
 }
 
+// WithExposePort returns a pre-build step that marks a port as exposed.
 func WithExposePort(port network.Port) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		if config.Config.ExposedPorts == nil {
@@ -51,6 +58,7 @@ func WithExposePort(port network.Port) ContainerPreBuildStep {
 	}
 }
 
+// WithLabel returns a pre-build step that sets a container label.
 func WithLabel(label, value string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		if config.Config.Labels == nil {
@@ -61,6 +69,7 @@ func WithLabel(label, value string) ContainerPreBuildStep {
 	}
 }
 
+// WithHostPort returns a pre-build step that reserves a host port binding.
 func WithHostPort(port network.Port) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		if config.Host.PortBindings == nil {
@@ -73,16 +82,27 @@ func WithHostPort(port network.Port) ContainerPreBuildStep {
 	}
 }
 
+// WithHostBind returns a pre-build step that binds a host path into the container.
 func WithHostBind(from string, to string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
+		cleanedFrom, err := cleanPath(from)
+		if err != nil {
+			return fmt.Errorf("failed to clean from path %q: %w", from, err)
+		}
+
+		cleanedTo, err := cleanPath(to)
+		if err != nil {
+			return fmt.Errorf("failed to clean to path %q: %w", to, err)
+		}
 		if config.Host.Binds == nil {
 			config.Host.Binds = make([]string, 0, 1)
 		}
-		config.Host.Binds = append(config.Host.Binds, fmt.Sprintf("%s:%s", from, to))
+		config.Host.Binds = append(config.Host.Binds, fmt.Sprintf("%s:%s", cleanedFrom, cleanedTo))
 		return nil
 	}
 }
 
+// NewContainerBuilder creates a builder, applying any pre-build steps to the config.
 func NewContainerBuilder(config *ContainerConfig, steps ...ContainerPreBuildStep) (*ContainerBuilder, error) {
 	if config == nil {
 		config = &ContainerConfig{
@@ -107,13 +127,30 @@ func NewContainerBuilder(config *ContainerConfig, steps ...ContainerPreBuildStep
 	return &ContainerBuilder{config: config}, nil
 }
 
+// ContainerBuilder accumulates build steps and starts a container from its config.
 type ContainerBuilder struct {
 	config *ContainerConfig
 	steps  []ContainerBuildStep
 }
 
-func (b *ContainerBuilder) Build(ctx context.Context, client *DockerClient) (*Container, ContainerEndpoint, error) {
-	container, endpoint, err := client.StartContainer(ctx, b.config.Config.Image, b.config.Config, b.config.Host, "name", 0, 0)
+// AddStep appends a single build step to the builder.
+func (b *ContainerBuilder) AddStep(step ContainerBuildStep) {
+	b.steps = append(b.steps, step)
+}
+
+// AddSteps appends multiple build steps to the builder.
+func (b *ContainerBuilder) AddSteps(newSteps ...ContainerBuildStep) {
+	b.steps = append(b.steps, newSteps...)
+}
+
+// Build starts the container and runs each build step against it.
+func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Container, ContainerEndpoint, error) {
+	container, endpoint, err := cli.StartContainer(ctx, b.config.Config.Image, b.config.Config, b.config.Host, "name", 0, 0)
+	if err != nil {
+		return nil, endpoint, err
+	}
+
+	_, err = cli.client.ContainerStart(ctx, container.ID(), client.ContainerStartOptions{})
 	if err != nil {
 		return nil, endpoint, err
 	}
