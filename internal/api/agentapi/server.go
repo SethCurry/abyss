@@ -2,10 +2,12 @@ package agentapi
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
+	"sync/atomic"
 	"time"
 
 	"github.com/SethCurry/abyss/internal/acptools"
@@ -52,12 +54,20 @@ type Server struct {
 	agentCommand  []string
 	terminalTools *acptools.TerminalTools
 	fileTools     *acptools.FilesystemTools
+	activeConns   atomic.Int64
+}
+
+// ActiveConnection returns the number of currently active websocket
+// connections.
+func (s *Server) ActiveConnection() int64 {
+	return s.activeConns.Load()
 }
 
 // Serve listens on addr and bridges each websocket connection to an agent
 // process spawned from agentCommand.
 func (s *Server) Serve(addr string) error {
 	s.httpServer.AddRoute("GET", "/ws", s.handleWebsocket)
+	s.httpServer.AddRoute("GET", "/api/websocket/active_connections", s.handleActiveConnections)
 	return s.httpServer.Serve(addr)
 }
 
@@ -65,7 +75,17 @@ func (s *Server) Serve(addr string) error {
 // bridging each websocket connection to an agent process.
 func (s *Server) ServeTLS(addr string, tlsConfig *tls.Config) error {
 	s.httpServer.AddRoute("GET", "/ws", s.handleWebsocket)
+	s.httpServer.AddRoute("GET", "/api/websocket/active_connections", s.handleActiveConnections)
 	return s.httpServer.ServeTLS(addr, tlsConfig)
+}
+
+func (s *Server) handleActiveConnections(req *RequestContext) {
+	req.Response.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(req.Response).Encode(map[string]int64{
+		"active_connections": s.ActiveConnection(),
+	}); err != nil {
+		req.Logger.Error().Err(err).Msg("failed to encode active connections response")
+	}
 }
 
 func (s *Server) handleWebsocket(req *RequestContext) {
@@ -75,6 +95,8 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		req.Logger.Error().Err(err).Msg("failed to upgrade to websocket")
 		return
 	}
+	s.activeConns.Add(1)
+	defer s.activeConns.Add(-1)
 	defer func() {
 		closeErr := conn.Close()
 		if closeErr != nil {
