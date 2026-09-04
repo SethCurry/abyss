@@ -3,6 +3,7 @@ package wsacp
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
@@ -30,6 +31,17 @@ func NewWebsocketAgent(underlying *ProxiedACPAgent, router *wsrouter.ACPRouter, 
 		underlying: underlying,
 		router:     router,
 	}
+}
+
+func (w *WebsocketAgent) UserMessage(ctx context.Context, sessionID string, message string) error {
+	return w.conn.SessionUpdate(ctx, acp.SessionNotification{
+		SessionId: acp.SessionId(sessionID),
+		Update: acp.SessionUpdate{
+			AgentMessageChunk: &acp.SessionUpdateAgentMessageChunk{
+				Content: acp.TextBlock(message),
+			},
+		},
+	})
 }
 
 // SetSessionMode implements acp.Agent.
@@ -181,6 +193,16 @@ func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRe
 		}
 	}
 	w.logger.Debug().Str("method", "NewSession").Msg("handling request")
+	newSession, err := w.underlying.NewSession(ctx, params)
+	if err != nil {
+		return acp.NewSessionResponse{}, err
+	}
+
+	go func() {
+		time.Sleep(time.Second * 1)
+
+		w.UserMessage(context.Background(), string(newSession.SessionId), "Welcome to abyss!")
+	}()
 	return w.underlying.NewSession(ctx, params)
 }
 
