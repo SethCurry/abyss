@@ -213,7 +213,7 @@ func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRe
 	go func() {
 		time.Sleep(time.Second * 1)
 
-		w.UserMessage(context.Background(), string(newSession.SessionId), "Welcome to abyss!")
+		_ = w.UserMessage(context.Background(), string(newSession.SessionId), "Welcome to abyss!")
 	}()
 	return newSession, nil
 }

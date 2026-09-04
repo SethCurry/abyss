@@ -70,7 +70,7 @@ func GenerateClientRoutes(proxiedAgent *WebsocketAgent) []wsrouter.MessageType {
 				}
 
 				if asInit, ok := newValue.(acp.InitializeRequest); ok {
-					proxiedAgent.Initialize(context.Background(), asInit)
+					_, _ = proxiedAgent.Initialize(context.Background(), asInit)
 				}
 				return nil
 			},
