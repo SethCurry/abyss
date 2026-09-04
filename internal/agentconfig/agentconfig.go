@@ -186,11 +186,16 @@ func (f FileCopyConfig) Validate() error {
 	}
 }
 
+type WebsocketConfig struct {
+	DisableTLS bool `yaml:"disable_tls"`
+}
+
 type AgentConfig struct {
 	Docker       DockerConfig         `yaml:"docker"`
 	SetupScripts []SetupScriptsConfig `yaml:"setup_scripts"`
 	CopyFiles    []FileCopyConfig     `yaml:"copy_files"`
 	ACP          ACPConfig            `yaml:"acp"`
+	Websocket    WebsocketConfig      `yaml:"websocket"`
 }
 
 // Validate implements types.Validator by validating each nested config.
