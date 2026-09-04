@@ -24,8 +24,20 @@ type ToolsOnHostConfig struct {
 	Terminal bool `yaml:"terminal"`
 }
 
+// Validate implements types.Validator. There is nothing to validate for
+// boolean flags.
+func (t ToolsOnHostConfig) Validate() error {
+	return nil
+}
+
 type ACPConfig struct {
 	ToolsOnHost ToolsOnHostConfig `yaml:"tools_on_host"`
+}
+
+// Validate implements types.Validator by validating the nested tools-on-host
+// config.
+func (a ACPConfig) Validate() error {
+	return a.ToolsOnHost.Validate()
 }
 
 type HostMount struct {
@@ -33,7 +45,7 @@ type HostMount struct {
 	Destination string `yaml:"destination"`
 }
 
-func (h HostMount) Validate() *types.ValidationError {
+func (h HostMount) Validate() error {
 	// TODO throw an error if source doesn't exist
 	if h.Source == "" {
 		return types.NewValidationError(h, "source", "Cannot be an empty string")
@@ -51,9 +63,27 @@ func (h HostMount) Validate() *types.ValidationError {
 }
 
 type DockerConfig struct {
+	// The Docker image to use.  Can be short or long, Docker will
+	// resolve it for short names.
 	Image        string      `yaml:"image"`
 	HostMounts   []HostMount `yaml:"host_mounts"`
 	AgentCommand []string    `yaml:"agent_command"`
+}
+
+// Validate implements types.Validator by checking the image and each host
+// mount.
+func (d DockerConfig) Validate() error {
+	if d.Image == "" {
+		return types.NewValidationError(d, "image", "Cannot be an empty string")
+	}
+
+	for _, mount := range d.HostMounts {
+		if err := mount.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // SetupScriptType is an enum type.  It exists
@@ -86,6 +116,21 @@ type SetupScriptsConfig struct {
 	Type SetupScriptType `yaml:"type"`
 	// Source is the script content or file path
 	Source string `yaml:"source"`
+}
+
+// Validate implements types.Validator by checking the source and type. An
+// empty type is allowed and treated as inline.
+func (s SetupScriptsConfig) Validate() error {
+	if s.Source == "" {
+		return types.NewValidationError(s, "source", "Cannot be an empty string")
+	}
+
+	switch s.Type {
+	case "", SetupScriptTypeFile, SetupScriptTypeInline:
+		return nil
+	default:
+		return types.NewValidationError(s, "type", fmt.Sprintf("must be %q or %q", SetupScriptTypeFile, SetupScriptTypeInline))
+	}
 }
 
 // FileCopyType is an enum type.  It exists
@@ -122,11 +167,51 @@ type FileCopyConfig struct {
 	Target string `yaml:"target"`
 }
 
+// Validate implements types.Validator by checking the source, target, and
+// type.
+func (f FileCopyConfig) Validate() error {
+	if f.Source == "" {
+		return types.NewValidationError(f, "source", "Cannot be an empty string")
+	}
+
+	if f.Target == "" {
+		return types.NewValidationError(f, "target", "Cannot be an empty string")
+	}
+
+	switch f.Type {
+	case FileCopyTypeInline, FileCopyTypePath:
+		return nil
+	default:
+		return types.NewValidationError(f, "type", fmt.Sprintf("must be %q or %q", FileCopyTypeInline, FileCopyTypePath))
+	}
+}
+
 type AgentConfig struct {
 	Docker       DockerConfig         `yaml:"docker"`
 	SetupScripts []SetupScriptsConfig `yaml:"setup_scripts"`
 	CopyFiles    []FileCopyConfig     `yaml:"copy_files"`
 	ACP          ACPConfig            `yaml:"acp"`
+}
+
+// Validate implements types.Validator by validating each nested config.
+func (a AgentConfig) Validate() error {
+	if err := a.Docker.Validate(); err != nil {
+		return err
+	}
+
+	for _, script := range a.SetupScripts {
+		if err := script.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, file := range a.CopyFiles {
+		if err := file.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return a.ACP.Validate()
 }
 
 // FromYAMLFile reads the YAML file at the given path and unmarshals it
