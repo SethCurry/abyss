@@ -19,7 +19,7 @@ type ISocket interface {
 func NewSocket(conn *websocket.Conn, sendChans map[int]chan SocketMessage) *Socket {
 	sock := &Socket{
 		conn:     conn,
-		logger:   log.Logger,
+		logger:   log.Logger.With().Str("from", "Socket").Logger(),
 		handlers: sendChans,
 	}
 

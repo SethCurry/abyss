@@ -18,7 +18,7 @@ type IProtoRouter interface {
 // NewProtoRouter creates a new *ProtoRouter.
 func NewProtoRouter() *ProtoRouter {
 	sock := &ProtoRouter{
-		logger:   log.Logger,
+		logger:   log.Logger.With().Str("from", "ProtoRouter").Logger(),
 		handlers: make(map[int]func(ProtoMessage)),
 	}
 

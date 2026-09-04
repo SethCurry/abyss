@@ -27,7 +27,7 @@ func newID() (string, error) {
 
 func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPConn {
 	return &ACPConn{
-		logger:    log.Logger,
+		logger:    log.Logger.With().Str("from", "ACPConn").Logger(),
 		protoConn: conn,
 		handler:   handler,
 	}
@@ -75,7 +75,7 @@ type MessageType struct {
 
 func NewACPRouter() *ACPRouter {
 	return &ACPRouter{
-		logger:          log.Logger,
+		logger:          log.Logger.With().Str("from", "ACPRouter").Logger(),
 		responseWatcher: NewResponseWatcher(),
 	}
 }
