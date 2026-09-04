@@ -24,3 +24,5 @@ v0.0.2 is now available for download!
 ## Changes
 
 - Websocket messages are now wrapped in protobuf, allowing non-ACP messages to be transmitted
+- Cleaned up the code for creating containers
+- Added mutual TLS authentication by default
