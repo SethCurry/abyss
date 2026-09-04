@@ -10,7 +10,6 @@ import (
 	"github.com/SethCurry/abyss/internal/types"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
-	"github.com/moby/moby/client"
 )
 
 // ContainerConfig holds the Docker host and container configuration used to
@@ -19,6 +18,15 @@ type ContainerConfig struct {
 	Host     *container.HostConfig
 	Config   *container.Config
 	Endpoint *ContainerEndpoint
+
+	// Name is the name to assign to the container. An empty name lets Docker
+	// generate one.
+	Name string
+	// ContainerPort is the port the container exposes to the host.
+	ContainerPort uint16
+	// HostPort is the host port bound to ContainerPort. 0 lets Docker assign a
+	// free port.
+	HostPort uint16
 }
 
 // Validate ensures the required host and container configs are present.
@@ -148,12 +156,7 @@ func (b *ContainerBuilder) AddSteps(newSteps ...ContainerBuildStep) {
 
 // Build starts the container and runs each build step against it.
 func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Container, ContainerEndpoint, error) {
-	container, endpoint, err := cli.StartContainer(ctx, b.config.Config.Image, b.config.Config, b.config.Host, "name", 0, 0)
-	if err != nil {
-		return nil, endpoint, err
-	}
-
-	_, err = cli.client.ContainerStart(ctx, container.ID(), client.ContainerStartOptions{})
+	container, endpoint, err := cli.StartContainer(ctx, b.config.Config.Image, b.config.Config, b.config.Host, b.config.Name, b.config.ContainerPort, b.config.HostPort)
 	if err != nil {
 		return nil, endpoint, err
 	}
