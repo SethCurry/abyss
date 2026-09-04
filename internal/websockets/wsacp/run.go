@@ -60,7 +60,7 @@ func GenerateClientRoutes(proxiedAgent *WebsocketAgent) []wsrouter.MessageType {
 		{
 			ID:   int32(wsmessage.InitializeRequestType),
 			Type: reflect.TypeOf(acp.InitializeRequest{}),
-			Handler: func(router *wsrouter.ACPRouter, msg *protobyss.Container) any {
+			Handler: func(router *wsrouter.ACPRouter, msg *protobyss.ACPContainer) any {
 				creator := wsmessage.MessageTypeToMessage[wsmessage.MessageType(msg.TypeId)]
 				newValue := creator()
 

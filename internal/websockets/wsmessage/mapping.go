@@ -8,6 +8,8 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+// ACPMessage stores all of the metadata about a particular kind of ACP message.
+// These are used to know how to unmarshal ACP messages embedded in protobufs.
 type ACPMessage struct {
 	TypeID    MessageType
 	Type      reflect.Type

@@ -45,7 +45,7 @@ func TestHandleResolvesPromise(t *testing.T) {
 	rw := NewResponseWatcher()
 	prom := rw.Register("req-1")
 
-	msg := &protobyss.Container{ResponseFor: "req-1"}
+	msg := &protobyss.ACPContainer{ResponseFor: "req-1"}
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		rw.Handle(nil, msg)
@@ -68,7 +68,7 @@ func TestHandleUnknownResponseFor(t *testing.T) {
 	rw := NewResponseWatcher()
 
 	// Should not panic or block.
-	rw.Handle(nil, &protobyss.Container{ResponseFor: "missing"})
+	rw.Handle(nil, &protobyss.ACPContainer{ResponseFor: "missing"})
 
 	if len(rw.handlers) != 0 {
 		t.Fatalf("expected no handlers registered, got %d", len(rw.handlers))
@@ -97,10 +97,10 @@ func TestRegisterOverwritesExisting(t *testing.T) {
 
 // TestResolveDeliversValue verifies Promise.Resolve sends the value on the channel.
 func TestResolveDeliversValue(t *testing.T) {
-	prom := &Promise[*protobyss.Container]{
-		resolveChan: make(chan *protobyss.Container, 1),
+	prom := &Promise[*protobyss.ACPContainer]{
+		resolveChan: make(chan *protobyss.ACPContainer, 1),
 	}
-	msg := &protobyss.Container{}
+	msg := &protobyss.ACPContainer{}
 	prom.Resolve(msg)
 
 	got := prom.Wait()
@@ -111,8 +111,8 @@ func TestResolveDeliversValue(t *testing.T) {
 
 // TestWaitBlocksUntilResolved verifies Wait blocks until Resolve is called.
 func TestWaitBlocksUntilResolved(t *testing.T) {
-	prom := &Promise[*protobyss.Container]{
-		resolveChan: make(chan *protobyss.Container),
+	prom := &Promise[*protobyss.ACPContainer]{
+		resolveChan: make(chan *protobyss.ACPContainer),
 	}
 
 	select {
@@ -121,7 +121,7 @@ func TestWaitBlocksUntilResolved(t *testing.T) {
 		t.Fatalf("expected Wait to block, got %v", got)
 	}
 
-	msg := &protobyss.Container{}
+	msg := &protobyss.ACPContainer{}
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		prom.Resolve(msg)
@@ -143,7 +143,7 @@ func TestHandleConcurrent(t *testing.T) {
 			id := "req-" + strconv.Itoa(i)
 			prom := rw.Register(id)
 			go func() {
-				rw.Handle(nil, &protobyss.Container{ResponseFor: id})
+				rw.Handle(nil, &protobyss.ACPContainer{ResponseFor: id})
 			}()
 			_ = prom.Wait()
 		}(i)

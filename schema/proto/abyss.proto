@@ -4,7 +4,7 @@ package protobyss;
 
 option go_package = "./protobyss";
 
-message Container {
+message ACPContainer {
   int32 type_id = 1;
   string message_id = 2;
   string response_for = 3;

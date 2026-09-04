@@ -8,7 +8,7 @@ import (
 
 func NewResponseWatcher() *ResponseWatcher {
 	return &ResponseWatcher{
-		handlers: make(map[string]*Promise[*protobyss.Container]),
+		handlers: make(map[string]*Promise[*protobyss.ACPContainer]),
 	}
 }
 
@@ -16,13 +16,13 @@ func NewResponseWatcher() *ResponseWatcher {
 // protobyss.Container messages that have a non-empty ResponseFor field will get routed
 // here so that the response can be fed to the Promise.
 type ResponseWatcher struct {
-	handlers map[string]*Promise[*protobyss.Container]
+	handlers map[string]*Promise[*protobyss.ACPContainer]
 	mut      sync.Mutex
 }
 
 // Handle dispatches the message to the Promise that is waiting for it.  This is a no-op
 // if the ResponseFor field doesn't match with a waiting Promise.
-func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.Container) {
+func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 	if handler, ok := r.handlers[msg.ResponseFor]; ok {
@@ -32,11 +32,11 @@ func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.Container) {
 }
 
 // Register creates a new *Promise and registers it as waiting for a response.
-func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.Container] {
+func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.ACPContainer] {
 	r.mut.Lock()
 	defer r.mut.Unlock()
-	prom := &Promise[*protobyss.Container]{
-		resolveChan: make(chan *protobyss.Container),
+	prom := &Promise[*protobyss.ACPContainer]{
+		resolveChan: make(chan *protobyss.ACPContainer),
 	}
 	r.handlers[requestID] = prom
 

@@ -25,7 +25,7 @@ func newID() (string, error) {
 	return gotUUID.String(), nil
 }
 
-func NewACPConn(conn IProtoRouter, handler func(*protobyss.Container)) *ACPConn {
+func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPConn {
 	return &ACPConn{
 		logger:    log.Logger,
 		protoConn: conn,
@@ -36,11 +36,11 @@ func NewACPConn(conn IProtoRouter, handler func(*protobyss.Container)) *ACPConn 
 type ACPConn struct {
 	logger    zerolog.Logger
 	protoConn IProtoRouter
-	handler   func(*protobyss.Container)
+	handler   func(*protobyss.ACPContainer)
 }
 
 func (c *ACPConn) Handle(msg ProtoMessage) {
-	protoMsg := &protobyss.Container{}
+	protoMsg := &protobyss.ACPContainer{}
 	err := proto.Unmarshal(msg.Content, protoMsg)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("failed to unmarshal proto message")
@@ -50,7 +50,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 	c.handler(protoMsg)
 }
 
-func (c *ACPConn) Send(msg *protobyss.Container) error {
+func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("failed to marshal proto message")
@@ -69,7 +69,7 @@ func (c *ACPConn) Send(msg *protobyss.Container) error {
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
-	Handler func(*ACPRouter, *protobyss.Container) any
+	Handler func(*ACPRouter, *protobyss.ACPContainer) any
 	IsRPC   bool
 }
 
@@ -108,7 +108,7 @@ func (r *ACPRouter) SetAgent(agent Agent) {
 	r.agent = agent
 }
 
-func (r *ACPRouter) Handle(id int32, messageType any, handler func(*ACPRouter, *protobyss.Container) any, isRPC bool) {
+func (r *ACPRouter) Handle(id int32, messageType any, handler func(*ACPRouter, *protobyss.ACPContainer) any, isRPC bool) {
 	r.messageTypes = append(r.messageTypes, MessageType{
 		ID:      id,
 		Type:    reflect.TypeOf(messageType),
@@ -121,7 +121,7 @@ func (r *ACPRouter) Send(message any) error {
 	return r.Respond("", message)
 }
 
-func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error) {
+func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], error) {
 	msgID, err := newID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate message UUID: %w", err)
@@ -139,7 +139,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.Container], error)
 		return nil, fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	err = r.conn.Send(&protobyss.Container{
+	err = r.conn.Send(&protobyss.ACPContainer{
 		MessageId: msgID,
 		TypeId:    int32(msgType.TypeID),
 		Content:   jsonMarshalled})
@@ -166,7 +166,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	return r.conn.Send(&protobyss.Container{
+	return r.conn.Send(&protobyss.ACPContainer{
 		MessageId:   msgID,
 		ResponseFor: requestID,
 		TypeId:      int32(msgType.TypeID),
@@ -174,7 +174,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 	})
 }
 
-func (r *ACPRouter) ServeMessage(msg *protobyss.Container) {
+func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 	if msg.ResponseFor != "" {
 		r.responseWatcher.Handle(r, msg)
 		return
@@ -408,7 +408,7 @@ func (r *ACPRouter) ServeMessage(msg *protobyss.Container) {
 	}
 }
 
-func handleRequest[T, R any](r *ACPRouter, msg *protobyss.Container, fn func(context.Context, T) (R, error)) {
+func handleRequest[T, R any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) (R, error)) {
 	var params T
 	if err := json.Unmarshal(msg.Content, &params); err != nil {
 		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
@@ -426,7 +426,7 @@ func handleRequest[T, R any](r *ACPRouter, msg *protobyss.Container, fn func(con
 	}
 }
 
-func handleNotification[T any](r *ACPRouter, msg *protobyss.Container, fn func(context.Context, T) error) {
+func handleNotification[T any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) error) {
 	var params T
 	if err := json.Unmarshal(msg.Content, &params); err != nil {
 		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
