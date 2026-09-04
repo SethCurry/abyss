@@ -64,7 +64,7 @@ Abyss can also:
 ### What will it do one day?
 
 The current feature set is nice and useful, but Abyss wouldn't be a real project without scope creep.
-This is a laundry list of features I would like to add.  Follow the blogs if you want updates!
+This is a laundry list of features I would like to add.  Follow the [blogs](/blog/) if you want updates!
 
 - Allow the agent container to run on another computer, e.g. via Kubernetes or SSH tunneling
 - Support for injecting RAG in a manner similar to what Docker or k8s do for volumes
