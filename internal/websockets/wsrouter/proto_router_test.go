@@ -1,10 +1,12 @@
 package wsrouter_test
 
+import "github.com/SethCurry/abyss/internal/websockets/wsrouter"
+
 // MockProtoRouter is a test double for IProtoRouter that records
 // written messages and registered handlers for inspection in tests.
 type MockProtoRouter struct {
 	WrittenMessages []MockWrittenMessage
-	Handlers        map[int]func(ProtoMessage)
+	Handlers        map[int]func(wsrouter.ProtoMessage)
 	// WriteErr, if set, is returned by WriteMessage instead of nil.
 	WriteErr error
 }
@@ -15,11 +17,11 @@ type MockWrittenMessage struct {
 	Data   []byte
 }
 
-var _ IProtoRouter = &MockProtoRouter{}
+var _ wsrouter.IProtoRouter = &MockProtoRouter{}
 
 func NewMockProtoRouter() *MockProtoRouter {
 	return &MockProtoRouter{
-		Handlers: make(map[int]func(ProtoMessage)),
+		Handlers: make(map[int]func(wsrouter.ProtoMessage)),
 	}
 }
 
@@ -31,16 +33,16 @@ func (m *MockProtoRouter) WriteMessage(mt int, data []byte) error {
 	return m.WriteErr
 }
 
-func (m *MockProtoRouter) Handle(mt int, handler func(ProtoMessage)) {
+func (m *MockProtoRouter) Handle(mt int, handler func(wsrouter.ProtoMessage)) {
 	if m.Handlers == nil {
-		m.Handlers = make(map[int]func(ProtoMessage))
+		m.Handlers = make(map[int]func(wsrouter.ProtoMessage))
 	}
 	m.Handlers[mt] = handler
 }
 
 // Dispatch invokes the registered handler for the given message type,
 // if any, simulating an inbound message arriving on the router.
-func (m *MockProtoRouter) Dispatch(msg ProtoMessage) {
+func (m *MockProtoRouter) Dispatch(msg wsrouter.ProtoMessage) {
 	if h, ok := m.Handlers[msg.TypeID]; ok {
 		h(msg)
 	}
