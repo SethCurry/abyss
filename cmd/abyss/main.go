@@ -172,6 +172,31 @@ func main() {
 							return nil
 						},
 					},
+					{
+						Name:  "gc",
+						Usage: "Garbage collect all abyss containers.",
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							docker, err := runenv.NewDockerClient()
+							if err != nil {
+								return fmt.Errorf("failed to connect to docker: %w", err)
+							}
+
+							containers, err := docker.AbyssContainers(ctx)
+							if err != nil {
+								return fmt.Errorf("failed to list containers: %w", err)
+							}
+
+							for _, v := range containers {
+								logger.Info().Str("container_id", v.ID).Strs("container_names", v.Names).Msg("stopping container")
+								cont := docker.GetContainer(v.ID)
+								err = cont.Stop(ctx, time.Second*5)
+								if err != nil {
+									return fmt.Errorf("failed to stop container %q: %w", v.ID, err)
+								}
+							}
+							return nil
+						},
+					},
 				},
 			},
 		},

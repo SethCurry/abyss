@@ -83,6 +83,10 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 	return resp.Items, nil
 }
 
+func (d *DockerClient) GetContainer(containerID string) *Container {
+	return NewContainer(d, containerID)
+}
+
 // StartContainer pulls imageRef (if necessary) and starts a container from it.
 // The container's containerPort is published to the host so the host can reach
 // it. hostPort selects the host port to bind; pass 0 to let Docker assign a
