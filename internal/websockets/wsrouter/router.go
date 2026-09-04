@@ -9,10 +9,21 @@ import (
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/coder/acp-go-sdk"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 )
+
+// newID generates a new UUID to use for identifying a particular message.
+func newID() (string, error) {
+	gotUUID, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+
+	return gotUUID.String(), nil
+}
 
 func NewACPConn(conn IProtoRouter, handler func(*protobyss.Container)) *ACPConn {
 	return &ACPConn{
