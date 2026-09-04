@@ -1,5 +1,6 @@
 package erres
 
+// NewHumanError wraps err with a human-readable message.
 func NewHumanError(message string, err error) *BaseHumanError {
 	return &BaseHumanError{
 		Message: message,
@@ -14,10 +15,12 @@ type BaseHumanError struct {
 	Err     error
 }
 
+// Error returns the underlying error message.
 func (e *BaseHumanError) Error() string {
 	return e.Err.Error()
 }
 
+// HumanError returns the human-readable message.
 func (e *BaseHumanError) HumanError() string {
 	return e.Message
 }

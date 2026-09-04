@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/SethCurry/abyss/internal/types"
 	"gopkg.in/yaml.v3"
 )
 
 /*
+ * TODO features to add
  * I want to support these configurations:
  * - apt-get packages
  * - apk packages
@@ -29,6 +31,23 @@ type ACPConfig struct {
 type HostMount struct {
 	Source      string `yaml:"source"`
 	Destination string `yaml:"destination"`
+}
+
+func (h HostMount) Validate() *types.ValidationError {
+	// TODO throw an error if source doesn't exist
+	if h.Source == "" {
+		return types.NewValidationError(h, "source", "Cannot be an empty string")
+	}
+
+	if _, err := os.Stat(h.Source); err != nil && os.IsNotExist(err) {
+		return types.NewValidationError(h, "source", "Path does not exist")
+	}
+
+	if h.Destination == "" {
+		return types.NewValidationError(h, "destination", "Cannot be an empty string")
+	}
+
+	return nil
 }
 
 type DockerConfig struct {
