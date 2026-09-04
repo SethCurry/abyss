@@ -2,9 +2,11 @@ package runenv
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SethCurry/abyss/internal/types"
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 )
 
 type ContainerConfig struct {
@@ -27,6 +29,56 @@ func (c *ContainerConfig) Validate() *types.ValidationError {
 func WithImage(imgName string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		config.Config.Image = imgName
+		return nil
+	}
+}
+
+func WithEnv(envString string) ContainerPreBuildStep {
+	return func(config *ContainerConfig) error {
+		config.Config.Env = append(config.Config.Env, envString)
+
+		return nil
+	}
+}
+
+func WithExposePort(port network.Port) ContainerPreBuildStep {
+	return func(config *ContainerConfig) error {
+		if config.Config.ExposedPorts == nil {
+			config.Config.ExposedPorts = make(map[network.Port]struct{})
+		}
+		config.Config.ExposedPorts[port] = struct{}{}
+		return nil
+	}
+}
+
+func WithLabel(label, value string) ContainerPreBuildStep {
+	return func(config *ContainerConfig) error {
+		if config.Config.Labels == nil {
+			config.Config.Labels = make(map[string]string)
+		}
+		config.Config.Labels[label] = value
+		return nil
+	}
+}
+
+func WithHostPort(port network.Port) ContainerPreBuildStep {
+	return func(config *ContainerConfig) error {
+		if config.Host.PortBindings == nil {
+			config.Host.PortBindings = make(map[network.Port][]network.PortBinding)
+		}
+
+		config.Host.PortBindings[port] = make([]network.PortBinding, 0, 1)
+
+		return nil
+	}
+}
+
+func WithHostBind(from string, to string) ContainerPreBuildStep {
+	return func(config *ContainerConfig) error {
+		if config.Host.Binds == nil {
+			config.Host.Binds = make([]string, 0, 1)
+		}
+		config.Host.Binds = append(config.Host.Binds, fmt.Sprintf("%s:%s", from, to))
 		return nil
 	}
 }
