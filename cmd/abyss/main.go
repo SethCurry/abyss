@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/api/agentapi"
+	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/runenv"
 	api "github.com/SethCurry/abyss/internal/websockets/wsacp"
@@ -25,6 +27,10 @@ import (
 const (
 	defaultImage = "ghcr.io/sethcurry/abyss-pi:latest"
 	serverPort   = 8080
+
+	tlsServerCertPath = "/etc/abyss/tls/server.crt"
+	tlsServerKeyPath  = "/etc/abyss/tls/server.key"
+	tlsCACertPath     = "/etc/abyss/tls/ca.crt"
 )
 
 func main() {
@@ -126,6 +132,18 @@ func main() {
 						Usage:   "Run filesystem ACP commands on the client rather than this server",
 						Value:   false,
 					},
+					&cli.StringFlag{
+						Name:  "tls-cert",
+						Usage: "Path to the TLS server certificate.",
+					},
+					&cli.StringFlag{
+						Name:  "tls-key",
+						Usage: "Path to the TLS server key.",
+					},
+					&cli.StringFlag{
+						Name:  "tls-ca",
+						Usage: "Path to the CA certificate used to verify client certificates.",
+					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					agentCmd := cmd.StringSlice("agent")
@@ -142,6 +160,19 @@ func main() {
 					}
 
 					httpSrv := agentapi.NewServer(agentCmd, localTerminal, localFilesystem)
+
+					tlsCert := cmd.String("tls-cert")
+					tlsKey := cmd.String("tls-key")
+					tlsCA := cmd.String("tls-ca")
+
+					if tlsCert != "" && tlsKey != "" && tlsCA != "" {
+						tlsConfig, err := pacific.LoadServerTLSConfig(tlsCert, tlsKey, tlsCA)
+						if err != nil {
+							return fmt.Errorf("load TLS config: %w", err)
+						}
+						return httpSrv.ServeTLS(cmd.String("addr"), tlsConfig)
+					}
+
 					return httpSrv.Serve(cmd.String("addr"))
 				},
 			},
@@ -255,6 +286,16 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 	}
 	agent := cfg.Docker.AgentCommand
 
+	// Generate a certificate set for mutual TLS unless the user disabled it.
+	var certs *pacific.Certificates
+	if !cfg.Websocket.DisableTLS {
+		certs, err = pacific.GenerateCertificates()
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to generate TLS certificates")
+			return err
+		}
+	}
+
 	agentArgs := make([]string, len(agent)*2)
 
 	for k, v := range agent {
@@ -269,6 +310,14 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 
 	if cfg.ACP.ToolsOnHost.Terminal {
 		agentArgs = append(agentArgs, "--local-terminal")
+	}
+
+	if certs != nil {
+		agentArgs = append(agentArgs,
+			"--tls-cert", tlsServerCertPath,
+			"--tls-key", tlsServerKeyPath,
+			"--tls-ca", tlsCACertPath,
+		)
 	}
 
 	joinedArgs := strings.Join(agentArgs, " ")
@@ -293,6 +342,10 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		runenv.WithSetupScripts(cfg.SetupScripts),
 	)
 
+	if certs != nil {
+		builder.AddStep(installTLSCerts(certs))
+	}
+
 	cont, endpoint, err := builder.Build(ctx, docker)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to start container")
@@ -301,13 +354,24 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 
 	time.Sleep(time.Second * 5)
 
-	wsURL := "ws://" + endpoint.String() + "/ws"
+	scheme := "ws"
+	var tlsConfig *tls.Config
+	if certs != nil {
+		scheme = "wss"
+		tlsConfig, err = certs.ClientTLSConfig()
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to build client TLS config")
+			return err
+		}
+	}
+
+	wsURL := scheme + "://" + endpoint.String() + "/ws"
 	logger.Info().
 		Str("url", wsURL).
 		Str("container_id", endpoint.ContainerID).
 		Msg("connecting to agent container")
 
-	if err := api.RunClient(ctx, wsURL, logger); err != nil {
+	if err := api.RunClient(ctx, wsURL, tlsConfig, logger); err != nil {
 		logger.Error().Err(err).Msg("client disconnected with error")
 	}
 
@@ -318,4 +382,28 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 	}
 
 	return nil
+}
+
+// installTLSCerts returns a build step that copies the server certificate,
+// server key, and CA certificate into the container so the server can serve
+// mutual TLS.
+func installTLSCerts(certs *pacific.Certificates) runenv.ContainerBuildStep {
+	return func(ctx context.Context, container *runenv.Container) error {
+		files := []struct {
+			path    string
+			content []byte
+		}{
+			{path: tlsServerCertPath, content: certs.ServerCertPEM},
+			{path: tlsServerKeyPath, content: certs.ServerKeyPEM},
+			{path: tlsCACertPath, content: certs.CACertPEM},
+		}
+
+		for _, f := range files {
+			if err := container.CopyFileFromHost(ctx, f.content, f.path, 0o600); err != nil {
+				return fmt.Errorf("copy %q into container: %w", f.path, err)
+			}
+		}
+
+		return nil
+	}
 }

@@ -1,6 +1,7 @@
 package agentapi
 
 import (
+	"crypto/tls"
 	"log/slog"
 	"net/http"
 	"os"
@@ -58,6 +59,13 @@ type Server struct {
 func (s *Server) Serve(addr string) error {
 	s.httpServer.AddRoute("GET", "/ws", s.handleWebsocket)
 	return s.httpServer.Serve(addr)
+}
+
+// ServeTLS listens on addr and serves over TLS using the provided config,
+// bridging each websocket connection to an agent process.
+func (s *Server) ServeTLS(addr string, tlsConfig *tls.Config) error {
+	s.httpServer.AddRoute("GET", "/ws", s.handleWebsocket)
+	return s.httpServer.ServeTLS(addr, tlsConfig)
 }
 
 func (s *Server) handleWebsocket(req *RequestContext) {

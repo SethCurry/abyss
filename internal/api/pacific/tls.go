@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"os"
 	"time"
 )
 
@@ -97,6 +98,31 @@ func (c *Certificates) ClientTLSConfig() (*tls.Config, error) {
 		RootCAs:      pool,
 		MinVersion:   tls.VersionTLS13,
 	}, nil
+}
+
+// LoadServerTLSConfig reads the server certificate, key, and CA certificate
+// from the given paths and returns a tls.Config for mutual TLS.
+func LoadServerTLSConfig(certPath, keyPath, caPath string) (*tls.Config, error) {
+	certPEM, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, fmt.Errorf("read server certificate %q: %w", certPath, err)
+	}
+
+	keyPEM, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("read server key %q: %w", keyPath, err)
+	}
+
+	caPEM, err := os.ReadFile(caPath)
+	if err != nil {
+		return nil, fmt.Errorf("read CA certificate %q: %w", caPath, err)
+	}
+
+	return (&Certificates{
+		ServerCertPEM: certPEM,
+		ServerKeyPEM:  keyPEM,
+		CACertPEM:     caPEM,
+	}).ServerTLSConfig()
 }
 
 // generateCA creates a self-signed CA certificate and returns its PEM-encoded

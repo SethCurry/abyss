@@ -2,6 +2,7 @@ package wsacp
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -18,9 +19,15 @@ import (
 )
 
 // RunClient dials the websocket server at wsURL and bridges it to a client
-// (typically an editor) over stdio.
-func RunClient(ctx context.Context, wsURL string, logger zerolog.Logger) error {
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+// (typically an editor) over stdio. A non-nil tlsConfig enables TLS for the
+// connection.
+func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
+	dialer := websocket.DefaultDialer
+	if tlsConfig != nil {
+		dialer = &websocket.Dialer{TLSClientConfig: tlsConfig}
+	}
+
+	conn, _, err := dialer.DialContext(ctx, wsURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to dial Docker websocket: %w", err)
 	}
