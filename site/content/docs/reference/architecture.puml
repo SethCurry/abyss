@@ -10,7 +10,7 @@ cloud Docker {
 }
 
 [ACP Client] --> [abyss Client Proxy] : stdio
-[abyss Client Proxy] --> [abyss Agent Proxy] : Websocket
+[abyss Client Proxy] --> [abyss Agent Proxy] : Protobuf via Websocket
 [abyss Client Proxy] --> [Docker] : Docker API
 [abyss Agent Proxy] --> [Underlying Agent] : stdio
 
