@@ -97,7 +97,7 @@ func main() {
 						Str("image", agentCfg.Docker.Image).
 						Strs("agent_command", agentCfg.Docker.AgentCommand).
 						Msg("starting Docker agent")
-					return runClient(ctx, agentCfg, logger)
+					return runClient(ctx, "", agentCfg, logger)
 				},
 			},
 			{
@@ -124,7 +124,8 @@ func main() {
 						Str("image", agentCfg.Docker.Image).
 						Strs("agent_command", agentCfg.Docker.AgentCommand).
 						Msg("starting Docker agent")
-					return runClient(ctx, agentCfg, logger)
+					prompt := strings.Join(cmd.Args().Slice(), " ")
+					return runClient(ctx, prompt, agentCfg, logger)
 				},
 			},
 			{

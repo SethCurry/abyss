@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/SethCurry/abyss/internal/acp/termacp"
 	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
@@ -40,6 +41,8 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 	router.SetConn(acpConn)
 	socket.Handle(1, acpConn.Handle)
 
+	termACPClient := termacp.NewTermACPClient()
+	router.SetClient(termACPClient)
 	proxiedAgent := NewProxiedACPAgent(router)
 
 	go func() {

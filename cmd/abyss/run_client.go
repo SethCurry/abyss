@@ -17,7 +17,9 @@ import (
 
 // runClient starts a Docker container running the abyss server command and
 // bridges it to a client over stdio.
-func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
+//
+// If prompt is not empty, it will be used as a one-shot prompt to the server.
+func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
 		return erres.NewHumanError("Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?", err)
@@ -101,7 +103,7 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		return err
 	}
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 1)
 
 	scheme := "ws"
 	var tlsConfig *tls.Config
@@ -120,8 +122,14 @@ func runClient(ctx context.Context, cfg *agentconfig.AgentConfig, logger zerolog
 		Str("container_id", endpoint.ContainerID).
 		Msg("connecting to agent container")
 
-	if err := api.RunClient(ctx, wsURL, tlsConfig, logger); err != nil {
-		logger.Error().Err(err).Msg("client disconnected with error")
+	if prompt == "" {
+		if err := api.RunClient(ctx, wsURL, tlsConfig, logger); err != nil {
+			logger.Error().Err(err).Msg("client disconnected with error")
+		}
+	} else {
+		if err := api.Oneshot(ctx, prompt, wsURL, tlsConfig, logger); err != nil {
+			logger.Error().Err(err).Msg("oneshot failed")
+		}
 	}
 
 	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
