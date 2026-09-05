@@ -101,6 +101,33 @@ func main() {
 				},
 			},
 			{
+				Name:    "oneshot",
+				Aliases: []string{"p"},
+				Usage:   "Executes a single agent turn based on the provided prompt.",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "config",
+						Aliases:  []string{"f"},
+						Usage:    "The path to the agent configuration YAML file.",
+						Required: true,
+					},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					configPath := cmd.String("config")
+					agentCfg, err := agentconfig.FromYAMLFile(configPath)
+					if err != nil {
+						logger.Error().Err(err).Str("config_path", configPath).Msg("failed to load agent config")
+						return err
+					}
+					logger.Debug().
+						Str("config_path", configPath).
+						Str("image", agentCfg.Docker.Image).
+						Strs("agent_command", agentCfg.Docker.AgentCommand).
+						Msg("starting Docker agent")
+					return runClient(ctx, agentCfg, logger)
+				},
+			},
+			{
 				Name:    "server",
 				Aliases: []string{"s"},
 				Usage:   "Starts the agent-side proxy.  You should never need to manually invoke this.",

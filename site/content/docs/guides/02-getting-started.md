@@ -66,12 +66,11 @@ You can put it anywhere you would like, though.
 
 ## Connecting Your ACP Client
 
-In Zed, click the hamburger on the top left and click "Open Settings File".  That will pull up your Zed config file.
+In Zed, open your settings file.  You can either click the hamburger on the top left and use the main Zed menu to click the
+"Open Settings File" option.  Alternately, you can use Ctrl+Shift+P to open the command palette and use the "zed: open settings file"
+command.
 
-You need to add a section like below.  If `agent_servers` already exists as a key, you can just append the `"abyss"` to the
-list of agents in it.
-
-If not, put the whole section starting with `"agent_servers"` into the JSON blob.
+In the config file it opens, paste a section like this:
 
 ```json
 {
@@ -89,8 +88,14 @@ If not, put the whole section starting with `"agent_servers"` into the JSON blob
 }
 ```
 
+If the `agent_servers` key already exists, add the `abyss` part to it.  If not, you can copy the entire agent_servers key.
+
 If you would like Zed to call the agent something else, change the name of the JSON key from `"abyss"` to whatever you would like.
 (don't change the value of the `"command"` key, change the `"abyss"` above that)
+
+This is what an example of the config looks like:
+
+![Sample Zed Config](/images/zed-config.png)
 
 ## Usage
 
