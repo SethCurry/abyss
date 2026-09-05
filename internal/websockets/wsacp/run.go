@@ -56,7 +56,9 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 	}
 
 	newSession, err := proxiedAgent.NewSession(ctx, acp.NewSessionRequest{
-		Cwd: cwd,
+		AdditionalDirectories: []string{},
+		McpServers:            []acp.McpServer{},
+		Cwd:                   cwd,
 	})
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create new session")
