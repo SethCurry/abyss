@@ -1,6 +1,7 @@
 package wsrouter
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -48,10 +49,15 @@ type ProtoRouter struct {
 func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 	s.conn = ws
 	for {
+
 		mt, content, err := s.conn.ReadMessage()
 		if err != nil {
-			s.logger.Error().Err(err).Msg("failed to read raw websocket message")
-			continue
+			// Any read error leaves the connection unusable; reading again panics
+			// with "repeated read on failed websocket connection".
+			if !errors.Is(err, websocket.ErrCloseSent) {
+				s.logger.Error().Err(err).Msg("failed to read raw websocket message")
+			}
+			return
 		}
 
 		sendTo, ok := s.handlers[mt]
