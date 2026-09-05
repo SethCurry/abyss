@@ -74,6 +74,8 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 		return err
 	}
 
+	// TODO close this cleanly so it doesn't spray errors
+
 	return nil
 }
 
