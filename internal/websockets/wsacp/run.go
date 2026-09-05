@@ -18,6 +18,60 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
+	dialer := websocket.DefaultDialer
+	if tlsConfig != nil {
+		dialer = &websocket.Dialer{TLSClientConfig: tlsConfig}
+	}
+
+	conn, _, err := dialer.DialContext(ctx, wsURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to dial Docker websocket: %w", err)
+	}
+	defer func() {
+		closeErr := conn.Close()
+		if closeErr != nil {
+			logger.Warn().Err(closeErr).Msg("failed to close client websocket connection")
+		}
+	}()
+	socket := wsrouter.NewProtoRouter()
+	router := wsrouter.NewACPRouter()
+	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	router.SetConn(acpConn)
+	socket.Handle(1, acpConn.Handle)
+
+	proxiedAgent := NewProxiedACPAgent(router)
+
+	go func() {
+		socket.Serve(conn)
+	}()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to get current working directory")
+		return err
+	}
+
+	newSession, err := proxiedAgent.NewSession(ctx, acp.NewSessionRequest{
+		Cwd: cwd,
+	})
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to create new session")
+	}
+
+	_, err = proxiedAgent.Prompt(ctx, acp.PromptRequest{
+		SessionId: newSession.SessionId,
+		Prompt: []acp.ContentBlock{
+			acp.TextBlock(prompt),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RunClient dials the websocket server at wsURL and bridges it to a client
 // (typically an editor) over stdio. A non-nil tlsConfig enables TLS for the
 // connection.
