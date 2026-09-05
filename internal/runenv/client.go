@@ -19,6 +19,7 @@ import (
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // ContainerEndpoint describes how the host can reach a started container.
@@ -53,7 +54,7 @@ func NewDockerClient() (*DockerClient, error) {
 
 	return &DockerClient{
 		client: cli,
-		logger: zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger(),
+		logger: log.Logger.With().Str("from", "DockerClient").Timestamp().Logger(),
 	}, nil
 }
 
