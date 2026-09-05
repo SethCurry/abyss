@@ -3,20 +3,15 @@ package wsacp
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
-	"reflect"
 
 	"github.com/SethCurry/abyss/internal/acp/termacp"
-	"github.com/SethCurry/abyss/internal/websockets/protobyss"
-	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
@@ -121,28 +116,4 @@ func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger 
 	<-asc.Done()
 	logger.Info().Msg("agent closed connection")
 	return nil
-}
-
-func GenerateClientRoutes(proxiedAgent *WebsocketAgent) []wsrouter.MessageType {
-	return []wsrouter.MessageType{
-		{
-			ID:   int32(wsmessage.InitializeRequestType),
-			Type: reflect.TypeOf(acp.InitializeRequest{}),
-			Handler: func(router *wsrouter.ACPRouter, msg *protobyss.ACPContainer) any {
-				creator := wsmessage.MessageTypeToMessage[wsmessage.MessageType(msg.TypeId)]
-				newValue := creator()
-
-				err := json.Unmarshal(msg.Content, &newValue)
-				if err != nil {
-					log.Warn().Err(err).Msg("failed to unmarshal message")
-				}
-
-				if asInit, ok := newValue.(acp.InitializeRequest); ok {
-					_, _ = proxiedAgent.Initialize(context.Background(), asInit)
-				}
-				return nil
-			},
-			IsRPC: true,
-		},
-	}
 }
