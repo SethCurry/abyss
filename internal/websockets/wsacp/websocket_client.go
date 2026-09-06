@@ -40,40 +40,61 @@ func (e *WebsocketAgentClient) SetClientConnection(conn *acp.ClientSideConnectio
 }
 
 func (e *WebsocketAgentClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
-	e.logger.Debug().Str("method", "RequestPermission").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "RequestPermission").
+		Msg("handling request")
 	return e.underlying.RequestPermission(ctx, params)
 }
 
 func (e *WebsocketAgentClient) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
-	e.logger.Debug().Str("method", "SessionUpdate").Msg("handling notification")
+	e.logger.Debug().
+		Str("method", "SessionUpdate").
+		Msg("handling notification")
 	return e.underlying.SessionUpdate(ctx, params)
 }
 
 func (e *WebsocketAgentClient) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
 	if e.fileTools != nil {
-		e.logger.Debug().Str("method", "WriteTextFile").Str("handler", "fileTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "WriteTextFile").
+			Str("handler", "fileTools").
+			Msg("handling request")
 		return e.fileTools.WriteTextFile(ctx, params)
 	}
 
-	e.logger.Debug().Str("method", "WriteTextFile").Str("handler", "client").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "WriteTextFile").
+		Str("handler", "client").
+		Msg("handling request")
 	return e.underlying.WriteTextFile(ctx, params)
 }
 
 func (e *WebsocketAgentClient) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
 	if e.fileTools != nil {
-		e.logger.Debug().Str("method", "ReadTextFile").Str("handler", "fileTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "ReadTextFile").
+			Str("handler", "fileTools").
+			Msg("handling request")
 		return e.fileTools.ReadTextFile(ctx, params)
 	}
 
-	e.logger.Debug().Str("method", "ReadTextFile").Str("handler", "client").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "ReadTextFile").
+		Str("handler", "client").
+		Msg("handling request")
 	return e.underlying.ReadTextFile(ctx, params)
 }
 
 func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
-	e.logger.Debug().Str("method", "CreateTerminal").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "CreateTerminal").
+		Msg("handling request")
 
 	if e.terminalTools != nil {
-		e.logger.Debug().Str("method", "CreateTerminal").Str("handler", "terminalTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "CreateTerminal").
+			Str("handler", "terminalTools").
+			Msg("handling request")
 		return e.terminalTools.CreateTerminal(ctx, params)
 	}
 
@@ -81,10 +102,15 @@ func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.Cr
 }
 
 func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
-	e.logger.Debug().Str("method", "TerminalOutput").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "TerminalOutput").
+		Msg("handling request")
 
 	if e.terminalTools != nil {
-		e.logger.Debug().Str("method", "TerminalOutput").Str("handler", "terminalTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "TerminalOutput").
+			Str("handler", "terminalTools").
+			Msg("handling request")
 		return e.terminalTools.TerminalOutput(ctx, params)
 	}
 
@@ -92,10 +118,15 @@ func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.Te
 }
 
 func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
-	e.logger.Debug().Str("method", "ReleaseTerminal").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "ReleaseTerminal").
+		Msg("handling request")
 
 	if e.terminalTools != nil {
-		e.logger.Debug().Str("method", "ReleaseTerminal").Str("handler", "terminalTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "ReleaseTerminal").
+			Str("handler", "terminalTools").
+			Msg("handling request")
 		return e.terminalTools.ReleaseTerminal(ctx, params)
 	}
 
@@ -103,10 +134,15 @@ func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.R
 }
 
 func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
-	e.logger.Debug().Str("method", "WaitForTerminalExit").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "WaitForTerminalExit").
+		Msg("handling request")
 
 	if e.terminalTools != nil {
-		e.logger.Debug().Str("method", "WaitForTerminalExit").Str("handler", "terminalTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "WaitForTerminalExit").
+			Str("handler", "terminalTools").
+			Msg("handling request")
 		return e.terminalTools.WaitForTerminalExit(ctx, params)
 	}
 
@@ -115,10 +151,15 @@ func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params a
 
 // KillTerminal implements acp.Client.
 func (e *WebsocketAgentClient) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
-	e.logger.Debug().Str("method", "KillTerminal").Msg("handling request")
+	e.logger.Debug().
+		Str("method", "KillTerminal").
+		Msg("handling request")
 
 	if e.terminalTools != nil {
-		e.logger.Debug().Str("method", "KillTerminal").Str("handler", "terminalTools").Msg("handling request")
+		e.logger.Debug().
+			Str("method", "KillTerminal").
+			Str("handler", "terminalTools").
+			Msg("handling request")
 		return e.terminalTools.KillTerminal(ctx, params)
 	}
 
