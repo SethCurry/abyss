@@ -15,7 +15,6 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 
-	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
@@ -212,6 +211,8 @@ func cleanPath(path string) (string, error) {
 // additional mounts. Paths are normalized to absolute form; a mount whose host
 // path does not exist on the host is skipped with a warning, since Docker would
 // create it as an empty directory owned by root, which is rarely intended.
+
+/*
 func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig *container.HostConfig) *container.HostConfig {
 	if hostConfig == nil {
 		hostConfig = &container.HostConfig{}
@@ -258,6 +259,7 @@ func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig
 
 	return hostConfig
 }
+*/
 
 // ptr returns a pointer to v.
 func ptr[T any](v T) *T { return &v }

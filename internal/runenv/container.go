@@ -43,12 +43,16 @@ func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
 	c.logger.Info().Msg("stopping container")
 
 	if _, err := c.client.client.ContainerStop(ctx, c.containerID, client.ContainerStopOptions{Signal: "SIGTERM", Timeout: ptr(int(timeout.Seconds()))}); err != nil {
-		c.logger.Warn().Err(err).Msg("container stop failed, attempting remove")
+		c.logger.Warn().
+			Err(err).
+			Msg("container stop failed, attempting remove")
 	}
 
 	c.logger.Info().Msg("removing container")
 	if _, err := c.client.client.ContainerRemove(ctx, c.containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
-		c.logger.Error().Err(err).Msg("failed to remove container")
+		c.logger.Error().
+			Err(err).
+			Msg("failed to remove container")
 		return fmt.Errorf("remove container: %w", err)
 	}
 
@@ -82,13 +86,20 @@ func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr
 
 	var out, errOut bytes.Buffer
 	if _, err := stdcopy.StdCopy(&out, &errOut, attach.Reader); err != nil {
-		c.logger.Error().Err(err).Msg("failed to read exec output")
+		c.logger.Error().
+			Err(err).
+			Msg("failed to read exec output")
 		return "", "", fmt.Errorf("read exec output: %w", err)
 	}
 
-	inspect, err := c.client.client.ExecInspect(ctx, created.ID, client.ExecInspectOptions{})
+	inspect, err := c.client.client.ExecInspect(
+		ctx,
+		created.ID,
+		client.ExecInspectOptions{})
 	if err != nil {
-		c.logger.Error().Err(err).Msg("failed to inspect exec")
+		c.logger.Error().
+			Err(err).
+			Msg("failed to inspect exec")
 		return "", "", fmt.Errorf("inspect exec: %w", err)
 	}
 

@@ -78,11 +78,10 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 			Entrypoint: []string{"/bin/bash", "-c"},
 			Cmd:        []string{"/usr/local/bin/abyss server " + joinedArgs},
 		},
-		Host:          docker.ApplyHostMounts(&cfg.Docker, nil),
 		ContainerPort: serverPort,
 	}
 
-	builder, err := runenv.NewContainerBuilder(config, runenv.WithImage(image))
+	builder, err := runenv.NewContainerBuilder(config, runenv.WithImage(image), runenv.WithHostMounts(&cfg.Docker))
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to build container config")
 		return err

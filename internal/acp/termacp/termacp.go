@@ -50,16 +50,16 @@ type TermACPClient struct {
 func (e *TermACPClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
 	title := toolCallTitle(params.ToolCall)
 
-	fmt.Fprintf(e.out, "\n\033[1mPermission required\033[0m")
+	_, _ = fmt.Fprintf(e.out, "\n\033[1mPermission required\033[0m")
 	if title != "" {
-		fmt.Fprintf(e.out, ": %s", title)
+		_, _ = fmt.Fprintf(e.out, ": %s", title)
 	}
-	fmt.Fprintln(e.out)
+	_, _ = fmt.Fprintln(e.out)
 
 	for i, opt := range params.Options {
-		fmt.Fprintf(e.out, "  [%d] %s\n", i+1, opt.Name)
+		_, _ = fmt.Fprintf(e.out, "  [%d] %s\n", i+1, opt.Name)
 	}
-	fmt.Fprintf(e.out, "Select an option (1-%d) [cancel]: ", len(params.Options))
+	_, _ = fmt.Fprintf(e.out, "Select an option (1-%d) [cancel]: ", len(params.Options))
 
 	line, ok := e.readLine(ctx)
 	if !ok || line == "" {
@@ -93,35 +93,35 @@ func (e *TermACPClient) RequestPermission(ctx context.Context, params acp.Reques
 func (e *TermACPClient) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
 	switch {
 	case params.Update.AgentMessageChunk != nil:
-		fmt.Fprint(e.out, contentBlockText(params.Update.AgentMessageChunk.Content))
+		_, _ = fmt.Fprint(e.out, contentBlockText(params.Update.AgentMessageChunk.Content))
 	case params.Update.AgentThoughtChunk != nil:
 		text := contentBlockText(params.Update.AgentThoughtChunk.Content)
 		if text != "" {
-			fmt.Fprintf(e.out, "\033[2m%s\033[0m", text)
+			_, _ = fmt.Fprintf(e.out, "\033[2m%s\033[0m", text)
 		}
 	case params.Update.UserMessageChunk != nil:
-		fmt.Fprint(e.out, contentBlockText(params.Update.UserMessageChunk.Content))
+		_, _ = fmt.Fprint(e.out, contentBlockText(params.Update.UserMessageChunk.Content))
 	case params.Update.ToolCall != nil:
 		tc := params.Update.ToolCall
-		fmt.Fprintf(e.out, "\n\033[1mtool:\033[0m %s\n", tc.Title)
+		_, _ = fmt.Fprintf(e.out, "\n\033[1mtool:\033[0m %s\n", tc.Title)
 		for _, c := range tc.Content {
-			fmt.Fprint(e.out, renderToolCallContent(c))
+			_, _ = fmt.Fprint(e.out, renderToolCallContent(c))
 		}
 	case params.Update.ToolCallUpdate != nil:
 		tc := params.Update.ToolCallUpdate
 		if tc.Title != nil {
-			fmt.Fprintf(e.out, "\n\033[1mtool:\033[0m %s\n", *tc.Title)
+			_, _ = fmt.Fprintf(e.out, "\n\033[1mtool:\033[0m %s\n", *tc.Title)
 		}
 		if tc.Status != nil {
-			fmt.Fprintf(e.out, "\033[2m[%s]\033[0m\n", *tc.Status)
+			_, _ = fmt.Fprintf(e.out, "\033[2m[%s]\033[0m\n", *tc.Status)
 		}
 		for _, c := range tc.Content {
-			fmt.Fprint(e.out, renderToolCallContent(c))
+			_, _ = fmt.Fprint(e.out, renderToolCallContent(c))
 		}
 	case params.Update.Plan != nil:
-		fmt.Fprintln(e.out, "\n\033[1mplan\033[0m")
+		_, _ = fmt.Fprintln(e.out, "\n\033[1mplan\033[0m")
 		for _, entry := range params.Update.Plan.Entries {
-			fmt.Fprintf(e.out, "  [%s] %s\n", entry.Status, entry.Content)
+			_, _ = fmt.Fprintf(e.out, "  [%s] %s\n", entry.Status, entry.Content)
 		}
 	}
 	return nil

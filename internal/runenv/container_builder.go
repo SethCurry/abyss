@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
@@ -292,6 +293,50 @@ func WithCopyFiles(files []agentconfig.FileCopyConfig) ContainerBuildStep {
 			}
 
 			container.logger.Debug().Str("target", f.Target).Str("type", string(f.Type)).Msg("copied file into container")
+		}
+
+		return nil
+	}
+}
+
+func WithHostMounts(cfg *agentconfig.DockerConfig) ContainerPreBuildStep {
+	return func(containerConfig *ContainerConfig) error {
+		hostConfig := containerConfig.Host
+		if hostConfig == nil {
+			hostConfig = &container.HostConfig{}
+		}
+		if cfg == nil || len(cfg.HostMounts) == 0 {
+			return nil
+		}
+
+		for _, mount := range cfg.HostMounts {
+			hostPath, err := cleanPath(mount.Source)
+			if err != nil {
+				return fmt.Errorf("failed to get absolute host path: %w", err)
+			}
+
+			var containerPath string
+
+			if mount.Destination != "" {
+				containerPath, err = cleanPath(mount.Destination)
+				if err != nil {
+					return fmt.Errorf("failed to get absolute container path: %w", err)
+				}
+			} else {
+				containerPath = hostPath
+			}
+
+			if !filepath.IsAbs(hostPath) {
+				return fmt.Errorf("skipping non-absolute host mount: %s", hostPath)
+			}
+			if !filepath.IsAbs(containerPath) {
+				return fmt.Errorf("skipping mount with non-absolute container path: %s", containerPath)
+			}
+			if _, err := os.Stat(hostPath); err != nil {
+				return fmt.Errorf("skipping host mount, path does not exist on host: %w", err)
+			}
+
+			hostConfig.Binds = append(hostConfig.Binds, hostPath+":"+containerPath)
 		}
 
 		return nil
