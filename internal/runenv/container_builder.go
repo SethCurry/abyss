@@ -114,6 +114,12 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 		}
 		config.Config.ExposedPorts[asPort] = struct{}{}
 
+		config.Endpoint = &ContainerEndpoint{
+			ContainerID: "",
+			IP:          netip.IPv4Unspecified().String(),
+			Port:        hostPort.Num(),
+		}
+
 		return nil
 	}
 }
@@ -192,7 +198,7 @@ func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Conta
 		}
 	}
 
-	return container, endpoint, nil
+	return container, *b.config.Endpoint, nil
 }
 
 type ContainerPreBuildStep func(*ContainerConfig) error
