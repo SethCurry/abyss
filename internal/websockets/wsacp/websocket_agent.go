@@ -172,13 +172,13 @@ func (w *WebsocketAgent) UnstableSetProvider(ctx context.Context, params acp.Uns
 
 // UnstableDeleteSession implements acp.AgentExperimental.
 func (w *WebsocketAgent) UnstableDeleteSession(ctx context.Context, params acp.UnstableDeleteSessionRequest) (acp.UnstableDeleteSessionResponse, error) {
-	w.logger.Debug().Str("method", "UnstableDeleteSession").Msg("handling request")
+	w.logger.Debug().Str("method", "UnstableDeleteSession").Str("session_id", string(params.SessionId)).Msg("handling request")
 	return w.underlying.UnstableDeleteSession(ctx, params)
 }
 
 // CloseSession implements acp.Agent.
 func (w *WebsocketAgent) CloseSession(ctx context.Context, params acp.CloseSessionRequest) (acp.CloseSessionResponse, error) {
-	w.logger.Debug().Str("method", "CloseSession").Msg("handling request")
+	w.logger.Debug().Str("method", "CloseSession").Str("session_id", string(params.SessionId)).Msg("handling request")
 	return w.underlying.CloseSession(ctx, params)
 }
 
@@ -224,12 +224,12 @@ func (w *WebsocketAgent) Authenticate(ctx context.Context, params acp.Authentica
 }
 
 func (w *WebsocketAgent) LoadSession(ctx context.Context, params acp.LoadSessionRequest) (acp.LoadSessionResponse, error) {
-	w.logger.Debug().Str("method", "LoadSession").Msg("handling request")
+	w.logger.Debug().Str("method", "LoadSession").Str("session_id", string(params.SessionId)).Msg("handling request")
 	return w.underlying.LoadSession(ctx, params)
 }
 
 func (w *WebsocketAgent) Cancel(ctx context.Context, params acp.CancelNotification) error {
-	w.logger.Debug().Str("method", "Cancel").Msg("handling notification")
+	w.logger.Debug().Str("method", "Cancel").Str("session_id", string(params.SessionId)).Msg("handling notification")
 	return w.underlying.Cancel(ctx, params)
 }
 
