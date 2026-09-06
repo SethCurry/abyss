@@ -95,7 +95,6 @@ func (d *DockerClient) GetContainer(containerID string) *Container {
 // image.
 func (d *DockerClient) StartContainer(
 	ctx context.Context,
-	imageRef string,
 	config *container.Config,
 	hostConfig *container.HostConfig,
 	name string,
@@ -103,7 +102,7 @@ func (d *DockerClient) StartContainer(
 	hostPort uint16,
 ) (*Container, ContainerEndpoint, error) {
 	d.logger.Debug().
-		Str("image", imageRef).
+		Str("image", config.Image).
 		Str("name", name).
 		Uint16("container_port", containerPort).
 		Uint16("host_port", hostPort).
@@ -121,7 +120,6 @@ func (d *DockerClient) StartContainer(
 	if config == nil {
 		config = &container.Config{}
 	}
-	config.Image = imageRef
 	config.ExposedPorts = network.PortSet{port: {}}
 	config.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	config.Labels = map[string]string{
@@ -144,7 +142,7 @@ func (d *DockerClient) StartContainer(
 		Name:       name,
 	})
 	if err != nil {
-		d.logger.Error().Err(err).Str("image", imageRef).Str("name", name).Msg("failed to create container")
+		d.logger.Error().Err(err).Str("image", config.Image).Str("name", name).Msg("failed to create container")
 		return nil, ContainerEndpoint{}, fmt.Errorf("create container: %w", err)
 	}
 

@@ -156,7 +156,7 @@ func (b *ContainerBuilder) AddSteps(newSteps ...ContainerBuildStep) {
 
 // Build starts the container and runs each build step against it.
 func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Container, ContainerEndpoint, error) {
-	container, endpoint, err := cli.StartContainer(ctx, b.config.Config.Image, b.config.Config, b.config.Host, b.config.Name, b.config.ContainerPort, b.config.HostPort)
+	container, endpoint, err := cli.StartContainer(ctx, b.config.Config, b.config.Host, b.config.Name, b.config.ContainerPort, b.config.HostPort)
 	if err != nil {
 		return nil, endpoint, err
 	}
