@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"strings"
 	"time"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
@@ -33,9 +32,8 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 
 	image := cfg.Docker.Image
 	if image == "" {
-		image = defaultImage
+		image = agentconfig.DefaultImage
 	}
-	agent := cfg.Docker.AgentCommand
 
 	// Generate a certificate set for mutual TLS unless the user disabled it.
 	var certs *pacific.Certificates
@@ -47,41 +45,20 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 		}
 	}
 
-	agentArgs := make([]string, len(agent)*2)
-
-	for k, v := range agent {
-		startIndex := k * 2
-		agentArgs[startIndex] = "--agent"
-		agentArgs[startIndex+1] = v
-	}
-
-	if cfg.ACP.ToolsOnHost.Files {
-		agentArgs = append(agentArgs, "--local-filesystem")
-	}
-
-	if cfg.ACP.ToolsOnHost.Terminal {
-		agentArgs = append(agentArgs, "--local-terminal")
-	}
-
-	if certs != nil {
-		agentArgs = append(agentArgs,
-			"--tls-cert", tlsServerCertPath,
-			"--tls-key", tlsServerKeyPath,
-			"--tls-ca", tlsCACertPath,
-		)
-	}
-
-	joinedArgs := strings.Join(agentArgs, " ")
-
 	config := &runenv.ContainerConfig{
 		Config: &container.Config{
-			Entrypoint: []string{"/bin/bash", "-c"},
-			Cmd:        []string{"/usr/local/bin/abyss server " + joinedArgs},
+			Entrypoint: []string{"/bin/bash"},
+			Cmd:        []string{"-c", agentconfig.BuildAgentProxyArgs(cfg)},
 		},
-		ContainerPort: serverPort,
+		ContainerPort: agentconfig.DefaultServerPort,
 	}
 
-	builder, err := runenv.NewContainerBuilder(config, runenv.WithImage(image), runenv.WithHostMounts(&cfg.Docker))
+	builder, err := runenv.NewContainerBuilder(
+		config,
+		runenv.WithImage(image),
+		runenv.WithHostMounts(&cfg.Docker),
+		runenv.WithExposeContainerPort(8080),
+	)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to build container config")
 		return err

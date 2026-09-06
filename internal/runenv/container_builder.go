@@ -3,6 +3,7 @@ package runenv
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,14 +82,37 @@ func WithLabel(label, value string) ContainerPreBuildStep {
 	}
 }
 
-// WithHostPort returns a pre-build step that reserves a host port binding.
-func WithHostPort(port network.Port) ContainerPreBuildStep {
+func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
+		asPort, ok := network.PortFrom(uint16(containerPort), network.TCP)
+		if !ok {
+			return fmt.Errorf("invalid container port: %d", containerPort)
+		}
+
 		if config.Host.PortBindings == nil {
 			config.Host.PortBindings = make(map[network.Port][]network.PortBinding)
 		}
 
-		config.Host.PortBindings[port] = make([]network.PortBinding, 0, 1)
+		hostPortInt, err := FreePort()
+		if err != nil {
+			return fmt.Errorf("failed to find free port: %w", err)
+		}
+
+		hostPort, ok := network.PortFrom(uint16(hostPortInt), network.TCP)
+		if !ok {
+			return fmt.Errorf("invalid host port: %d", hostPortInt)
+		}
+
+		config.Host.PortBindings[asPort] = make([]network.PortBinding, 1)
+		config.Host.PortBindings[asPort][0] = network.PortBinding{
+			HostPort: hostPort.Port(),
+			HostIP:   netip.IPv4Unspecified(),
+		}
+
+		if config.Config.ExposedPorts == nil {
+			config.Config.ExposedPorts = make(map[network.Port]struct{})
+		}
+		config.Config.ExposedPorts[asPort] = struct{}{}
 
 		return nil
 	}

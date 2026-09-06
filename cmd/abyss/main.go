@@ -21,15 +21,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-const (
-	defaultImage = "ghcr.io/sethcurry/abyss-pi:latest"
-	serverPort   = 8080
-
-	tlsServerCertPath = "/etc/abyss/tls/server.crt"
-	tlsServerKeyPath  = "/etc/abyss/tls/server.key"
-	tlsCACertPath     = "/etc/abyss/tls/ca.crt"
-)
-
 func main() {
 	logFile, err := openLogFile()
 	if err != nil {
@@ -300,9 +291,9 @@ func installTLSCerts(certs *pacific.Certificates) runenv.ContainerBuildStep {
 			path    string
 			content []byte
 		}{
-			{path: tlsServerCertPath, content: certs.ServerCertPEM},
-			{path: tlsServerKeyPath, content: certs.ServerKeyPEM},
-			{path: tlsCACertPath, content: certs.CACertPEM},
+			{path: agentconfig.DefaultTLSServerCertPath, content: certs.ServerCertPEM},
+			{path: agentconfig.DefaultTLSServerKeyPath, content: certs.ServerKeyPEM},
+			{path: agentconfig.DefaultTLSCACertPath, content: certs.CACertPEM},
 		}
 
 		for _, f := range files {

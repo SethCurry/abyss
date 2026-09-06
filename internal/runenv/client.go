@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 
-	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -111,28 +109,12 @@ func (d *DockerClient) StartContainer(
 	//	return ContainerEndpoint{}, err
 	//}
 
-	port, ok := network.PortFrom(containerPort, network.TCP)
-	if !ok {
-		return nil, ContainerEndpoint{}, fmt.Errorf("invalid container port %d", containerPort)
-	}
-
 	if config == nil {
 		config = &container.Config{}
 	}
-	config.ExposedPorts = network.PortSet{port: {}}
 	config.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	config.Labels = map[string]string{
 		"abyss": "true",
-	}
-
-	if hostConfig == nil {
-		hostConfig = &container.HostConfig{}
-	}
-	hostConfig.PortBindings = network.PortMap{
-		port: {{
-			HostIP:   netip.IPv4Unspecified(),
-			HostPort: strconv.FormatUint(uint64(hostPort), 10),
-		}},
 	}
 
 	created, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
@@ -150,31 +132,33 @@ func (d *DockerClient) StartContainer(
 		return nil, ContainerEndpoint{}, fmt.Errorf("start container: %w", err)
 	}
 
-	// Resolve the actual host port in case Docker assigned one for us.
-	actualPort := hostPort
-	if hostPort == 0 {
-		inspected, err := d.client.ContainerInspect(ctx, created.ID, client.ContainerInspectOptions{})
-		if err != nil {
-			d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to inspect container")
-			return nil, ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
-		}
+	/*
+		// Resolve the actual host port in case Docker assigned one for us.
+		actualPort := hostPort
+		if hostPort == 0 {
+			inspected, err := d.client.ContainerInspect(ctx, created.ID, client.ContainerInspectOptions{})
+			if err != nil {
+				d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to inspect container")
+				return nil, ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
+			}
 
-		bindings := inspected.Container.NetworkSettings.Ports[port]
-		if len(bindings) == 0 {
-			return nil, ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
-		}
+			bindings := inspected.Container.NetworkSettings.Ports[port]
+			if len(bindings) == 0 {
+				return nil, ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
+			}
 
-		p, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
-		if err != nil {
-			return nil, ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
+			p, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
+			if err != nil {
+				return nil, ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
+			}
+			actualPort = uint16(p)
 		}
-		actualPort = uint16(p)
-	}
+	*/
 
 	endpoint := ContainerEndpoint{
 		ContainerID: created.ID,
 		IP:          d.hostIP(),
-		Port:        actualPort,
+		Port:        hostPort,
 	}
 	d.logger.Debug().
 		Str("container_id", endpoint.ContainerID).

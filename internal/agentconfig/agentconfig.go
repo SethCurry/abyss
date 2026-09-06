@@ -2,6 +2,7 @@ package agentconfig
 
 import (
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -64,4 +65,36 @@ func FromYAMLFile(path string) (*AgentConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+func BuildAgentProxyArgs(cfg *AgentConfig) string {
+	agent := cfg.Docker.AgentCommand
+
+	agentArgs := make([]string, len(agent)*2)
+
+	for k, v := range agent {
+		startIndex := k * 2
+		agentArgs[startIndex] = "--agent"
+		agentArgs[startIndex+1] = v
+	}
+
+	if cfg.ACP.ToolsOnHost.Files {
+		agentArgs = append(agentArgs, "--local-filesystem")
+	}
+
+	if cfg.ACP.ToolsOnHost.Terminal {
+		agentArgs = append(agentArgs, "--local-terminal")
+	}
+
+	if !cfg.Websocket.DisableTLS {
+		agentArgs = append(agentArgs,
+			"--tls-cert", DefaultTLSServerCertPath,
+			"--tls-key", DefaultTLSServerKeyPath,
+			"--tls-ca", DefaultTLSCACertPath,
+		)
+	}
+
+	joinedArgs := strings.Join(agentArgs, " ")
+
+	return "/usr/local/bin/abyss server " + joinedArgs
 }
