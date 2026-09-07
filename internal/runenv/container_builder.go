@@ -24,8 +24,10 @@ type ContainerConfig struct {
 	// Name is the name to assign to the container. An empty name lets Docker
 	// generate one.
 	Name string
+
 	// ContainerPort is the port the container exposes to the host.
 	ContainerPort uint16
+
 	// HostPort is the host port bound to ContainerPort. 0 lets Docker assign a
 	// free port.
 	HostPort uint16
