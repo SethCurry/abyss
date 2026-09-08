@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
 )

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/api/agentapi"
 	"github.com/SethCurry/abyss/internal/api/pacific"

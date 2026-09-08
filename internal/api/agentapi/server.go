@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"

@@ -3,7 +3,7 @@ package wsacp
 import (
 	"context"
 
-	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
