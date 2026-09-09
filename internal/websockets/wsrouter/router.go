@@ -141,7 +141,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], err
 
 	err = r.conn.Send(&protobyss.ACPContainer{
 		MessageId: msgID,
-		TypeId:    int32(msgType.TypeID),
+		TypeId:    int32(msgType.GetTypeID()),
 		Content:   jsonMarshalled})
 	if err != nil {
 		return nil, fmt.Errorf("failed to send RPC request: %w", err)
@@ -169,7 +169,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 	return r.conn.Send(&protobyss.ACPContainer{
 		MessageId:   msgID,
 		ResponseFor: requestID,
-		TypeId:      int32(msgType.TypeID),
+		TypeId:      int32(msgType.GetTypeID()),
 		Content:     marshalled,
 	})
 }

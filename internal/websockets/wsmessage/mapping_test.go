@@ -12,8 +12,8 @@ func TestGetMessageTypeByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetMessageTypeByID returned error: %v", err)
 	}
-	if got.TypeID != wsmessage.CancelNotificationType {
-		t.Errorf("TypeID = %v, want %v", got.TypeID, wsmessage.CancelNotificationType)
+	if got.GetTypeID() != wsmessage.CancelNotificationType {
+		t.Errorf("TypeID = %v, want %v", got.GetTypeID(), wsmessage.CancelNotificationType)
 	}
 }
 
@@ -28,8 +28,8 @@ func TestGetMessageTypeByType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetMessageTypeByType returned error: %v", err)
 	}
-	if got.TypeID != wsmessage.CancelNotificationType {
-		t.Errorf("TypeID = %v, want %v", got.TypeID, wsmessage.CancelNotificationType)
+	if got.GetTypeID() != wsmessage.CancelNotificationType {
+		t.Errorf("TypeID = %v, want %v", got.GetTypeID(), wsmessage.CancelNotificationType)
 	}
 }
 

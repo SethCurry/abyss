@@ -8,916 +8,127 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
-// ACPMessage stores all of the metadata about a particular kind of ACP message.
-// These are used to know how to unmarshal ACP messages embedded in protobufs.
-type ACPMessage struct {
-	TypeID    MessageType
-	Type      reflect.Type
-	Unmarshal func([]byte) (any, error)
+func NewMessage[T any](msgTypeID MessageType) *Message[T] {
+	return &Message[T]{
+		TypeID: msgTypeID,
+	}
 }
 
-func GetMessageTypeByID(msgTypeID int32) (ACPMessage, error) {
+type Message[T any] struct {
+	TypeID MessageType
+}
+
+func (m *Message[T]) Unmarshal(content []byte) (T, error) {
+	var resp T
+	err := json.Unmarshal(content, &resp)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+// GetTypeID returns the identifier for this message type.
+func (m *Message[T]) GetTypeID() MessageType { return m.TypeID }
+
+// ReflectType returns the concrete Go type this message unmarshals into.
+func (m *Message[T]) ReflectType() reflect.Type { return reflect.TypeOf((*T)(nil)).Elem() }
+
+// UnmarshalAny unmarshals content into the message's concrete type, returned as any.
+func (m *Message[T]) UnmarshalAny(content []byte) (any, error) {
+	return m.Unmarshal(content)
+}
+
+// TypedMessage is the common interface for generic Message[T] values so they can
+// be stored together in a single heterogeneous registry.
+type TypedMessage interface {
+	GetTypeID() MessageType
+	ReflectType() reflect.Type
+	UnmarshalAny(content []byte) (any, error)
+}
+
+func GetMessageTypeByID(msgTypeID int32) (TypedMessage, error) {
 	for _, v := range AllMessages {
-		if int32(v.TypeID) == msgTypeID {
+		if int32(v.GetTypeID()) == msgTypeID {
 			return v, nil
 		}
 	}
 
-	return ACPMessage{}, fmt.Errorf("no ACP message type with ID %d", msgTypeID)
+	return nil, fmt.Errorf("no ACP message type with ID %d", msgTypeID)
 }
 
-func GetMessageTypeByType(msg any) (ACPMessage, error) {
+func GetMessageTypeByType(msg any) (TypedMessage, error) {
 	msgType := reflect.TypeOf(msg)
 	for _, v := range AllMessages {
-		if msgType == v.Type {
+		if msgType == v.ReflectType() {
 			return v, nil
 		}
 	}
 
-	return ACPMessage{}, fmt.Errorf("unknown router message type %T", msg)
+	return nil, fmt.Errorf("unknown router message type %T", msg)
 }
 
-var AllMessages = []ACPMessage{
-	{
-		TypeID: RequestPermissionRequestType,
-		Type:   reflect.TypeOf(acp.RequestPermissionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.RequestPermissionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: RequestPermissionResponseType,
-		Type:   reflect.TypeOf(acp.RequestPermissionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.RequestPermissionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: WriteTextFileRequestType,
-		Type:   reflect.TypeOf(acp.WriteTextFileRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.WriteTextFileRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: WriteTextFileResponseType,
-		Type:   reflect.TypeOf(acp.WriteTextFileResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.WriteTextFileResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ReadTextFileRequestType,
-		Type:   reflect.TypeOf(acp.ReadTextFileRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ReadTextFileRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ReadTextFileResponseType,
-		Type:   reflect.TypeOf(acp.ReadTextFileResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ReadTextFileResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: CreateTerminalRequestType,
-		Type:   reflect.TypeOf(acp.CreateTerminalRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.CreateTerminalRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: CreateTerminalResponseType,
-		Type:   reflect.TypeOf(acp.CreateTerminalResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.CreateTerminalResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: TerminalOutputRequestType,
-		Type:   reflect.TypeOf(acp.TerminalOutputRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.TerminalOutputRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: TerminalOutputResponseType,
-		Type:   reflect.TypeOf(acp.TerminalOutputResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.TerminalOutputResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ReleaseTerminalRequestType,
-		Type:   reflect.TypeOf(acp.ReleaseTerminalRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ReleaseTerminalRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ReleaseTerminalResponseType,
-		Type:   reflect.TypeOf(acp.ReleaseTerminalResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ReleaseTerminalResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: WaitForTerminalExitRequestType,
-		Type:   reflect.TypeOf(acp.WaitForTerminalExitRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.WaitForTerminalExitRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: WaitForTerminalExitResponseType,
-		Type:   reflect.TypeOf(acp.WaitForTerminalExitResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.WaitForTerminalExitResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: KillTerminalRequestType,
-		Type:   reflect.TypeOf(acp.KillTerminalRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.KillTerminalRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: KillTerminalResponseType,
-		Type:   reflect.TypeOf(acp.KillTerminalResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.KillTerminalResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: SessionNotificationType,
-		Type:   reflect.TypeOf(acp.SessionNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.SessionNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: SetSessionModeRequestType,
-		Type:   reflect.TypeOf(acp.SetSessionModeRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.SetSessionModeRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: SetSessionModeResponseType,
-		Type:   reflect.TypeOf(acp.SetSessionModeResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.SetSessionModeResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableForkSessionRequestType,
-		Type:   reflect.TypeOf(acp.UnstableForkSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableForkSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableForkSessionResponseType,
-		Type:   reflect.TypeOf(acp.UnstableForkSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableForkSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ListSessionsRequestType,
-		Type:   reflect.TypeOf(acp.ListSessionsRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ListSessionsRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ListSessionsResponseType,
-		Type:   reflect.TypeOf(acp.ListSessionsResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ListSessionsResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ResumeSessionRequestType,
-		Type:   reflect.TypeOf(acp.ResumeSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ResumeSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: ResumeSessionResponseType,
-		Type:   reflect.TypeOf(acp.ResumeSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.ResumeSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: SetSessionConfigOptionRequestType,
-		Type:   reflect.TypeOf(acp.SetSessionConfigOptionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.SetSessionConfigOptionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: SetSessionConfigOptionResponseType,
-		Type:   reflect.TypeOf(acp.SetSessionConfigOptionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.SetSessionConfigOptionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: LogoutRequestType,
-		Type:   reflect.TypeOf(acp.LogoutRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.LogoutRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: LogoutResponseType,
-		Type:   reflect.TypeOf(acp.LogoutResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.LogoutResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableCloseNesRequestType,
-		Type:   reflect.TypeOf(acp.UnstableCloseNesRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableCloseNesRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableCloseNesResponseType,
-		Type:   reflect.TypeOf(acp.UnstableCloseNesResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableCloseNesResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableStartNesRequestType,
-		Type:   reflect.TypeOf(acp.UnstableStartNesRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableStartNesRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableStartNesResponseType,
-		Type:   reflect.TypeOf(acp.UnstableStartNesResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableStartNesResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableSuggestNesRequestType,
-		Type:   reflect.TypeOf(acp.UnstableSuggestNesRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableSuggestNesRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableSuggestNesResponseType,
-		Type:   reflect.TypeOf(acp.UnstableSuggestNesResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableSuggestNesResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableAcceptNesNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableAcceptNesNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableAcceptNesNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableRejectNesNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableRejectNesNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableRejectNesNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDidChangeDocumentNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableDidChangeDocumentNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDidChangeDocumentNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDidCloseDocumentNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableDidCloseDocumentNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDidCloseDocumentNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDidFocusDocumentNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableDidFocusDocumentNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDidFocusDocumentNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDidOpenDocumentNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableDidOpenDocumentNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDidOpenDocumentNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDidSaveDocumentNotificationType,
-		Type:   reflect.TypeOf(acp.UnstableDidSaveDocumentNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDidSaveDocumentNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDisableProviderRequestType,
-		Type:   reflect.TypeOf(acp.UnstableDisableProviderRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDisableProviderRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDisableProviderResponseType,
-		Type:   reflect.TypeOf(acp.UnstableDisableProviderResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDisableProviderResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableListProvidersRequestType,
-		Type:   reflect.TypeOf(acp.UnstableListProvidersRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableListProvidersRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableListProvidersResponseType,
-		Type:   reflect.TypeOf(acp.UnstableListProvidersResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableListProvidersResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableSetProviderRequestType,
-		Type:   reflect.TypeOf(acp.UnstableSetProviderRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableSetProviderRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableSetProviderResponseType,
-		Type:   reflect.TypeOf(acp.UnstableSetProviderResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableSetProviderResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDeleteSessionRequestType,
-		Type:   reflect.TypeOf(acp.UnstableDeleteSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDeleteSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: UnstableDeleteSessionResponseType,
-		Type:   reflect.TypeOf(acp.UnstableDeleteSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.UnstableDeleteSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: CloseSessionRequestType,
-		Type:   reflect.TypeOf(acp.CloseSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.CloseSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: CloseSessionResponseType,
-		Type:   reflect.TypeOf(acp.CloseSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.CloseSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: InitializeRequestType,
-		Type:   reflect.TypeOf(acp.InitializeRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.InitializeRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: InitializeResponseType,
-		Type:   reflect.TypeOf(acp.InitializeResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.InitializeResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: NewSessionRequestType,
-		Type:   reflect.TypeOf(acp.NewSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.NewSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: NewSessionResponseType,
-		Type:   reflect.TypeOf(acp.NewSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.NewSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: AuthenticateRequestType,
-		Type:   reflect.TypeOf(acp.AuthenticateRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.AuthenticateRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: AuthenticateResponseType,
-		Type:   reflect.TypeOf(acp.AuthenticateResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.AuthenticateResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: LoadSessionRequestType,
-		Type:   reflect.TypeOf(acp.LoadSessionRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.LoadSessionRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: LoadSessionResponseType,
-		Type:   reflect.TypeOf(acp.LoadSessionResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.LoadSessionResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: PromptRequestType,
-		Type:   reflect.TypeOf(acp.PromptRequest{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.PromptRequest
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: PromptResponseType,
-		Type:   reflect.TypeOf(acp.PromptResponse{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.PromptResponse
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
-	{
-		TypeID: CancelNotificationType,
-		Type:   reflect.TypeOf(acp.CancelNotification{}),
-		Unmarshal: func(content []byte) (any, error) {
-			var resp acp.CancelNotification
-
-			err := json.Unmarshal(content, &resp)
-			if err != nil {
-				return nil, err
-			}
-
-			return resp, nil
-		},
-	},
+var AllMessages = []TypedMessage{
+	NewMessage[acp.RequestPermissionRequest](RequestPermissionRequestType),
+	NewMessage[acp.RequestPermissionResponse](RequestPermissionResponseType),
+	NewMessage[acp.WriteTextFileRequest](WriteTextFileRequestType),
+	NewMessage[acp.WriteTextFileResponse](WriteTextFileResponseType),
+	NewMessage[acp.ReadTextFileRequest](ReadTextFileRequestType),
+	NewMessage[acp.ReadTextFileResponse](ReadTextFileResponseType),
+	NewMessage[acp.CreateTerminalRequest](CreateTerminalRequestType),
+	NewMessage[acp.CreateTerminalResponse](CreateTerminalResponseType),
+	NewMessage[acp.TerminalOutputRequest](TerminalOutputRequestType),
+	NewMessage[acp.TerminalOutputResponse](TerminalOutputResponseType),
+	NewMessage[acp.ReleaseTerminalRequest](ReleaseTerminalRequestType),
+	NewMessage[acp.ReleaseTerminalResponse](ReleaseTerminalResponseType),
+	NewMessage[acp.WaitForTerminalExitRequest](WaitForTerminalExitRequestType),
+	NewMessage[acp.WaitForTerminalExitResponse](WaitForTerminalExitResponseType),
+	NewMessage[acp.KillTerminalRequest](KillTerminalRequestType),
+	NewMessage[acp.KillTerminalResponse](KillTerminalResponseType),
+	NewMessage[acp.SessionNotification](SessionNotificationType),
+	NewMessage[acp.SetSessionModeRequest](SetSessionModeRequestType),
+	NewMessage[acp.SetSessionModeResponse](SetSessionModeResponseType),
+	NewMessage[acp.UnstableForkSessionRequest](UnstableForkSessionRequestType),
+	NewMessage[acp.UnstableForkSessionResponse](UnstableForkSessionResponseType),
+	NewMessage[acp.ListSessionsRequest](ListSessionsRequestType),
+	NewMessage[acp.ListSessionsResponse](ListSessionsResponseType),
+	NewMessage[acp.ResumeSessionRequest](ResumeSessionRequestType),
+	NewMessage[acp.ResumeSessionResponse](ResumeSessionResponseType),
+	NewMessage[acp.SetSessionConfigOptionRequest](SetSessionConfigOptionRequestType),
+	NewMessage[acp.SetSessionConfigOptionResponse](SetSessionConfigOptionResponseType),
+	NewMessage[acp.LogoutRequest](LogoutRequestType),
+	NewMessage[acp.LogoutResponse](LogoutResponseType),
+	NewMessage[acp.UnstableCloseNesRequest](UnstableCloseNesRequestType),
+	NewMessage[acp.UnstableCloseNesResponse](UnstableCloseNesResponseType),
+	NewMessage[acp.UnstableStartNesRequest](UnstableStartNesRequestType),
+	NewMessage[acp.UnstableStartNesResponse](UnstableStartNesResponseType),
+	NewMessage[acp.UnstableSuggestNesRequest](UnstableSuggestNesRequestType),
+	NewMessage[acp.UnstableSuggestNesResponse](UnstableSuggestNesResponseType),
+	NewMessage[acp.UnstableAcceptNesNotification](UnstableAcceptNesNotificationType),
+	NewMessage[acp.UnstableRejectNesNotification](UnstableRejectNesNotificationType),
+	NewMessage[acp.UnstableDidChangeDocumentNotification](UnstableDidChangeDocumentNotificationType),
+	NewMessage[acp.UnstableDidCloseDocumentNotification](UnstableDidCloseDocumentNotificationType),
+	NewMessage[acp.UnstableDidFocusDocumentNotification](UnstableDidFocusDocumentNotificationType),
+	NewMessage[acp.UnstableDidOpenDocumentNotification](UnstableDidOpenDocumentNotificationType),
+	NewMessage[acp.UnstableDidSaveDocumentNotification](UnstableDidSaveDocumentNotificationType),
+	NewMessage[acp.UnstableDisableProviderRequest](UnstableDisableProviderRequestType),
+	NewMessage[acp.UnstableDisableProviderResponse](UnstableDisableProviderResponseType),
+	NewMessage[acp.UnstableListProvidersRequest](UnstableListProvidersRequestType),
+	NewMessage[acp.UnstableListProvidersResponse](UnstableListProvidersResponseType),
+	NewMessage[acp.UnstableSetProviderRequest](UnstableSetProviderRequestType),
+	NewMessage[acp.UnstableSetProviderResponse](UnstableSetProviderResponseType),
+	NewMessage[acp.UnstableDeleteSessionRequest](UnstableDeleteSessionRequestType),
+	NewMessage[acp.UnstableDeleteSessionResponse](UnstableDeleteSessionResponseType),
+	NewMessage[acp.CloseSessionRequest](CloseSessionRequestType),
+	NewMessage[acp.CloseSessionResponse](CloseSessionResponseType),
+	NewMessage[acp.InitializeRequest](InitializeRequestType),
+	NewMessage[acp.InitializeResponse](InitializeResponseType),
+	NewMessage[acp.NewSessionRequest](NewSessionRequestType),
+	NewMessage[acp.NewSessionResponse](NewSessionResponseType),
+	NewMessage[acp.AuthenticateRequest](AuthenticateRequestType),
+	NewMessage[acp.AuthenticateResponse](AuthenticateResponseType),
+	NewMessage[acp.LoadSessionRequest](LoadSessionRequestType),
+	NewMessage[acp.LoadSessionResponse](LoadSessionResponseType),
+	NewMessage[acp.PromptRequest](PromptRequestType),
+	NewMessage[acp.PromptResponse](PromptResponseType),
+	NewMessage[acp.CancelNotification](CancelNotificationType),
 }
