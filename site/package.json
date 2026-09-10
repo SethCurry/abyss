@@ -10,7 +10,7 @@
   },
   "scripts": {
     "create": "hugo new",
-    "dev": "hugo server --disableFastRender --noHTTPCache",
+    "dev": "hugo server --disableFastRender --noHTTPCache --buildDrafts",
     "format": "prettier **/** -w -c",
     "build": "hugo --minify --gc",
     "preview": "vite preview --outDir public"
