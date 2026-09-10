@@ -118,7 +118,7 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 
 		config.Endpoint = &ContainerEndpoint{
 			ContainerID: "",
-			IP:          netip.IPv4Unspecified().String(),
+			IP:          "127.0.0.1",
 			Port:        hostPort.Num(),
 		}
 

@@ -26,3 +26,5 @@ v0.0.2 is now available for download!
 - Websocket messages are now wrapped in protobuf, allowing non-ACP messages to be transmitted
 - Cleaned up the code for creating containers
 - Added mutual TLS authentication by default
+- Added Docker image pull options
+- Fixed a bug where the agent would start before setup scripts had finished running
