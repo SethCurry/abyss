@@ -25,6 +25,11 @@ docker:
   # The name of the image to use
   image: "ghcr.io/sethcurry/abyss-pi:latest"
 
+  # Controls when images are pulled from the registry
+  # Valid options: "Always", "IfNotPresent", "Never"
+  # Default: "IfNotPresent"
+  image_pull_policy: "Always"
+
   # A list of host mounts to bind mount into the container
   # You can specify relative paths, but they will be mounted
   # inside the container at the absolute path on your host machine
@@ -87,6 +92,19 @@ websocket:
 
 If you are creating your own image, make sure you have the `abyss` binary installed at `/usr/local/bin/abyss`.
 Also make sure that you have `bash` installed; some containers are slim and only include `sh`.
+
+### `image_pull_policy`
+
+`image_pull_policy` controls when images are pulled from the registry.  Valid options are `Always`, `IfNotPresent`, and `Never`.
+The default is `IfNotPresent`.
+
+The options do basically what you'd expect.
+
+| Option | Description |
+| ------ | ----------- |
+| `Always` | Always pull the image from the registry, even if it already exists locally. |
+| `IfNotPresent` | Pull the image from the registry only if it does not exist locally. |
+| `Never` | Never pull the image from the registry; use the local image if it exists, otherwise fail. |
 
 ### `agent_command`
 
