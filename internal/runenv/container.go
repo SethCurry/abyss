@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
@@ -42,14 +43,14 @@ func (c *Container) ID() string {
 func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
 	c.logger.Info().Msg("stopping container")
 
-	if _, err := c.client.client.ContainerStop(ctx, c.containerID, client.ContainerStopOptions{Signal: "SIGTERM", Timeout: ptr(int(timeout.Seconds()))}); err != nil {
+	if _, err := c.client.Client.ContainerStop(ctx, c.containerID, client.ContainerStopOptions{Signal: "SIGTERM", Timeout: ptr(int(timeout.Seconds()))}); err != nil {
 		c.logger.Warn().
 			Err(err).
 			Msg("container stop failed, attempting remove")
 	}
 
 	c.logger.Info().Msg("removing container")
-	if _, err := c.client.client.ContainerRemove(ctx, c.containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
+	if _, err := c.client.Client.ContainerRemove(ctx, c.containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
 		c.logger.Error().
 			Err(err).
 			Msg("failed to remove container")
@@ -67,7 +68,7 @@ func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
 func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr string, err error) {
 	c.logger.Debug().Msg("executing bash script in container")
 
-	created, err := c.client.client.ExecCreate(ctx, c.containerID, client.ExecCreateOptions{
+	created, err := c.client.Client.ExecCreate(ctx, c.containerID, client.ExecCreateOptions{
 		Cmd:          []string{"bash", "-c", script},
 		AttachStdout: true,
 		AttachStderr: true,
@@ -77,7 +78,7 @@ func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr
 		return "", "", fmt.Errorf("create exec: %w", err)
 	}
 
-	attach, err := c.client.client.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
+	attach, err := c.client.Client.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
 	if err != nil {
 		c.logger.Error().Err(err).Msg("failed to attach to exec")
 		return "", "", fmt.Errorf("attach to exec: %w", err)
@@ -92,7 +93,7 @@ func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr
 		return "", "", fmt.Errorf("read exec output: %w", err)
 	}
 
-	inspect, err := c.client.client.ExecInspect(
+	inspect, err := c.client.Client.ExecInspect(
 		ctx,
 		created.ID,
 		client.ExecInspectOptions{})
@@ -108,6 +109,12 @@ func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr
 	}
 
 	return out.String(), errOut.String(), nil
+}
+
+func (d *Container) CreateAgentStartFile(ctx context.Context) error {
+	d.logger.Debug().Str("path", agentconfig.DefaultStartFilePath).Msg("creating start file")
+	_, _, err := d.ExecBash(ctx, "touch "+agentconfig.DefaultStartFilePath)
+	return err
 }
 
 // CopyToContainer copies the file or directory at hostPath into the container
@@ -137,7 +144,7 @@ func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, con
 		pw.CloseWithError(buildTar(pw, hostPath, info))
 	}()
 
-	if _, err := d.client.client.CopyToContainer(ctx, containerID, client.CopyToContainerOptions{
+	if _, err := d.client.Client.CopyToContainer(ctx, containerID, client.CopyToContainerOptions{
 		DestinationPath: containerDir,
 		Content:         pr,
 	}); err != nil {
@@ -176,7 +183,7 @@ func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, contai
 		pw.CloseWithError(writeContentTar(pw, content, base, mode))
 	}()
 
-	if _, err := d.client.client.CopyToContainer(ctx, d.containerID, client.CopyToContainerOptions{
+	if _, err := d.client.Client.CopyToContainer(ctx, d.containerID, client.CopyToContainerOptions{
 		DestinationPath: dir,
 		Content:         pr,
 	}); err != nil {

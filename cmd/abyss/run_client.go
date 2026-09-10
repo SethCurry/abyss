@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
@@ -33,6 +34,12 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 	image := cfg.Docker.Image
 	if image == "" {
 		image = agentconfig.DefaultImage
+	}
+
+	err = runenv.PullImage(ctx, docker.Client, image, cfg.Docker.ImagePullPolicy)
+	if err != nil {
+		logger.Error().Err(err).Str("image", image).Msg("failed to pull Docker image")
+		return fmt.Errorf("failed to pull Docker image")
 	}
 
 	// Generate a certificate set for mutual TLS unless the user disabled it.
@@ -79,7 +86,13 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 		return err
 	}
 
-	time.Sleep(time.Second * 1)
+	err = cont.CreateAgentStartFile(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to create agent start file")
+		return err
+	}
+
+	time.Sleep(agentconfig.WaitForStartFileSleepDuration)
 
 	scheme := "ws"
 	var tlsConfig *tls.Config

@@ -28,12 +28,33 @@ func (h HostMount) Validate() error {
 	return nil
 }
 
+// ImagePullPolicy controls when Docker pulls the configured image.
+type ImagePullPolicy string
+
+const (
+	ImagePullPolicyAlways       ImagePullPolicy = "Always"
+	ImagePullPolicyIfNotPresent ImagePullPolicy = "IfNotPresent"
+	ImagePullPolicyNever        ImagePullPolicy = "Never"
+)
+
+// Validate implements types.Validator by rejecting values outside the
+// allowed set. An empty value is treated as unset and is valid.
+func (p ImagePullPolicy) Validate() error {
+	switch p {
+	case "", ImagePullPolicyAlways, ImagePullPolicyIfNotPresent, ImagePullPolicyNever:
+		return nil
+	default:
+		return types.NewValidationError(p, "image_pull_policy", "must be one of Always, IfNotPresent, or Never")
+	}
+}
+
 type DockerConfig struct {
 	// The Docker image to use.  Can be short or long, Docker will
 	// resolve it for short names.
-	Image        string      `yaml:"image"`
-	HostMounts   []HostMount `yaml:"host_mounts"`
-	AgentCommand []string    `yaml:"agent_command"`
+	Image           string          `yaml:"image"`
+	ImagePullPolicy ImagePullPolicy `yaml:"image_pull_policy"`
+	HostMounts      []HostMount     `yaml:"host_mounts"`
+	AgentCommand    []string        `yaml:"agent_command"`
 }
 
 // Validate implements types.Validator by checking the image and each host
@@ -41,6 +62,10 @@ type DockerConfig struct {
 func (d DockerConfig) Validate() error {
 	if d.Image == "" {
 		return types.NewValidationError(d, "image", "Cannot be an empty string")
+	}
+
+	if err := d.ImagePullPolicy.Validate(); err != nil {
+		return err
 	}
 
 	for _, mount := range d.HostMounts {

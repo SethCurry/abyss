@@ -162,6 +162,15 @@ func main() {
 					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
+					logger.Info().Str("path", agentconfig.DefaultStartFilePath).Msg("waiting for file to appear to start")
+					for {
+						if _, err := os.Stat(agentconfig.DefaultStartFilePath); err == nil {
+							logger.Info().Str("path", agentconfig.DefaultStartFilePath).Msg("found start file, starting")
+							break
+						}
+						logger.Debug().Str("path", agentconfig.DefaultStartFilePath).Msg("start file not found, waiting")
+						time.Sleep(agentconfig.WaitForStartFileSleepDuration)
+					}
 					agentCmd := cmd.StringSlice("agent")
 					logger.Debug().Strs("agent_command", agentCmd).Msg("starting agent and websocket server")
 
