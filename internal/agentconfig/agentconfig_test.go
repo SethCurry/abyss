@@ -1,9 +1,13 @@
 package agentconfig
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/SethCurry/abyss/internal/types"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,197 +25,125 @@ func assertError(t *testing.T, err error) {
 	}
 }
 
-func TestSetupScriptType_UnmarshalYAML(t *testing.T) {
+func assertValidationError(t *testing.T, err error, field string) {
+	t.Helper()
+	var ve *types.ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected *types.ValidationError, got %T: %v", err, err)
+	}
+	if ve.Field != field {
+		t.Fatalf("expected field %q, got %q", field, ve.Field)
+	}
+}
+
+func TestHostMount_Validate(t *testing.T) {
+	tempDir := t.TempDir()
+	existingFile := filepath.Join(tempDir, "exists.txt")
+	if err := os.WriteFile(existingFile, []byte("data"), 0o600); err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+
 	tests := []struct {
-		name    string
-		yaml    string
-		want    SetupScriptType
-		wantErr bool
+		name      string
+		mount     HostMount
+		wantField string
 	}{
 		{
-			name: "file",
-			yaml: `"file"`,
-			want: SetupScriptTypeFile,
+			name:      "valid",
+			mount:     HostMount{Source: existingFile, Destination: "/tmp/dest"},
+			wantField: "",
 		},
 		{
-			name: "inline",
-			yaml: `"inline"`,
-			want: SetupScriptTypeInline,
+			name:      "empty source",
+			mount:     HostMount{Source: "", Destination: "/tmp/dest"},
+			wantField: "source",
 		},
 		{
-			name:    "invalid value",
-			yaml:    `"bogus"`,
-			wantErr: true,
+			name:      "source does not exist",
+			mount:     HostMount{Source: filepath.Join(tempDir, "missing.txt"), Destination: "/tmp/dest"},
+			wantField: "source",
 		},
 		{
-			name:    "empty value",
-			yaml:    `""`,
-			wantErr: true,
-		},
-		{
-			name:    "non-string node",
-			yaml:    `123`,
-			wantErr: true,
+			name:      "empty destination",
+			mount:     HostMount{Source: existingFile, Destination: ""},
+			wantField: "destination",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var got SetupScriptType
-			err := yaml.Unmarshal([]byte(tt.yaml), &got)
-			if tt.wantErr {
-				assertError(t, err)
+			err := tt.mount.Validate()
+			if tt.wantField == "" {
+				assertNoError(t, err)
 				return
 			}
-			assertNoError(t, err)
-			if got != tt.want {
-				t.Fatalf("got %q, want %q", got, tt.want)
-			}
+			assertValidationError(t, err, tt.wantField)
 		})
 	}
 }
 
-func TestFileCopyType_UnmarshalYAML(t *testing.T) {
+func TestAgentConfig_Validate(t *testing.T) {
+	tempDir := t.TempDir()
+	existingFile := filepath.Join(tempDir, "exists.txt")
+	if err := os.WriteFile(existingFile, []byte("data"), 0o600); err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+
 	tests := []struct {
-		name    string
-		yaml    string
-		want    FileCopyType
-		wantErr bool
+		name      string
+		cfg       AgentConfig
+		wantField string
 	}{
 		{
-			name: "inline",
-			yaml: `"inline"`,
-			want: FileCopyTypeInline,
+			name: "valid",
+			cfg: AgentConfig{
+				Docker: DockerConfig{Image: "ubuntu:latest"},
+			},
+			wantField: "",
 		},
 		{
-			name: "path",
-			yaml: `"path"`,
-			want: FileCopyTypePath,
+			name: "valid full",
+			cfg: AgentConfig{
+				Docker: DockerConfig{
+					Image:      "ubuntu:latest",
+					HostMounts: []HostMount{{Source: existingFile, Destination: "/tmp/dest"}},
+				},
+				SetupScripts: []SetupScriptsConfig{{Type: SetupScriptTypeInline, Source: "echo hello"}},
+				CopyFiles:    []FileCopyConfig{{Type: FileCopyTypeInline, Source: "hello", Target: "/tmp/hello"}},
+			},
+			wantField: "",
 		},
 		{
-			name:    "invalid value",
-			yaml:    `"bogus"`,
-			wantErr: true,
+			name:      "invalid docker image",
+			cfg:       AgentConfig{Docker: DockerConfig{Image: ""}},
+			wantField: "image",
 		},
 		{
-			name:    "empty value",
-			yaml:    `""`,
-			wantErr: true,
+			name: "invalid setup script",
+			cfg: AgentConfig{
+				Docker:       DockerConfig{Image: "ubuntu:latest"},
+				SetupScripts: []SetupScriptsConfig{{Type: SetupScriptTypeInline, Source: ""}},
+			},
+			wantField: "source",
 		},
 		{
-			name:    "non-string node",
-			yaml:    `123`,
-			wantErr: true,
+			name: "invalid copy file",
+			cfg: AgentConfig{
+				Docker:    DockerConfig{Image: "ubuntu:latest"},
+				CopyFiles: []FileCopyConfig{{Type: FileCopyTypeInline, Source: "hello", Target: ""}},
+			},
+			wantField: "target",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var got FileCopyType
-			err := yaml.Unmarshal([]byte(tt.yaml), &got)
-			if tt.wantErr {
-				assertError(t, err)
+			err := tt.cfg.Validate()
+			if tt.wantField == "" {
+				assertNoError(t, err)
 				return
 			}
-			assertNoError(t, err)
-			if got != tt.want {
-				t.Fatalf("got %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAgentConfig_SetupScriptsValidation(t *testing.T) {
-	tests := []struct {
-		name    string
-		yaml    string
-		wantErr bool
-	}{
-		{
-			name: "valid file type",
-			yaml: `
-setup_scripts:
-  - type: file
-    source: /tmp/script.sh
-`,
-		},
-		{
-			name: "valid inline type",
-			yaml: `
-setup_scripts:
-  - type: inline
-    source: echo hello
-`,
-		},
-		{
-			name: "invalid setup script type",
-			yaml: `
-setup_scripts:
-  - type: bogus
-    source: echo hello
-`,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var cfg AgentConfig
-			err := yaml.Unmarshal([]byte(tt.yaml), &cfg)
-			if tt.wantErr {
-				assertError(t, err)
-				return
-			}
-			assertNoError(t, err)
-		})
-	}
-}
-
-func TestAgentConfig_CopyFilesValidation(t *testing.T) {
-	tests := []struct {
-		name    string
-		yaml    string
-		wantErr bool
-	}{
-		{
-			name: "valid inline type",
-			yaml: `
-copy_files:
-  - type: inline
-    source: hello
-    target: /tmp/hello
-`,
-		},
-		{
-			name: "valid path type",
-			yaml: `
-copy_files:
-  - type: path
-    source: ./local.txt
-    target: /tmp/local.txt
-`,
-		},
-		{
-			name: "invalid file copy type",
-			yaml: `
-copy_files:
-  - type: bogus
-    source: ./local.txt
-    target: /tmp/local.txt
-`,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var cfg AgentConfig
-			err := yaml.Unmarshal([]byte(tt.yaml), &cfg)
-			if tt.wantErr {
-				assertError(t, err)
-				return
-			}
-			assertNoError(t, err)
+			assertValidationError(t, err, tt.wantField)
 		})
 	}
 }

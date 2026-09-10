@@ -1,13 +1,14 @@
 package agentconfig
 
 import (
-	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 /*
+ * TODO features to add
  * I want to support these configurations:
  * - apt-get packages
  * - apk packages
@@ -17,90 +18,8 @@ import (
  *  - These are just shims to apt-get/apk/etc
  */
 
-type ToolsOnHostConfig struct {
-	Files    bool `yaml:"files"`
-	Terminal bool `yaml:"terminal"`
-}
-
-type ACPConfig struct {
-	ToolsOnHost ToolsOnHostConfig `yaml:"tools_on_host"`
-}
-
-type HostMount struct {
-	Source      string `yaml:"source"`
-	Destination string `yaml:"destination"`
-}
-
-type DockerConfig struct {
-	Image        string      `yaml:"image"`
-	HostMounts   []HostMount `yaml:"host_mounts"`
-	AgentCommand []string    `yaml:"agent_command"`
-}
-
-// SetupScriptType is an enum type.  It exists
-// solely so UnmarshalYAML can validate the type field.
-type SetupScriptType string
-
-const (
-	SetupScriptTypeFile   SetupScriptType = "file"
-	SetupScriptTypeInline SetupScriptType = "inline"
-)
-
-// UnmarshalYAML validates that the Type field is either "file" or "inline".
-func (t *SetupScriptType) UnmarshalYAML(value *yaml.Node) error {
-	var s string
-	if err := value.Decode(&s); err != nil {
-		return err
-	}
-
-	switch SetupScriptType(s) {
-	case SetupScriptTypeFile, SetupScriptTypeInline:
-		*t = SetupScriptType(s)
-		return nil
-	default:
-		return fmt.Errorf("invalid setup script type %q: must be %q or %q", s, SetupScriptTypeFile, SetupScriptTypeInline)
-	}
-}
-
-type SetupScriptsConfig struct {
-	// Type is either "inline" or "file"
-	Type SetupScriptType `yaml:"type"`
-	// Source is the script content or file path
-	Source string `yaml:"source"`
-}
-
-// FileCopyType is an enum type.  It exists
-// solely so UnmarshalYAML can validate the type field.
-type FileCopyType string
-
-const (
-	FileCopyTypeInline FileCopyType = "inline"
-	FileCopyTypePath   FileCopyType = "path"
-)
-
-// UnmarshalYAML validates that the Type field is either "inline" or "path".
-func (t *FileCopyType) UnmarshalYAML(value *yaml.Node) error {
-	var s string
-	if err := value.Decode(&s); err != nil {
-		return err
-	}
-
-	switch FileCopyType(s) {
-	case FileCopyTypeInline, FileCopyTypePath:
-		*t = FileCopyType(s)
-		return nil
-	default:
-		return fmt.Errorf("invalid file copy type %q: must be %q or %q", s, FileCopyTypeInline, FileCopyTypePath)
-	}
-}
-
-type FileCopyConfig struct {
-	// Type is currently either "inline" or "path"
-	Type FileCopyType `yaml:"type"`
-	// Source is the content or file path of the source
-	Source string `yaml:"source"`
-	// Target is the destination path on the agent
-	Target string `yaml:"target"`
+type WebsocketConfig struct {
+	DisableTLS bool `yaml:"disable_tls"`
 }
 
 type AgentConfig struct {
@@ -108,6 +27,28 @@ type AgentConfig struct {
 	SetupScripts []SetupScriptsConfig `yaml:"setup_scripts"`
 	CopyFiles    []FileCopyConfig     `yaml:"copy_files"`
 	ACP          ACPConfig            `yaml:"acp"`
+	Websocket    WebsocketConfig      `yaml:"websocket"`
+}
+
+// Validate implements types.Validator by validating each nested config.
+func (a AgentConfig) Validate() error {
+	if err := a.Docker.Validate(); err != nil {
+		return err
+	}
+
+	for _, script := range a.SetupScripts {
+		if err := script.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, file := range a.CopyFiles {
+		if err := file.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return a.ACP.Validate()
 }
 
 // FromYAMLFile reads the YAML file at the given path and unmarshals it
@@ -124,4 +65,36 @@ func FromYAMLFile(path string) (*AgentConfig, error) {
 	}
 
 	return &cfg, nil
+}
+
+func BuildAgentProxyArgs(cfg *AgentConfig) string {
+	agent := cfg.Docker.AgentCommand
+
+	agentArgs := make([]string, len(agent)*2)
+
+	for k, v := range agent {
+		startIndex := k * 2
+		agentArgs[startIndex] = "--agent"
+		agentArgs[startIndex+1] = v
+	}
+
+	if cfg.ACP.ToolsOnHost.Files {
+		agentArgs = append(agentArgs, "--local-filesystem")
+	}
+
+	if cfg.ACP.ToolsOnHost.Terminal {
+		agentArgs = append(agentArgs, "--local-terminal")
+	}
+
+	if !cfg.Websocket.DisableTLS {
+		agentArgs = append(agentArgs,
+			"--tls-cert", DefaultTLSServerCertPath,
+			"--tls-key", DefaultTLSServerKeyPath,
+			"--tls-ca", DefaultTLSCACertPath,
+		)
+	}
+
+	joinedArgs := strings.Join(agentArgs, " ")
+
+	return "/usr/local/bin/abyss server " + joinedArgs
 }

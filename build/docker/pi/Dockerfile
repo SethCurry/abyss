@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/sethcurry/abyss-base:latest
+FROM ghcr.io/sethcurry/abyss-base:dev
 
 RUN apt-get update && apt-get install -y ca-certificates nodejs npm
 RUN npm install -g @earendil-works/pi-coding-agent pi-acp

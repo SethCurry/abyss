@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,10 +14,12 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 
-	"github.com/SethCurry/abyss/internal/agentconfig"
-	"github.com/moby/moby/api/types/network"
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
+	"github.com/SethCurry/abyss/internal/agentconfig"
 )
 
 // ContainerEndpoint describes how the host can reach a started container.
@@ -39,7 +40,7 @@ func (e ContainerEndpoint) String() string {
 // DockerClient wraps the Docker SDK client and provides helpers for managing
 // containers in a run environment.
 type DockerClient struct {
-	client *client.Client
+	Client *client.Client
 	logger zerolog.Logger
 }
 
@@ -52,15 +53,15 @@ func NewDockerClient() (*DockerClient, error) {
 	}
 
 	return &DockerClient{
-		client: cli,
-		logger: zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger(),
+		Client: cli,
+		logger: log.Logger.With().Str("from", "DockerClient").Timestamp().Logger(),
 	}, nil
 }
 
 // Close releases resources held by the underlying Docker client.
 func (d *DockerClient) Close() error {
 	d.logger.Debug().Msg("closing docker client")
-	if err := d.client.Close(); err != nil {
+	if err := d.Client.Close(); err != nil {
 		d.logger.Error().Err(err).Msg("failed to close docker client")
 		return err
 	}
@@ -68,7 +69,7 @@ func (d *DockerClient) Close() error {
 }
 
 func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary, error) {
-	resp, err := d.client.ContainerList(ctx, client.ContainerListOptions{
+	resp, err := d.Client.ContainerList(ctx, client.ContainerListOptions{
 		Filters: client.Filters{
 			"label": map[string]bool{
 				"abyss": true,
@@ -83,6 +84,10 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 	return resp.Items, nil
 }
 
+func (d *DockerClient) GetContainer(containerID string) *Container {
+	return NewContainer(d, containerID)
+}
+
 // StartContainer pulls imageRef (if necessary) and starts a container from it.
 // The container's containerPort is published to the host so the host can reach
 // it. hostPort selects the host port to bind; pass 0 to let Docker assign a
@@ -90,7 +95,6 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 // image.
 func (d *DockerClient) StartContainer(
 	ctx context.Context,
-	imageRef string,
 	config *container.Config,
 	hostConfig *container.HostConfig,
 	name string,
@@ -98,7 +102,7 @@ func (d *DockerClient) StartContainer(
 	hostPort uint16,
 ) (*Container, ContainerEndpoint, error) {
 	d.logger.Debug().
-		Str("image", imageRef).
+		Str("image", config.Image).
 		Str("name", name).
 		Uint16("container_port", containerPort).
 		Uint16("host_port", hostPort).
@@ -108,71 +112,56 @@ func (d *DockerClient) StartContainer(
 	//	return ContainerEndpoint{}, err
 	//}
 
-	port, ok := network.PortFrom(containerPort, network.TCP)
-	if !ok {
-		return nil, ContainerEndpoint{}, fmt.Errorf("invalid container port %d", containerPort)
-	}
-
 	if config == nil {
 		config = &container.Config{}
 	}
-	config.Image = imageRef
-	config.ExposedPorts = network.PortSet{port: {}}
 	config.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
 	config.Labels = map[string]string{
 		"abyss": "true",
 	}
 
-	if hostConfig == nil {
-		hostConfig = &container.HostConfig{}
-	}
-	hostConfig.PortBindings = network.PortMap{
-		port: {{
-			HostIP:   netip.IPv4Unspecified(),
-			HostPort: strconv.FormatUint(uint64(hostPort), 10),
-		}},
-	}
-
-	created, err := d.client.ContainerCreate(ctx, client.ContainerCreateOptions{
+	created, err := d.Client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config:     config,
 		HostConfig: hostConfig,
 		Name:       name,
 	})
 	if err != nil {
-		d.logger.Error().Err(err).Str("image", imageRef).Str("name", name).Msg("failed to create container")
+		d.logger.Error().Err(err).Str("image", config.Image).Str("name", name).Msg("failed to create container")
 		return nil, ContainerEndpoint{}, fmt.Errorf("create container: %w", err)
 	}
 
-	if _, err := d.client.ContainerStart(ctx, created.ID, client.ContainerStartOptions{}); err != nil {
+	if _, err := d.Client.ContainerStart(ctx, created.ID, client.ContainerStartOptions{}); err != nil {
 		d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to start container")
 		return nil, ContainerEndpoint{}, fmt.Errorf("start container: %w", err)
 	}
 
-	// Resolve the actual host port in case Docker assigned one for us.
-	actualPort := hostPort
-	if hostPort == 0 {
-		inspected, err := d.client.ContainerInspect(ctx, created.ID, client.ContainerInspectOptions{})
-		if err != nil {
-			d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to inspect container")
-			return nil, ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
-		}
+	/*
+		// Resolve the actual host port in case Docker assigned one for us.
+		actualPort := hostPort
+		if hostPort == 0 {
+			inspected, err := d.client.ContainerInspect(ctx, created.ID, client.ContainerInspectOptions{})
+			if err != nil {
+				d.logger.Error().Err(err).Str("container_id", created.ID).Msg("failed to inspect container")
+				return nil, ContainerEndpoint{}, fmt.Errorf("inspect container: %w", err)
+			}
 
-		bindings := inspected.Container.NetworkSettings.Ports[port]
-		if len(bindings) == 0 {
-			return nil, ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
-		}
+			bindings := inspected.Container.NetworkSettings.Ports[port]
+			if len(bindings) == 0 {
+				return nil, ContainerEndpoint{}, fmt.Errorf("no host port binding found for container port %d", containerPort)
+			}
 
-		p, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
-		if err != nil {
-			return nil, ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
+			p, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
+			if err != nil {
+				return nil, ContainerEndpoint{}, fmt.Errorf("parse host port %q: %w", bindings[0].HostPort, err)
+			}
+			actualPort = uint16(p)
 		}
-		actualPort = uint16(p)
-	}
+	*/
 
 	endpoint := ContainerEndpoint{
 		ContainerID: created.ID,
 		IP:          d.hostIP(),
-		Port:        actualPort,
+		Port:        hostPort,
 	}
 	d.logger.Debug().
 		Str("container_id", endpoint.ContainerID).
@@ -200,60 +189,6 @@ func cleanPath(path string) (string, error) {
 	}
 
 	return filepath.Clean(absPath), nil
-}
-
-// ApplyHostMounts populates hostConfig.Binds from the HostMounts declared in
-// cfg. Each entry maps a host path to a container path using Docker's
-// "hostPath:containerPath" bind format. If hostConfig is nil a new HostConfig is
-// allocated. Mounts are appended to any existing binds so callers can layer
-// additional mounts. Paths are normalized to absolute form; a mount whose host
-// path does not exist on the host is skipped with a warning, since Docker would
-// create it as an empty directory owned by root, which is rarely intended.
-func (d *DockerClient) ApplyHostMounts(cfg *agentconfig.DockerConfig, hostConfig *container.HostConfig) *container.HostConfig {
-	if hostConfig == nil {
-		hostConfig = &container.HostConfig{}
-	}
-	if cfg == nil || len(cfg.HostMounts) == 0 {
-		return hostConfig
-	}
-
-	for _, mount := range cfg.HostMounts {
-		hostPath, err := cleanPath(mount.Source)
-		if err != nil {
-			d.logger.Err(err).Msg("failed to get absolute host path")
-			return nil
-		}
-
-		var containerPath string
-
-		if mount.Destination != "" {
-			containerPath, err = cleanPath(mount.Destination)
-			if err != nil {
-				d.logger.Err(err).Msg("failed to get absolute container path")
-				return nil
-			}
-		} else {
-			containerPath = hostPath
-		}
-
-		if !filepath.IsAbs(hostPath) {
-			d.logger.Warn().Str("host_path", hostPath).Str("container_path", containerPath).Msg("skipping non-absolute host mount")
-			continue
-		}
-		if !filepath.IsAbs(containerPath) {
-			d.logger.Warn().Str("host_path", hostPath).Str("container_path", containerPath).Msg("skipping mount with non-absolute container path")
-			continue
-		}
-		if _, err := os.Stat(hostPath); err != nil {
-			d.logger.Warn().Err(err).Str("host_path", hostPath).Str("container_path", containerPath).Msg("skipping host mount, path does not exist on host")
-			continue
-		}
-
-		d.logger.Debug().Str("host_path", hostPath).Str("container_path", containerPath).Msg("adding host mount")
-		hostConfig.Binds = append(hostConfig.Binds, hostPath+":"+containerPath)
-	}
-
-	return hostConfig
 }
 
 // ptr returns a pointer to v.
@@ -383,9 +318,9 @@ func writeTarEntry(tw *tar.Writer, src, name string, fi os.FileInfo) error {
 // For a local daemon (unix socket or named pipe) this is the loopback address;
 // for a remote daemon it is the daemon's host.
 func (d *DockerClient) hostIP() string {
-	u, err := url.Parse(d.client.DaemonHost())
+	u, err := url.Parse(d.Client.DaemonHost())
 	if err != nil {
-		d.logger.Warn().Err(err).Str("daemon_host", d.client.DaemonHost()).Msg("failed to parse docker daemon host, defaulting to loopback")
+		d.logger.Warn().Err(err).Str("daemon_host", d.Client.DaemonHost()).Msg("failed to parse docker daemon host, defaulting to loopback")
 		return "127.0.0.1"
 	}
 
@@ -399,26 +334,59 @@ func (d *DockerClient) hostIP() string {
 	return "127.0.0.1"
 }
 
-// pullImage ensures imageRef is present on the Docker host.
-func (d *DockerClient) PullImage(ctx context.Context, imageRef string) error {
-	d.logger.Debug().Str("image", imageRef).Msg("pulling image")
+// PullImage pulls imageRef according to policy using the Docker API client.
+// An empty policy is treated as ImagePullPolicyIfNotPresent.
+func PullImage(ctx context.Context, cli *client.Client, imageRef string, policy agentconfig.ImagePullPolicy) error {
+	switch policy {
+	case agentconfig.ImagePullPolicyAlways:
+		return pullImage(ctx, cli, imageRef)
+	case agentconfig.ImagePullPolicyNever:
+		return nil
+	case agentconfig.ImagePullPolicyIfNotPresent, "":
+		present, err := imagePresent(ctx, cli, imageRef)
+		if err != nil {
+			return err
+		}
+		if present {
+			return nil
+		}
+		return pullImage(ctx, cli, imageRef)
+	default:
+		return fmt.Errorf("unsupported image pull policy %q", policy)
+	}
+}
 
-	resp, err := d.client.ImagePull(ctx, imageRef, client.ImagePullOptions{})
+// pullImage pulls imageRef from the registry.
+func pullImage(ctx context.Context, cli *client.Client, imageRef string) error {
+	log.Debug().Str("image", imageRef).Msg("pulling image")
+
+	resp, err := cli.ImagePull(ctx, imageRef, client.ImagePullOptions{})
 	if err != nil {
-		d.logger.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")
+		log.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")
 		return fmt.Errorf("pull image %q: %w", imageRef, err)
 	}
 	defer func() {
-		closeErr := resp.Close()
-		if closeErr != nil {
-			d.logger.Warn().Err(closeErr).Msg("failed to close ImagePull response")
+		if closeErr := resp.Close(); closeErr != nil {
+			log.Warn().Err(closeErr).Msg("failed to close ImagePull response")
 		}
 	}()
 
 	if err := resp.Wait(ctx); err != nil {
-		d.logger.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")
+		log.Error().Err(err).Str("image", imageRef).Msg("failed to pull image")
 		return fmt.Errorf("pull image %q: %w", imageRef, err)
 	}
 
 	return nil
+}
+
+// imagePresent reports whether imageRef is already present on the Docker host.
+func imagePresent(ctx context.Context, cli *client.Client, imageRef string) (bool, error) {
+	_, err := cli.ImageInspect(ctx, imageRef)
+	if err == nil {
+		return true, nil
+	}
+	if cerrdefs.IsNotFound(err) {
+		return false, nil
+	}
+	return false, fmt.Errorf("inspect image %q: %w", imageRef, err)
 }

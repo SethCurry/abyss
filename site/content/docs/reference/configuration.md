@@ -73,6 +73,10 @@ copy_files:
   - type: "path"
     source: "./config/some-config.yml"
     target: "/etc/some-config.yml"
+
+websocket:
+  # Disables mutual TLS auth on the websocket
+  disable_tls: true
 ```
 
 ## `docker`
@@ -172,3 +176,11 @@ This setting controls whether [ACP terminal requests](https://agentclientprotoco
 
 It is false by default, so those requests are intercepted by
 the Abyss server inside the container and executed there.
+
+## `websocket`
+
+### `disble_tls`
+
+By default, `abyss` generates a new CA and set of certificates for securing connections to your agent.
+
+If you set this flag to `true`, abyss will use a plaintext connection.  You probably don't want this.
