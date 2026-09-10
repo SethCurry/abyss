@@ -147,7 +147,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	router.SetConn(acpConn)
 	underlying := wsacp.NewProxiedACPClient(router)
 
-	client := wsacp.NewWebsocketAgentClient(underlying, router, s.terminalTools, s.fileTools, req.Logger)
+	client := wsacp.NewContainerProxy(underlying, router, s.terminalTools, s.fileTools, req.Logger)
 	csc := acp.NewClientSideConnection(client, stdin, stdout)
 	csc.SetLogger(slog.Default())
 	client.SetClientConnection(csc)

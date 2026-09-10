@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// WebsocketAgent is the entrypoint for the ACP client like Zed.
+// HostProxy is the entrypoint for the ACP client like Zed.
 // It stores the Websocket-proxied connection to the real agent as
 // well as the real connection to the ACP client.
-type WebsocketAgent struct {
+type HostProxy struct {
 	logger zerolog.Logger
 
 	// conn is the actual client connected over stdio
@@ -30,22 +30,22 @@ type WebsocketAgent struct {
 }
 
 var (
-	_ acp.Agent             = (*WebsocketAgent)(nil)
-	_ acp.AgentLoader       = (*WebsocketAgent)(nil)
-	_ acp.AgentExperimental = (*WebsocketAgent)(nil)
+	_ acp.Agent             = (*HostProxy)(nil)
+	_ acp.AgentLoader       = (*HostProxy)(nil)
+	_ acp.AgentExperimental = (*HostProxy)(nil)
 )
 
-// NewWebsocketAgent creates an agent-side ACP proxy that bridges a websocket
-// connection to a client over stdio.
-func NewWebsocketAgent(underlying *ProxiedACPAgent, router *wsrouter.ACPRouter, logger zerolog.Logger) *WebsocketAgent {
-	return &WebsocketAgent{
+// NewHostProxy creates a new host-side proxy that accepts ACP input
+// over stdio, and communicates to the container-side proxy via websocket.
+func NewHostProxy(underlying *ProxiedACPAgent, router *wsrouter.ACPRouter, logger zerolog.Logger) *HostProxy {
+	return &HostProxy{
 		logger:     logger,
 		underlying: underlying,
 		router:     router,
 	}
 }
 
-func (w *WebsocketAgent) UserMessage(ctx context.Context, sessionID string, message string) error {
+func (w *HostProxy) UserMessage(ctx context.Context, sessionID string, message string) error {
 	return w.conn.SessionUpdate(ctx, acp.SessionNotification{
 		SessionId: acp.SessionId(sessionID),
 		Update: acp.SessionUpdate{
@@ -57,7 +57,7 @@ func (w *WebsocketAgent) UserMessage(ctx context.Context, sessionID string, mess
 }
 
 // SetSessionMode implements acp.Agent.
-func (w *WebsocketAgent) SetSessionMode(ctx context.Context, params acp.SetSessionModeRequest) (acp.SetSessionModeResponse, error) {
+func (w *HostProxy) SetSessionMode(ctx context.Context, params acp.SetSessionModeRequest) (acp.SetSessionModeResponse, error) {
 	w.logger.Debug().
 		Str("method", "SetSessionMode").
 		Str("session_id", string(params.SessionId)).
@@ -67,7 +67,7 @@ func (w *WebsocketAgent) SetSessionMode(ctx context.Context, params acp.SetSessi
 }
 
 // UnstableForkSession implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableForkSession(ctx context.Context, params acp.UnstableForkSessionRequest) (acp.UnstableForkSessionResponse, error) {
+func (w *HostProxy) UnstableForkSession(ctx context.Context, params acp.UnstableForkSessionRequest) (acp.UnstableForkSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableForkSession").
 		Str("session_id", string(params.SessionId)).
@@ -77,7 +77,7 @@ func (w *WebsocketAgent) UnstableForkSession(ctx context.Context, params acp.Uns
 }
 
 // ListSessions implements acp.Agent.
-func (w *WebsocketAgent) ListSessions(ctx context.Context, params acp.ListSessionsRequest) (acp.ListSessionsResponse, error) {
+func (w *HostProxy) ListSessions(ctx context.Context, params acp.ListSessionsRequest) (acp.ListSessionsResponse, error) {
 	w.logger.Debug().
 		Str("method", "ListSessions").
 		Msg("handling request")
@@ -85,7 +85,7 @@ func (w *WebsocketAgent) ListSessions(ctx context.Context, params acp.ListSessio
 }
 
 // ResumeSession implements acp.Agent.
-func (w *WebsocketAgent) ResumeSession(ctx context.Context, params acp.ResumeSessionRequest) (acp.ResumeSessionResponse, error) {
+func (w *HostProxy) ResumeSession(ctx context.Context, params acp.ResumeSessionRequest) (acp.ResumeSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "ResumeSession").
 		Str("session_id", string(params.SessionId)).
@@ -95,7 +95,7 @@ func (w *WebsocketAgent) ResumeSession(ctx context.Context, params acp.ResumeSes
 }
 
 // SetSessionConfigOption implements acp.Agent.
-func (w *WebsocketAgent) SetSessionConfigOption(ctx context.Context, params acp.SetSessionConfigOptionRequest) (acp.SetSessionConfigOptionResponse, error) {
+func (w *HostProxy) SetSessionConfigOption(ctx context.Context, params acp.SetSessionConfigOptionRequest) (acp.SetSessionConfigOptionResponse, error) {
 	w.logger.Debug().
 		Str("method", "SetSessionConfigOption").
 		Msg("handling request")
@@ -103,7 +103,7 @@ func (w *WebsocketAgent) SetSessionConfigOption(ctx context.Context, params acp.
 }
 
 // UnstableDidChangeDocument implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDidChangeDocument(ctx context.Context, params acp.UnstableDidChangeDocumentNotification) error {
+func (w *HostProxy) UnstableDidChangeDocument(ctx context.Context, params acp.UnstableDidChangeDocumentNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableDidChangeDocument").
 		Str("session_id", string(params.SessionId)).
@@ -113,7 +113,7 @@ func (w *WebsocketAgent) UnstableDidChangeDocument(ctx context.Context, params a
 }
 
 // UnstableDidCloseDocument implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDidCloseDocument(ctx context.Context, params acp.UnstableDidCloseDocumentNotification) error {
+func (w *HostProxy) UnstableDidCloseDocument(ctx context.Context, params acp.UnstableDidCloseDocumentNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableDidCloseDocument").
 		Str("session_id", string(params.SessionId)).
@@ -123,7 +123,7 @@ func (w *WebsocketAgent) UnstableDidCloseDocument(ctx context.Context, params ac
 }
 
 // UnstableDidFocusDocument implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDidFocusDocument(ctx context.Context, params acp.UnstableDidFocusDocumentNotification) error {
+func (w *HostProxy) UnstableDidFocusDocument(ctx context.Context, params acp.UnstableDidFocusDocumentNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableDidFocusDocument").
 		Str("session_id", string(params.SessionId)).
@@ -133,7 +133,7 @@ func (w *WebsocketAgent) UnstableDidFocusDocument(ctx context.Context, params ac
 }
 
 // UnstableDidOpenDocument implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDidOpenDocument(ctx context.Context, params acp.UnstableDidOpenDocumentNotification) error {
+func (w *HostProxy) UnstableDidOpenDocument(ctx context.Context, params acp.UnstableDidOpenDocumentNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableDidOpenDocument").
 		Str("session_id", string(params.SessionId)).
@@ -143,7 +143,7 @@ func (w *WebsocketAgent) UnstableDidOpenDocument(ctx context.Context, params acp
 }
 
 // UnstableDidSaveDocument implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDidSaveDocument(ctx context.Context, params acp.UnstableDidSaveDocumentNotification) error {
+func (w *HostProxy) UnstableDidSaveDocument(ctx context.Context, params acp.UnstableDidSaveDocumentNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableDidSaveDocument").
 		Str("session_id", string(params.SessionId)).
@@ -153,7 +153,7 @@ func (w *WebsocketAgent) UnstableDidSaveDocument(ctx context.Context, params acp
 }
 
 // Logout implements acp.Agent.
-func (w *WebsocketAgent) Logout(ctx context.Context, params acp.LogoutRequest) (acp.LogoutResponse, error) {
+func (w *HostProxy) Logout(ctx context.Context, params acp.LogoutRequest) (acp.LogoutResponse, error) {
 	w.logger.Debug().
 		Str("method", "Logout").
 		Msg("handling request")
@@ -161,7 +161,7 @@ func (w *WebsocketAgent) Logout(ctx context.Context, params acp.LogoutRequest) (
 }
 
 // UnstableAcceptNes implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableAcceptNes(ctx context.Context, params acp.UnstableAcceptNesNotification) error {
+func (w *HostProxy) UnstableAcceptNes(ctx context.Context, params acp.UnstableAcceptNesNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableAcceptNes").
 		Msg("handling notification")
@@ -169,7 +169,7 @@ func (w *WebsocketAgent) UnstableAcceptNes(ctx context.Context, params acp.Unsta
 }
 
 // UnstableCloseNes implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableCloseNes(ctx context.Context, params acp.UnstableCloseNesRequest) (acp.UnstableCloseNesResponse, error) {
+func (w *HostProxy) UnstableCloseNes(ctx context.Context, params acp.UnstableCloseNesRequest) (acp.UnstableCloseNesResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableCloseNes").
 		Msg("handling request")
@@ -177,7 +177,7 @@ func (w *WebsocketAgent) UnstableCloseNes(ctx context.Context, params acp.Unstab
 }
 
 // UnstableRejectNes implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableRejectNes(ctx context.Context, params acp.UnstableRejectNesNotification) error {
+func (w *HostProxy) UnstableRejectNes(ctx context.Context, params acp.UnstableRejectNesNotification) error {
 	w.logger.Debug().
 		Str("method", "UnstableRejectNes").
 		Msg("handling notification")
@@ -185,7 +185,7 @@ func (w *WebsocketAgent) UnstableRejectNes(ctx context.Context, params acp.Unsta
 }
 
 // UnstableStartNes implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableStartNes(ctx context.Context, params acp.UnstableStartNesRequest) (acp.UnstableStartNesResponse, error) {
+func (w *HostProxy) UnstableStartNes(ctx context.Context, params acp.UnstableStartNesRequest) (acp.UnstableStartNesResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableStartNes").
 		Msg("handling request")
@@ -193,7 +193,7 @@ func (w *WebsocketAgent) UnstableStartNes(ctx context.Context, params acp.Unstab
 }
 
 // UnstableSuggestNes implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableSuggestNes(ctx context.Context, params acp.UnstableSuggestNesRequest) (acp.UnstableSuggestNesResponse, error) {
+func (w *HostProxy) UnstableSuggestNes(ctx context.Context, params acp.UnstableSuggestNesRequest) (acp.UnstableSuggestNesResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableSuggestNes").
 		Msg("handling request")
@@ -201,7 +201,7 @@ func (w *WebsocketAgent) UnstableSuggestNes(ctx context.Context, params acp.Unst
 }
 
 // UnstableDisableProvider implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDisableProvider(ctx context.Context, params acp.UnstableDisableProviderRequest) (acp.UnstableDisableProviderResponse, error) {
+func (w *HostProxy) UnstableDisableProvider(ctx context.Context, params acp.UnstableDisableProviderRequest) (acp.UnstableDisableProviderResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableDisableProvider").
 		Msg("handling request")
@@ -209,7 +209,7 @@ func (w *WebsocketAgent) UnstableDisableProvider(ctx context.Context, params acp
 }
 
 // UnstableListProviders implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableListProviders(ctx context.Context, params acp.UnstableListProvidersRequest) (acp.UnstableListProvidersResponse, error) {
+func (w *HostProxy) UnstableListProviders(ctx context.Context, params acp.UnstableListProvidersRequest) (acp.UnstableListProvidersResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableListProviders").
 		Msg("handling request")
@@ -217,7 +217,7 @@ func (w *WebsocketAgent) UnstableListProviders(ctx context.Context, params acp.U
 }
 
 // UnstableSetProvider implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableSetProvider(ctx context.Context, params acp.UnstableSetProviderRequest) (acp.UnstableSetProviderResponse, error) {
+func (w *HostProxy) UnstableSetProvider(ctx context.Context, params acp.UnstableSetProviderRequest) (acp.UnstableSetProviderResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableSetProvider").
 		Msg("handling request")
@@ -225,7 +225,7 @@ func (w *WebsocketAgent) UnstableSetProvider(ctx context.Context, params acp.Uns
 }
 
 // UnstableDeleteSession implements acp.AgentExperimental.
-func (w *WebsocketAgent) UnstableDeleteSession(ctx context.Context, params acp.UnstableDeleteSessionRequest) (acp.UnstableDeleteSessionResponse, error) {
+func (w *HostProxy) UnstableDeleteSession(ctx context.Context, params acp.UnstableDeleteSessionRequest) (acp.UnstableDeleteSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "UnstableDeleteSession").
 		Str("session_id", string(params.SessionId)).
@@ -234,7 +234,7 @@ func (w *WebsocketAgent) UnstableDeleteSession(ctx context.Context, params acp.U
 }
 
 // CloseSession implements acp.Agent.
-func (w *WebsocketAgent) CloseSession(ctx context.Context, params acp.CloseSessionRequest) (acp.CloseSessionResponse, error) {
+func (w *HostProxy) CloseSession(ctx context.Context, params acp.CloseSessionRequest) (acp.CloseSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "CloseSession").
 		Str("session_id", string(params.SessionId)).
@@ -245,20 +245,20 @@ func (w *WebsocketAgent) CloseSession(ctx context.Context, params acp.CloseSessi
 // SetAgentConnection stores the ACP agent-side connection used to forward
 // client capability requests received over the websocket to the client over
 // stdio.
-func (w *WebsocketAgent) SetAgentConnection(conn *acp.AgentSideConnection) {
+func (w *HostProxy) SetAgentConnection(conn *acp.AgentSideConnection) {
 	w.logger.Debug().Msg("agent connection set")
 	w.conn = conn
 	w.router.SetClient(conn)
 }
 
-func (w *WebsocketAgent) Initialize(ctx context.Context, params acp.InitializeRequest) (acp.InitializeResponse, error) {
+func (w *HostProxy) Initialize(ctx context.Context, params acp.InitializeRequest) (acp.InitializeResponse, error) {
 	w.logger.Debug().
 		Str("method", "Initialize").
 		Msg("handling request")
 	return w.underlying.Initialize(ctx, params)
 }
 
-func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRequest) (acp.NewSessionResponse, error) {
+func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest) (acp.NewSessionResponse, error) {
 	if _, err := os.Stat(params.Cwd); err != nil {
 		err = os.MkdirAll(params.Cwd, 0755)
 		if err != nil {
@@ -285,14 +285,14 @@ func (w *WebsocketAgent) NewSession(ctx context.Context, params acp.NewSessionRe
 	return newSession, nil
 }
 
-func (w *WebsocketAgent) Authenticate(ctx context.Context, params acp.AuthenticateRequest) (acp.AuthenticateResponse, error) {
+func (w *HostProxy) Authenticate(ctx context.Context, params acp.AuthenticateRequest) (acp.AuthenticateResponse, error) {
 	w.logger.Debug().
 		Str("method", "Authenticate").
 		Msg("handling request")
 	return w.underlying.Authenticate(ctx, params)
 }
 
-func (w *WebsocketAgent) LoadSession(ctx context.Context, params acp.LoadSessionRequest) (acp.LoadSessionResponse, error) {
+func (w *HostProxy) LoadSession(ctx context.Context, params acp.LoadSessionRequest) (acp.LoadSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "LoadSession").
 		Str("session_id", string(params.SessionId)).
@@ -300,7 +300,7 @@ func (w *WebsocketAgent) LoadSession(ctx context.Context, params acp.LoadSession
 	return w.underlying.LoadSession(ctx, params)
 }
 
-func (w *WebsocketAgent) Cancel(ctx context.Context, params acp.CancelNotification) error {
+func (w *HostProxy) Cancel(ctx context.Context, params acp.CancelNotification) error {
 	w.logger.Debug().
 		Str("method", "Cancel").
 		Str("session_id", string(params.SessionId)).
@@ -308,7 +308,7 @@ func (w *WebsocketAgent) Cancel(ctx context.Context, params acp.CancelNotificati
 	return w.underlying.Cancel(ctx, params)
 }
 
-func (w *WebsocketAgent) Prompt(ctx context.Context, params acp.PromptRequest) (acp.PromptResponse, error) {
+func (w *HostProxy) Prompt(ctx context.Context, params acp.PromptRequest) (acp.PromptResponse, error) {
 	w.logger.Debug().
 		Str("method", "Prompt").
 		Msg("handling request")

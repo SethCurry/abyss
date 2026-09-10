@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type WebsocketAgentClient struct {
+type ContainerProxy struct {
 	logger        zerolog.Logger
 	underlying    *ProxiedACPClient
 	acpConn       *acp.ClientSideConnection
@@ -18,12 +18,10 @@ type WebsocketAgentClient struct {
 	router        *wsrouter.ACPRouter
 }
 
-var _ acp.Client = (*WebsocketAgentClient)(nil)
+var _ acp.Client = (*ContainerProxy)(nil)
 
-// NewWebsocketAgentClient creates a client-side ACP proxy that bridges a
-// websocket connection to an agent over stdio.
-func NewWebsocketAgentClient(underlying *ProxiedACPClient, router *wsrouter.ACPRouter, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools, logger zerolog.Logger) *WebsocketAgentClient {
-	return &WebsocketAgentClient{
+func NewContainerProxy(underlying *ProxiedACPClient, router *wsrouter.ACPRouter, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools, logger zerolog.Logger) *ContainerProxy {
+	return &ContainerProxy{
 		logger:        logger,
 		underlying:    underlying,
 		terminalTools: terminalTools,
@@ -34,26 +32,26 @@ func NewWebsocketAgentClient(underlying *ProxiedACPClient, router *wsrouter.ACPR
 
 // SetClientConnection stores the ACP client-side connection used to forward
 // agent requests received over the websocket to the agent over stdio.
-func (e *WebsocketAgentClient) SetClientConnection(conn *acp.ClientSideConnection) {
+func (e *ContainerProxy) SetClientConnection(conn *acp.ClientSideConnection) {
 	e.acpConn = conn
 	e.router.SetAgent(conn)
 }
 
-func (e *WebsocketAgentClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
+func (e *ContainerProxy) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
 	e.logger.Debug().
 		Str("method", "RequestPermission").
 		Msg("handling request")
 	return e.underlying.RequestPermission(ctx, params)
 }
 
-func (e *WebsocketAgentClient) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
+func (e *ContainerProxy) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
 	e.logger.Debug().
 		Str("method", "SessionUpdate").
 		Msg("handling notification")
 	return e.underlying.SessionUpdate(ctx, params)
 }
 
-func (e *WebsocketAgentClient) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
+func (e *ContainerProxy) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
 	if e.fileTools != nil {
 		e.logger.Debug().
 			Str("method", "WriteTextFile").
@@ -69,7 +67,7 @@ func (e *WebsocketAgentClient) WriteTextFile(ctx context.Context, params acp.Wri
 	return e.underlying.WriteTextFile(ctx, params)
 }
 
-func (e *WebsocketAgentClient) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
+func (e *ContainerProxy) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
 	if e.fileTools != nil {
 		e.logger.Debug().
 			Str("method", "ReadTextFile").
@@ -85,7 +83,7 @@ func (e *WebsocketAgentClient) ReadTextFile(ctx context.Context, params acp.Read
 	return e.underlying.ReadTextFile(ctx, params)
 }
 
-func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
+func (e *ContainerProxy) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "CreateTerminal").
 		Msg("handling request")
@@ -101,7 +99,7 @@ func (e *WebsocketAgentClient) CreateTerminal(ctx context.Context, params acp.Cr
 	return e.underlying.CreateTerminal(ctx, params)
 }
 
-func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
+func (e *ContainerProxy) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
 	e.logger.Debug().
 		Str("method", "TerminalOutput").
 		Msg("handling request")
@@ -117,7 +115,7 @@ func (e *WebsocketAgentClient) TerminalOutput(ctx context.Context, params acp.Te
 	return e.underlying.TerminalOutput(ctx, params)
 }
 
-func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
+func (e *ContainerProxy) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "ReleaseTerminal").
 		Msg("handling request")
@@ -133,7 +131,7 @@ func (e *WebsocketAgentClient) ReleaseTerminal(ctx context.Context, params acp.R
 	return e.underlying.ReleaseTerminal(ctx, params)
 }
 
-func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
+func (e *ContainerProxy) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
 	e.logger.Debug().
 		Str("method", "WaitForTerminalExit").
 		Msg("handling request")
@@ -150,7 +148,7 @@ func (e *WebsocketAgentClient) WaitForTerminalExit(ctx context.Context, params a
 }
 
 // KillTerminal implements acp.Client.
-func (e *WebsocketAgentClient) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
+func (e *ContainerProxy) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "KillTerminal").
 		Msg("handling request")

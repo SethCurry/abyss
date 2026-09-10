@@ -102,7 +102,7 @@ func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger 
 	}
 	defer closeConn(conn, logger)
 
-	agent := NewWebsocketAgent(proxiedAgent, proxiedAgent.router, logger)
+	agent := NewHostProxy(proxiedAgent, proxiedAgent.router, logger)
 	asc := acp.NewAgentSideConnection(agent, os.Stdout, os.Stdin)
 	asc.SetLogger(slog.Default())
 	agent.SetAgentConnection(asc)
