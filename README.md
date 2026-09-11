@@ -53,13 +53,4 @@ and Docker images are under Packages on the right of the project home.
 - Bind-mounting directories from the host into the container
 - Copying files into the container (so agent edits don't impact your copy)
 - Intercepting ACP read/write file and terminal APIs so they run inside the container
-
-## Vague and Unorganized TODO
-
-These are not done, but are a laundry list of things I would like to accomplish:
-
-- Allow agents to communicate with each other (requires them to be able to ACP to each other)
-- Authentication on client-server comms
-- Encryption on client-server comms
-- Per-agent storage and shared storage
-  - Unsure what this looks like.  Is it RAG?  Is it literal directories?  Both?
+- Ephemeral mutual-TLS authentication; certificates are used for a single connection and then destroyed.
