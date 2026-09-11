@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,13 +15,14 @@ import (
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/runenv"
+	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
-	logFile, err := openLogFile()
+	logFile, err := timber.OpenLogFile()
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,6 @@ func main() {
 	cmd := &cli.Command{
 		Name:        "abyss",
 		Usage:       "Agent Runtime Environment(s)",
-		ArgsUsage:   "",
 		Description: "Manage agents just like containers.",
 		Version:     time.Now().Format(time.RFC3339),
 		Authors:     []any{"Seth Curry"},
@@ -61,6 +60,8 @@ func main() {
 			}
 			logger = logger.Level(level)
 			log.Logger = logger
+
+			_ = timber.CleanLogDir(10)
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
@@ -107,7 +108,10 @@ func main() {
 					configPath := cmd.String("config")
 					agentCfg, err := agentconfig.FromYAMLFile(configPath)
 					if err != nil {
-						logger.Error().Err(err).Str("config_path", configPath).Msg("failed to load agent config")
+						logger.Error().
+							Err(err).
+							Str("config_path", configPath).
+							Msg("failed to load agent config")
 						return err
 					}
 					logger.Debug().
@@ -127,7 +131,7 @@ func main() {
 					&cli.StringFlag{
 						Name:    "addr",
 						Aliases: []string{"a"},
-						Usage:   "The address to run the HTTP server on.",
+						Usage:   "The address to run the HTTP server on, formatted like 127.0.0.1:8080",
 						Value:   ":8080",
 					},
 					&cli.StringSliceFlag{
@@ -266,29 +270,6 @@ func main() {
 			logger.Error().Err(err).Msg("command failed")
 		}
 	}
-}
-
-// newFileLogger returns a zerolog.Logger configured to write debug-level logs
-// to ~/.local/share/abyss/abyss.log, creating the directory if necessary.
-func openLogFile() (io.WriteCloser, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user home directory: %w", err)
-	}
-
-	logDir := filepath.Join(home, ".local", "var", "abyss")
-	if err := os.MkdirAll(logDir, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to make parent directories of %q: %w", logDir, err)
-	}
-
-	logFilePath := filepath.Join(logDir, "abyss.log")
-
-	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return nil, fmt.Errorf("failed open log file %q: %w", logFilePath, err)
-	}
-
-	return logFile, nil
 }
 
 // installTLSCerts returns a build step that copies the server certificate,
