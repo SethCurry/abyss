@@ -66,9 +66,10 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:    "client",
-				Aliases: []string{"c"},
-				Usage:   "Starts the client-side proxy, which will create its own server-side proxy container running your agent.",
+				Name:        "client",
+				Aliases:     []string{"c"},
+				Usage:       "Starts the host-side proxy that your ACP client will connect directly to.",
+				Description: "Starts the host-side proxy that your ACP client will connect to via stdio.  It will create a Docker container, start the container-side proxy inside of it, and proxy your ACP connection into the container.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
