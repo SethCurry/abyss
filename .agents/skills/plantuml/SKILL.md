@@ -556,7 +556,7 @@ EOF
 ### Step 2 — Validate
 
 ```bash
-./validate-plantuml.sh login-flow.puml
+./.agents/skills/plantuml/scripts/validate-plantuml.sh login-flow.puml
 ```
 
 - Exit code 0 → syntax is valid, proceed to build.
@@ -571,7 +571,7 @@ Common errors to watch for:
 ### Step 3 — Build
 
 ```bash
-./build-plantuml.sh login-flow.puml
+./.agents/skills/plantuml/scripts/build-plantuml.sh login-flow.puml
 ```
 
 This produces an image file (typically .png or .svg) in the same directory or a configured output folder.

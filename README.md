@@ -6,14 +6,37 @@
 
 Check out [the docs](https://abyss.scurry.io) for in-depth information.
 
-`abyss` is an _Agent Runtime Environment(s)_. The long-term goal is to provide a runtime platform
-for agents, in a similar way to what Docker provides for compute.
+`abyss` is an _Agent Runtime Environment_ — a platform that runs your LLM agents
+inside isolated containers, the same way Docker runs your compute.
 
-`abyss` lets you create containers with copies or mounts of files from your desktop, talk to it
-through Zed (or any ACP client), and then remove the container when you're done.
+Writing Docker Compose files to isolate your agent is a pain, and trying to
+connect Zed to a containerized agent is even worse.
 
-No more worrying about your agent finding the keys for the prod database on your desktop,
-or `rm -rf`'ing your entire desktop.
+`abyss` handles all of
+that. You describe what your agent needs in a short YAML file and `abyss` brings
+up a container, exposes the agent over the [Agent Client Protocol](https://agentclientprotocol.com/)
+(ACP), and tears it all down when you're done — no Docker expertise required.
+
+`abyss` works with any ACP-compatible client, like Zed.  It integrates
+seamlessly and ensures that directories you mount show up at the same path
+in the container so you don't need to worry about memorizing a weird path scheme.
+
+No more worrying about the agent finding the keys for the prod database on your
+desktop, or `rm -rf`'ing your entire home directory.
+
+## Why abyss?
+
+- **No Docker configs to write.** A few lines of YAML describe the image, mounts,
+  and the command that launches your agent. `abyss` handles the rest.
+- **Sandboxed by default.** Each agent runs in its own container. Optionally copy
+  files in instead of bind-mounting, so agent edits never touch your working copy.
+- **ACP out of the box.** `abyss` proxies agent stdio over websockets and exposes
+  an ACP endpoint, so any ACP client — Zed included — can drive the agent.
+- **File and terminal interception.** ACP read/write file and terminal APIs are
+  intercepted and executed inside the container, so the agent and the client agree
+  on a single, consistent filesystem.
+- **Reproducible environments.** Run setup scripts before the agent starts to
+  install dependencies or seed state, and every session begins from a known place.
 
 ## Status
 
@@ -24,10 +47,8 @@ and Docker images are under Packages on the right of the project home.
 
 ## Features
 
-It currently supports:
-
 - Starting a Docker container with your agent
-- Proxying the stdio over websocket to your ACP client
+- Proxying the agent's stdio over websocket to your ACP client
 - Running setup scripts before starting the agent
 - Bind-mounting directories from the host into the container
 - Copying files into the container (so agent edits don't impact your copy)
