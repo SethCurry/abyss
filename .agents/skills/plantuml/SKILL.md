@@ -65,7 +65,6 @@ component [Payment Gateway] as PG
 Interfaces use parentheses () (resembling a lollipop circle) or the interface keyword:
 
 ```plantuml
-
 () "REST API"
 interface JDBC as db_iface
 
