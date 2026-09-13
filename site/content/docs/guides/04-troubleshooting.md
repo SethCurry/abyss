@@ -1,11 +1,11 @@
 ---
-title: "Custom Docker Images"
-description: "Build your own Docker images to use for running your agents."
+title: "Troubleshooting"
+description: "Guides on how to find issues with abyss, diagnose configurations and more."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
 lastmod: 2023-09-07T16:04:48+02:00
 draft: false
-weight: 5
+weight: 4
 toc: true
 params:
   math: false # enable mathematical rendering
