@@ -9,8 +9,6 @@ tasks:
       - binary:build
   site:
     dir: site
-    deps:
-      - puml
     cmds:
       - npm install
       - npm run dev

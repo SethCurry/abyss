@@ -4,20 +4,27 @@ import (
 	"github.com/moby/moby/api/types/container"
 )
 
+// NewErrInvalidContainerMetadata builds an error for invalid or missing
+// container labels.
 func NewErrInvalidContainerMetadata(msg string) *ErrInvalidContainerMetadata {
 	return &ErrInvalidContainerMetadata{
 		message: msg,
 	}
 }
 
+// ErrInvalidContainerMetadata is returned when a container's abyss labels are
+// malformed or absent.
 type ErrInvalidContainerMetadata struct {
 	message string
 }
 
+// Error formats the invalid metadata error.
 func (e *ErrInvalidContainerMetadata) Error() string {
 	return "cannot get abyss container labels: " + e.message
 }
 
+// GetLabelMetadata extracts abyss metadata from a container's labels.
+// Returns an error for missing labels
 func GetLabelMetadata(summary *container.Summary) (*LabelMetadata, error) {
 	labels := summary.Labels
 	if labels == nil {
@@ -44,12 +51,14 @@ func GetLabelMetadata(summary *container.Summary) (*LabelMetadata, error) {
 	}, nil
 }
 
+// LabelMetadata holds the abyss metadata stored in container labels.
 type LabelMetadata struct {
 	AbyssVersion    string
 	AgentConfigPath string
 	AgentConfigHash string
 }
 
+// ToMap returns the metadata as a map of container labels.
 func (l *LabelMetadata) ToMap() map[string]string {
 	return map[string]string{
 		"abyss_version":           l.AbyssVersion,
@@ -58,6 +67,7 @@ func (l *LabelMetadata) ToMap() map[string]string {
 	}
 }
 
+// AddToMap writes the metadata labels into the given map.
 func (l *LabelMetadata) AddToMap(underlying map[string]string) {
 	underlying["abyss_version"] = l.AbyssVersion
 	underlying["abyss_agent_config_path"] = l.AgentConfigPath
