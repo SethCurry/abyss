@@ -2,13 +2,16 @@ package runenv
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
+	"github.com/SethCurry/abyss/internal/constants"
 	"github.com/SethCurry/abyss/internal/types"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
@@ -147,7 +150,7 @@ func WithHostBind(from string, to string) ContainerPreBuildStep {
 }
 
 // NewContainerBuilder creates a builder, applying any pre-build steps to the config.
-func NewContainerBuilder(config *ContainerConfig, steps ...ContainerPreBuildStep) (*ContainerBuilder, error) {
+func NewContainerBuilder(configPath string, config *ContainerConfig, steps ...ContainerPreBuildStep) (*ContainerBuilder, error) {
 	if config == nil {
 		config = &ContainerConfig{
 			Host:   &container.HostConfig{},
@@ -168,13 +171,14 @@ func NewContainerBuilder(config *ContainerConfig, steps ...ContainerPreBuildStep
 		}
 	}
 
-	return &ContainerBuilder{config: config}, nil
+	return &ContainerBuilder{ConfigPath: configPath, config: config}, nil
 }
 
 // ContainerBuilder accumulates build steps and starts a container from its config.
 type ContainerBuilder struct {
-	config *ContainerConfig
-	steps  []ContainerBuildStep
+	ConfigPath string
+	config     *ContainerConfig
+	steps      []ContainerBuildStep
 }
 
 // AddStep appends a single build step to the builder.
@@ -189,7 +193,30 @@ func (b *ContainerBuilder) AddSteps(newSteps ...ContainerBuildStep) {
 
 // Build starts the container and runs each build step against it.
 func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Container, ContainerEndpoint, error) {
-	container, endpoint, err := cli.StartContainer(ctx, b.config.Config, b.config.Host, b.config.Name, b.config.ContainerPort, b.config.HostPort)
+	configFd, err := os.Open(b.ConfigPath)
+	if err != nil {
+		return nil, ContainerEndpoint{}, fmt.Errorf("failed to open config file at %q: %w", b.ConfigPath, err)
+	}
+	defer func() {
+		_ = configFd.Close()
+	}()
+
+	hasher := sha256.New()
+
+	if _, err := io.Copy(hasher, configFd); err != nil {
+		return nil, ContainerEndpoint{}, fmt.Errorf("failed to read config file at %q: %w", b.ConfigPath, err)
+	}
+
+	byteHash := hasher.Sum(nil)
+
+	stringHash := fmt.Sprintf("%x", byteHash)
+
+	md := &LabelMetadata{
+		AbyssVersion:    constants.Version,
+		AgentConfigPath: b.ConfigPath,
+		AgentConfigHash: stringHash,
+	}
+	container, endpoint, err := cli.StartContainer(ctx, b.config.Config, b.config.Host, md.ToMap(), b.config.Name, b.config.ContainerPort, b.config.HostPort)
 	if err != nil {
 		return nil, endpoint, err
 	}
