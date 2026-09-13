@@ -136,16 +136,14 @@ func main() {
 						Required: true,
 					},
 					&cli.BoolFlag{
-						Name:    "local-terminal",
-						Aliases: []string{""},
-						Usage:   "Run terminal ACP commands on the client rather than this server",
-						Value:   false,
+						Name:  "local-terminal",
+						Usage: "Run terminal ACP commands on the client rather than this server",
+						Value: false,
 					},
 					&cli.BoolFlag{
-						Name:    "local-filesystem",
-						Aliases: []string{""},
-						Usage:   "Run filesystem ACP commands on the client rather than this server",
-						Value:   false,
+						Name:  "local-filesystem",
+						Usage: "Run filesystem ACP commands on the client rather than this server",
+						Value: false,
 					},
 					&cli.StringFlag{
 						Name:  "tls-cert",
