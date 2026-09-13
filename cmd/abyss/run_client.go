@@ -19,7 +19,7 @@ import (
 // bridges it to a client over stdio.
 //
 // If prompt is not empty, it will be used as a one-shot prompt to the server.
-func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
+func runClient(ctx context.Context, prompt string, configPath string, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
 		return erres.NewHumanError(err, "Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?")
@@ -63,6 +63,7 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 	}
 
 	builder, err := runenv.NewContainerBuilder(
+		configPath,
 		config,
 		runenv.WithImage(image),
 		runenv.WithHostMounts(&cfg.Docker),

@@ -75,7 +75,7 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 	resp, err := d.Client.ContainerList(ctx, client.ContainerListOptions{
 		Filters: client.Filters{
 			"label": map[string]bool{
-				"abyss": true,
+				"abyss_version": true,
 			},
 		},
 	})
@@ -97,6 +97,7 @@ func (d *DockerClient) StartContainer(
 	ctx context.Context,
 	config *container.Config,
 	hostConfig *container.HostConfig,
+	labels map[string]string,
 	name string,
 	containerPort uint16,
 	hostPort uint16,
@@ -115,10 +116,9 @@ func (d *DockerClient) StartContainer(
 	if config == nil {
 		config = &container.Config{}
 	}
+
 	config.Env = []string{"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"}
-	config.Labels = map[string]string{
-		"abyss": "true",
-	}
+	config.Labels = labels
 
 	created, err := d.Client.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config:     config,

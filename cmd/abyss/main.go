@@ -93,7 +93,7 @@ func main() {
 							Str("config_path", configPath).
 							Msg("loaded config")
 					}
-					return runClient(ctx, "", agentCfg, log.Logger)
+					return runClient(ctx, "", configPath, agentCfg, log.Logger)
 				},
 			},
 			{
@@ -122,7 +122,7 @@ func main() {
 						Str("config_path", configPath).
 						Msg("loaded config")
 					prompt := strings.Join(cmd.Args().Slice(), " ")
-					return runClient(ctx, prompt, agentCfg, log.Logger)
+					return runClient(ctx, prompt, configPath, agentCfg, log.Logger)
 				},
 			},
 			{
