@@ -1,0 +1,24 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  test:
+    cmds:
+      - go test ./...
+  build:
+    deps:
+      - proto
+    cmds:
+      - go build -ldflags="-X github.com/SethCurry/abyss/internal/constants.Version=$(./scripts/get-version.sh)" -o abyss ./cmd/abyss
+  lint:
+    cmds:
+      - golangci-lint run
+  test-oneshot:
+    deps:
+      - build-binary
+    cmds:
+      - ./abyss oneshot -f ./abyss-agent.yaml "What is the capital of France?"
+  proto:
+    cmds:
+      - protoc -I=./schema/proto --go_out=./internal/websockets ./schema/proto/abyss.proto

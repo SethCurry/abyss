@@ -13,6 +13,7 @@ import (
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/api/agentapi"
 	"github.com/SethCurry/abyss/internal/api/pacific"
+	"github.com/SethCurry/abyss/internal/constants"
 	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/runenv"
 	"github.com/SethCurry/abyss/internal/timber"
@@ -45,6 +46,7 @@ func main() {
 		Name:        "abyss",
 		Usage:       "A tool for managing and connecting to agents running in containers.",
 		Description: "abyss creates Docker containers for you, copies files, creates bind mounts, executes setup scripts, and proxies your ACP connection with mutual TLS authentication.",
+		Version:     constants.Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
@@ -62,6 +64,8 @@ func main() {
 			log.Logger = globalLogger.Level(level)
 
 			_ = timber.CleanLogDir(10)
+
+			log.Logger.Info().Str("version", constants.Version).Msg("starting abyss")
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
