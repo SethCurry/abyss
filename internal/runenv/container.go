@@ -10,21 +10,23 @@ import (
 	"time"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
+	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/client"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // NewContainer initializes a new container.
 func NewContainer(docker *DockerClient, containerID string) *Container {
 	return &Container{
 		client:      docker,
-		logger:      log.With().Str("component", "container:"+containerID).Logger(),
+		logger:      timber.ComponentLogger("container:" + containerID),
 		containerID: containerID,
 	}
 }
 
+// Container is an abstraction around Docker's container objects.
+// It primarily adds logging and utility functions specific to abyss.
 type Container struct {
 	containerID string
 	client      *DockerClient

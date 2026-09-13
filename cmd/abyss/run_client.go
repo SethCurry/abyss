@@ -22,7 +22,7 @@ import (
 func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
-		return erres.NewHumanError("Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?", err)
+		return erres.NewHumanError(err, "Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?")
 	}
 	defer func() {
 		closeErr := docker.Close()
@@ -39,7 +39,9 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 	err = runenv.PullImage(ctx, docker.Client, image, cfg.Docker.ImagePullPolicy)
 	if err != nil {
 		logger.Error().Err(err).Str("image", image).Msg("failed to pull Docker image")
-		return fmt.Errorf("failed to pull Docker image")
+		return erres.NewHumanError(
+			fmt.Errorf("failed to pull Docker image: %w", err),
+			fmt.Sprintf("Failed to pull Docker image %q.  Ensure that the image exists and that you have permission to pull it.", image))
 	}
 
 	// Generate a certificate set for mutual TLS unless the user disabled it.
@@ -68,7 +70,7 @@ func runClient(ctx context.Context, prompt string, cfg *agentconfig.AgentConfig,
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to build container config")
-		return err
+		return erres.NewHumanError(err, "Failed to build container config.  This is likely an issue with abyss itself or the Docker image you are using.", "Please report a bug if you have time.")
 	}
 
 	builder.AddSteps(

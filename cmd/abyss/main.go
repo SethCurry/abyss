@@ -34,16 +34,17 @@ func main() {
 		}
 	}()
 
-	logOut := io.MultiWriter(logFile, os.Stderr)
-	logger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
-	log.Logger = logger
+	logOut := zerolog.ConsoleWriter{Out: io.MultiWriter(logFile, os.Stderr)}
+	globalLogger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
+	log.Logger = globalLogger
+
+	globalLogger, closeLogger := timber.CreateLogger(zerolog.DebugLevel)
+	defer closeLogger()
 
 	cmd := &cli.Command{
 		Name:        "abyss",
-		Usage:       "Agent Runtime Environment(s)",
-		Description: "Manage agents just like containers.",
-		Version:     time.Now().Format(time.RFC3339),
-		Authors:     []any{"Seth Curry"},
+		Usage:       "A tool for managing and connecting to agents running in containers.",
+		Description: "abyss creates Docker containers for you, copies files, creates bind mounts, executes setup scripts, and proxies your ACP connection with mutual TLS authentication.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
@@ -58,8 +59,7 @@ func main() {
 			if err != nil {
 				return nil, fmt.Errorf("invalid log level %q: %w", cmd.String("log-level"), err)
 			}
-			logger = logger.Level(level)
-			log.Logger = logger
+			log.Logger = globalLogger.Level(level)
 
 			_ = timber.CleanLogDir(10)
 			return ctx, nil
@@ -68,8 +68,8 @@ func main() {
 			{
 				Name:        "client",
 				Aliases:     []string{"c"},
-				Usage:       "Starts the host-side proxy that your ACP client will connect directly to.",
-				Description: "Starts the host-side proxy that your ACP client will connect to via stdio.  It will create a Docker container, start the container-side proxy inside of it, and proxy your ACP connection into the container.",
+				Usage:       "Starts the host-side proxy that your editor connects to.",
+				Description: "Creates a Docker container, starts the container-side proxy inside of it, and proxies your ACP connection into the container.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
@@ -82,21 +82,20 @@ func main() {
 					configPath := cmd.String("config")
 					agentCfg, err := agentconfig.FromYAMLFile(configPath)
 					if err != nil {
-						logger.Error().Err(err).Str("config_path", configPath).Msg("failed to load agent config")
+						log.Logger.Error().Err(err).Str("config_path", configPath).Msg("failed to load agent config")
 						return err
+					} else {
+						log.Logger.Debug().
+							Str("config_path", configPath).
+							Msg("loaded config")
 					}
-					logger.Debug().
-						Str("config_path", configPath).
-						Str("image", agentCfg.Docker.Image).
-						Strs("agent_command", agentCfg.Docker.AgentCommand).
-						Msg("starting Docker agent")
-					return runClient(ctx, "", agentCfg, logger)
+					return runClient(ctx, "", agentCfg, log.Logger)
 				},
 			},
 			{
 				Name:    "oneshot",
 				Aliases: []string{"p"},
-				Usage:   "Executes a single agent turn based on the provided prompt.",
+				Usage:   "Executes a single agent turn, batch-style.",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
@@ -109,19 +108,17 @@ func main() {
 					configPath := cmd.String("config")
 					agentCfg, err := agentconfig.FromYAMLFile(configPath)
 					if err != nil {
-						logger.Error().
+						log.Logger.Error().
 							Err(err).
 							Str("config_path", configPath).
 							Msg("failed to load agent config")
 						return err
 					}
-					logger.Debug().
+					log.Logger.Debug().
 						Str("config_path", configPath).
-						Str("image", agentCfg.Docker.Image).
-						Strs("agent_command", agentCfg.Docker.AgentCommand).
-						Msg("starting Docker agent")
+						Msg("loaded config")
 					prompt := strings.Join(cmd.Args().Slice(), " ")
-					return runClient(ctx, prompt, agentCfg, logger)
+					return runClient(ctx, prompt, agentCfg, log.Logger)
 				},
 			},
 			{
@@ -142,16 +139,14 @@ func main() {
 						Required: true,
 					},
 					&cli.BoolFlag{
-						Name:    "local-terminal",
-						Aliases: []string{""},
-						Usage:   "Run terminal ACP commands on the client rather than this server",
-						Value:   false,
+						Name:  "local-terminal",
+						Usage: "Run terminal ACP commands on the client rather than this server",
+						Value: false,
 					},
 					&cli.BoolFlag{
-						Name:    "local-filesystem",
-						Aliases: []string{""},
-						Usage:   "Run filesystem ACP commands on the client rather than this server",
-						Value:   false,
+						Name:  "local-filesystem",
+						Usage: "Run filesystem ACP commands on the client rather than this server",
+						Value: false,
 					},
 					&cli.StringFlag{
 						Name:  "tls-cert",
@@ -167,26 +162,32 @@ func main() {
 					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					logger.Info().Str("path", agentconfig.DefaultStartFilePath).Msg("waiting for file to appear to start")
+					log.Logger.Info().Str("start_file_path", agentconfig.DefaultStartFilePath).Msg("waiting for start file to appear to start")
 					for {
 						if _, err := os.Stat(agentconfig.DefaultStartFilePath); err == nil {
-							logger.Info().Str("path", agentconfig.DefaultStartFilePath).Msg("found start file, starting")
+							log.Logger.Info().
+								Str("path", agentconfig.DefaultStartFilePath).
+								Msg("found start file, starting")
 							break
 						}
-						logger.Debug().Str("path", agentconfig.DefaultStartFilePath).Msg("start file not found, waiting")
+						log.Logger.Debug().
+							Str("path", agentconfig.DefaultStartFilePath).
+							Msg("start file not found, waiting")
 						time.Sleep(agentconfig.WaitForStartFileSleepDuration)
 					}
+
 					agentCmd := cmd.StringSlice("agent")
-					logger.Debug().Strs("agent_command", agentCmd).Msg("starting agent and websocket server")
 
 					var localTerminal *acptools.TerminalTools
 					var localFilesystem *acptools.FilesystemTools
 
 					if cmd.Bool("local-terminal") {
-						localTerminal = acptools.NewTerminalTools(logger)
+						log.Logger.Debug().Msg("local-terminal enabled")
+						localTerminal = acptools.NewTerminalTools(log.Logger)
 					}
 					if cmd.Bool("local-filesystem") {
-						localFilesystem = acptools.NewFilesystemTools(logger)
+						log.Logger.Debug().Msg("local-filesystem enabled")
+						localFilesystem = acptools.NewFilesystemTools(log.Logger)
 					}
 
 					httpSrv := agentapi.NewServer(agentCmd, localTerminal, localFilesystem)
@@ -196,9 +197,17 @@ func main() {
 					tlsCA := cmd.String("tls-ca")
 
 					if tlsCert != "" && tlsKey != "" && tlsCA != "" {
-						tlsConfig, err := pacific.LoadServerTLSConfig(tlsCert, tlsKey, tlsCA)
+						log.Logger.Info().
+							Str("tls-cert", tlsCert).
+							Str("tls-key", tlsKey).
+							Str("tls-ca", tlsCA).
+							Msg("TLS enabled")
+						tlsConfig, err := pacific.LoadServerTLSConfig(
+							tlsCert,
+							tlsKey,
+							tlsCA)
 						if err != nil {
-							return fmt.Errorf("load TLS config: %w", err)
+							return erres.NewHumanError(fmt.Errorf("failed to load TLS config: %w", err), "Failed to load TLS config.  Ensure that the files exist and that you have permissions to read them.")
 						}
 						return httpSrv.ServeTLS(cmd.String("addr"), tlsConfig)
 					}
@@ -209,12 +218,13 @@ func main() {
 			{
 				Name:    "docker",
 				Aliases: []string{"d"},
-				Usage:   "Docker-related utilities.",
+				Usage:   "Clean up old Docker containers, see running abyss containers, etc.",
 				Commands: []*cli.Command{
 					{
-						Name:    "ps",
-						Aliases: []string{"p"},
-						Usage:   "List Abyss containers that are currently running.",
+						Name:        "ps",
+						Aliases:     []string{"p"},
+						Usage:       "List Abyss containers that are currently running.",
+						Description: "Finds all running containers with the `abyss` label.",
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							docker, err := runenv.NewDockerClient()
 							if err != nil {
@@ -234,8 +244,9 @@ func main() {
 						},
 					},
 					{
-						Name:  "gc",
-						Usage: "Garbage collect all abyss containers.",
+						Name:        "gc",
+						Usage:       "Stop all abyss containers.",
+						Description: "Stops all containers with the `abyss` label.",
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							docker, err := runenv.NewDockerClient()
 							if err != nil {
@@ -248,7 +259,10 @@ func main() {
 							}
 
 							for _, v := range containers {
-								logger.Info().Str("container_id", v.ID).Strs("container_names", v.Names).Msg("stopping container")
+								log.Logger.Info().
+									Str("container_id", v.ID).
+									Strs("container_names", v.Names).
+									Msg("stopping container")
 								cont := docker.GetContainer(v.ID)
 								err = cont.Stop(ctx, time.Second*5)
 								if err != nil {
@@ -266,9 +280,10 @@ func main() {
 	err = cmd.Run(context.Background(), os.Args)
 	if err != nil {
 		if humanErr, ok := errors.AsType[erres.HumanError](err); ok {
-			logger.Error().Err(err).Str("human_error", humanErr.HumanError()).Msg("command failed")
+			log.Logger.Error().Err(err).Str("human_error", humanErr.HumanError()).Msg("command failed")
+			fmt.Fprintf(os.Stderr, "%s\n", humanErr.HumanError())
 		} else {
-			logger.Error().Err(err).Msg("command failed")
+			log.Logger.Error().Err(err).Msg("command failed")
 		}
 	}
 }
