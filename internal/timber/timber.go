@@ -106,3 +106,7 @@ func OpenLogFile() (io.WriteCloser, error) {
 
 	return logFile, nil
 }
+
+func ComponentLogger(component string) zerolog.Logger {
+	return log.Logger.With().Str("component", component).Logger()
+}

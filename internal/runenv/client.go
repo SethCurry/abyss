@@ -20,6 +20,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
+	"github.com/SethCurry/abyss/internal/timber"
 )
 
 // ContainerEndpoint describes how the host can reach a started container.
@@ -54,7 +55,7 @@ func NewDockerClient() (*DockerClient, error) {
 
 	return &DockerClient{
 		Client: cli,
-		logger: log.Logger.With().Str("from", "DockerClient").Timestamp().Logger(),
+		logger: timber.ComponentLogger("DockerClient"),
 	}, nil
 }
 
