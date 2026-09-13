@@ -1,9 +1,11 @@
 package erres
 
+import "strings"
+
 // NewHumanError wraps err with a human-readable message.
-func NewHumanError(message string, err error) *BaseHumanError {
+func NewHumanError(err error, messages ...string) *BaseHumanError {
 	return &BaseHumanError{
-		Message: message,
+		Message: strings.Join(messages, "\n"),
 		Err:     err,
 	}
 }
