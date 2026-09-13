@@ -38,6 +38,9 @@ func main() {
 	globalLogger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
 	log.Logger = globalLogger
 
+	globalLogger, closeLogger := timber.CreateLogger(zerolog.DebugLevel)
+	defer closeLogger()
+
 	cmd := &cli.Command{
 		Name:        "abyss",
 		Usage:       "A tool for managing and connecting to agents running in containers.",

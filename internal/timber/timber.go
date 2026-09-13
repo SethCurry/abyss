@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/SethCurry/abyss/internal/fp"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const timeFormat = "2006-01-02_15-04-05"
@@ -29,6 +31,26 @@ func getLogDir() (string, error) {
 	}
 
 	return logDir, nil
+}
+
+func CreateLogger(level zerolog.Level) (zerolog.Logger, func()) {
+	logFile, err := OpenLogFile()
+	if err != nil {
+		panic(err)
+	}
+
+	closer := func() {
+		defErr := logFile.Close()
+		if defErr != nil {
+			log.Error().Err(err).Msg("failed to close log file")
+		}
+	}
+
+	logOut := zerolog.ConsoleWriter{Out: io.MultiWriter(logFile, os.Stderr)}
+	globalLogger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
+	log.Logger = globalLogger
+
+	return globalLogger, closer
 }
 
 // CleanLogDir removes old log entries to keep the directory clean.
