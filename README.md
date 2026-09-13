@@ -6,37 +6,56 @@
 
 Check out [the docs](https://abyss.scurry.io) for in-depth information.
 
+## Stop handing your whole machine to an LLM you don't fully control.
+
+Let's be honest: an LLM agent is an unvetted process running commands on *your*
+computer. One hallucinated `rm -rf`, one over-eager "fix" that rewrites your
+configs, one wandering `grep` that stumbles onto your production credentials —
+and your machine, your source tree, and your secrets are on the line. Agents
+are powerful. Trusting them with unrestricted access to your desktop is a gamble.
+
 `abyss` is an _Agent Runtime Environment_ — a platform that runs your LLM agents
-inside isolated containers, the same way Docker runs your compute.
+inside isolated containers, the same way Docker runs your compute. Every command
+your agent runs, every file it touches, every terminal it spawns stays locked
+inside a sandbox. The agent never touches your working copy, never sees the keys
+on your desktop, and never gets the chance to `rm -rf` your home directory.
+
+## Your agent, sandboxed in seconds.
 
 Writing Docker Compose files to isolate your agent is a pain, and trying to
 connect Zed to a containerized agent is even worse.
 
-`abyss` handles all of
-that. You describe what your agent needs in a short YAML file and `abyss` brings
-up a container, exposes the agent over the [Agent Client Protocol](https://agentclientprotocol.com/)
-(ACP), and tears it all down when you're done — no Docker expertise required.
+`abyss` handles all of that. You describe what your agent needs in a short YAML
+file and `abyss` brings up a container, exposes the agent over the
+[Agent Client Protocol](https://agentclientprotocol.com/) (ACP), and tears it all
+down when you're done — no Docker expertise required.
 
-`abyss` works with any ACP-compatible client, like Zed.  It integrates
-seamlessly and ensures that directories you mount show up at the same path
-in the container so you don't need to worry about memorizing a weird path scheme.
-
-No more worrying about the agent finding the keys for the prod database on your
-desktop, or `rm -rf`'ing your entire home directory.
+`abyss` works with any ACP-compatible client, like Zed. It integrates seamlessly
+and ensures that directories you mount show up at the same path in the container,
+so you don't need to memorize a weird path scheme.
 
 ## Why abyss?
 
+- **Sandboxed by default.** Each agent runs in its own container — your machine is
+  never exposed to whatever the agent decides to run. Optionally copy files in
+  instead of bind-mounting, so agent edits never touch your working copy.
 - **No Docker configs to write.** A few lines of YAML describe the image, mounts,
   and the command that launches your agent. `abyss` handles the rest.
-- **Sandboxed by default.** Each agent runs in its own container. Optionally copy
-  files in instead of bind-mounting, so agent edits never touch your working copy.
+- **File and terminal interception.** ACP read/write file and terminal APIs are
+  intercepted and executed *inside* the container, so the agent and the client
+  agree on a single, consistent filesystem — and the agent never escapes it.
+- **Ephemeral security by design.** Ephemeral mutual-TLS authentication; certificates
+  are used for a single connection and then destroyed.
 - **ACP out of the box.** `abyss` proxies agent stdio over websockets and exposes
   an ACP endpoint, so any ACP client — Zed included — can drive the agent.
-- **File and terminal interception.** ACP read/write file and terminal APIs are
-  intercepted and executed inside the container, so the agent and the client agree
-  on a single, consistent filesystem.
 - **Reproducible environments.** Run setup scripts before the agent starts to
   install dependencies or seed state, and every session begins from a known place.
+
+## Sleep easier. Ship faster.
+
+`abyss` is the firewall between your agent and your machine. Run the most capable
+models you can find, give them the most aggressive prompts you want — and know
+that the worst an agent can do is wreck its own sandbox, not your system.
 
 ## Status
 
