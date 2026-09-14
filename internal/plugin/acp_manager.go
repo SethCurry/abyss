@@ -6,6 +6,16 @@ import (
 	"github.com/SethCurry/abyss/pkg/protobyss"
 )
 
+func NewACPManager(ctx context.Context) (*ACPManager, error) {
+	loader, err := protobyss.NewACPPluginPlugin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &ACPManager{
+		loader: loader,
+	}, nil
+}
+
 type ACPManager struct {
 	loader  *protobyss.ACPPluginPlugin
 	plugins []protobyss.ACPPlugin
