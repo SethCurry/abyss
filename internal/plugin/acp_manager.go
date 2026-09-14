@@ -3,7 +3,9 @@ package plugin
 import (
 	"context"
 
+	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/protobyss"
+	"github.com/rs/zerolog"
 )
 
 func NewACPManager(ctx context.Context) (*ACPManager, error) {
@@ -13,15 +15,18 @@ func NewACPManager(ctx context.Context) (*ACPManager, error) {
 	}
 	return &ACPManager{
 		loader: loader,
+		logger: timber.ComponentLogger("plugin.ACPManager"),
 	}, nil
 }
 
 type ACPManager struct {
 	loader  *protobyss.ACPPluginPlugin
 	plugins []protobyss.ACPPlugin
+	logger  zerolog.Logger
 }
 
 func (a *ACPManager) Load(ctx context.Context, path string) error {
+	a.logger.Info().Str("path", path).Msg("loading ACP plugin")
 	plugin, err := a.loader.Load(ctx, path)
 	if err != nil {
 		return err
@@ -30,7 +35,7 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 	return nil
 }
 
-func (a *ACPManager) Handle(ctx context.Context, req *protobyss.ACPContainer) ([]*protobyss.ACPContainer, error) {
+func (a *ACPManager) HandleMessage(ctx context.Context, req *protobyss.ACPContainer) ([]*protobyss.ACPContainer, error) {
 	allMessages := make([]*protobyss.ACPContainer, 1)
 	allMessages[0] = req
 	for _, v := range a.plugins {

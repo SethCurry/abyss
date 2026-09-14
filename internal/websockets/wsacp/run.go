@@ -8,7 +8,9 @@ import (
 	"os"
 
 	"github.com/SethCurry/abyss/internal/acp/termacp"
+	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -18,7 +20,7 @@ import (
 // router, and ACP connection. It launches the demultiplexing read loop in a
 // goroutine and returns the constructed proxied agent along with the close
 // behavior. A non-nil tlsConfig enables TLS for the connection.
-func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) (*websocket.Conn, *wsrouter.ProtoRouter, *ProxiedACPAgent, error) {
+func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, plugins *plugin.ACPManager, logger zerolog.Logger) (*websocket.Conn, *wsrouter.ProtoRouter, *ProxiedACPAgent, error) {
 	dialer := websocket.DefaultDialer
 	if tlsConfig != nil {
 		dialer = &websocket.Dialer{TLSClientConfig: tlsConfig}
@@ -33,7 +35,25 @@ func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, logg
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	router.SetConn(acpConn)
-	socket.Handle(1, acpConn.Handle)
+	//socket.Handle(1, acpConn.Handle)
+	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
+		newMsgs, err := plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+			TypeId:  int32(msg.TypeID),
+			Content: msg.Content,
+		})
+		if err != nil {
+			acpConn.Handle(msg)
+			logger.Error().Err(err).Msg("failed to handle message")
+			return
+		}
+
+		for _, v := range newMsgs {
+			acpConn.Handle(wsrouter.ProtoMessage{
+				TypeID:  int(v.TypeId),
+				Content: v.Content,
+			})
+		}
+	})
 
 	proxiedAgent := NewProxiedACPAgent(router)
 
@@ -53,7 +73,11 @@ func closeConn(conn *websocket.Conn, logger zerolog.Logger) {
 }
 
 func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
-	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, logger)
+	plugMgr, err := plugin.NewACPManager(ctx)
+	if err != nil {
+		return err
+	}
+	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
 	if err != nil {
 		return err
 	}
@@ -96,7 +120,11 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 // (typically an editor) over stdio. A non-nil tlsConfig enables TLS for the
 // connection.
 func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
-	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, logger)
+	plugMgr, err := plugin.NewACPManager(ctx)
+	if err != nil {
+		return err
+	}
+	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
 	if err != nil {
 		return err
 	}
