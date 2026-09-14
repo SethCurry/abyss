@@ -26,14 +26,14 @@ func RegisterACPPlugin(p ACPPlugin) {
 	aCPPlugin = p
 }
 
-//go:wasmexport acp_plugin_handle_stream
-func _acp_plugin_handle_stream(ptr, size uint32) uint64 {
+//go:wasmexport acp_plugin_handle_message
+func _acp_plugin_handle_message(ptr, size uint32) uint64 {
 	b := wasm.PtrToByte(ptr, size)
 	req := new(ACPContainer)
 	if err := req.UnmarshalVT(b); err != nil {
 		return 0
 	}
-	response, err := aCPPlugin.HandleStream(context.Background(), req)
+	response, err := aCPPlugin.HandleMessage(context.Background(), req)
 	if err != nil {
 		ptr, size = wasm.ByteToPtr([]byte(err.Error()))
 		return (uint64(ptr) << uint64(32)) | uint64(size) |

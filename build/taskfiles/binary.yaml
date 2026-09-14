@@ -21,4 +21,4 @@ tasks:
       - ./abyss oneshot -f ./abyss-agent.yaml "What is the capital of France?"
   proto:
     cmds:
-      - protoc -I=./schema/proto --go-plugin_opt=disable_pb_gen=true --go-plugin_out=./internal/websockets --go_out=./internal/websockets ./schema/proto/abyss.proto
+      - protoc -I=./schema/proto --go-plugin_opt=disable_pb_gen=true --go-plugin_out=./pkg --go_out=./pkg ./schema/proto/abyss.proto

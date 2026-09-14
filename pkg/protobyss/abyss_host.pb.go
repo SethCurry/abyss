@@ -91,9 +91,9 @@ func (p *ACPPluginPlugin) Load(ctx context.Context, pluginPath string) (aCPPlugi
 		return nil, fmt.Errorf("API version mismatch, host: %d, plugin: %d", ACPPluginPluginAPIVersion, results[0])
 	}
 
-	handlestream := module.ExportedFunction("acp_plugin_handle_stream")
-	if handlestream == nil {
-		return nil, errors.New("acp_plugin_handle_stream is not exported")
+	handlemessage := module.ExportedFunction("acp_plugin_handle_message")
+	if handlemessage == nil {
+		return nil, errors.New("acp_plugin_handle_message is not exported")
 	}
 
 	malloc := module.ExportedFunction("malloc")
@@ -106,11 +106,11 @@ func (p *ACPPluginPlugin) Load(ctx context.Context, pluginPath string) (aCPPlugi
 		return nil, errors.New("free is not exported")
 	}
 	return &aCPPluginPlugin{
-		runtime:      r,
-		module:       module,
-		malloc:       malloc,
-		free:         free,
-		handlestream: handlestream,
+		runtime:       r,
+		module:        module,
+		malloc:        malloc,
+		free:          free,
+		handlemessage: handlemessage,
 	}, nil
 }
 
@@ -122,14 +122,14 @@ func (p *aCPPluginPlugin) Close(ctx context.Context) (err error) {
 }
 
 type aCPPluginPlugin struct {
-	runtime      wazero.Runtime
-	module       api.Module
-	malloc       api.Function
-	free         api.Function
-	handlestream api.Function
+	runtime       wazero.Runtime
+	module        api.Module
+	malloc        api.Function
+	free          api.Function
+	handlemessage api.Function
 }
 
-func (p *aCPPluginPlugin) HandleStream(ctx context.Context, request *ACPContainer) (*ACPContainer, error) {
+func (p *aCPPluginPlugin) HandleMessage(ctx context.Context, request *ACPContainer) (*ACPContainerList, error) {
 	data, err := request.MarshalVT()
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (p *aCPPluginPlugin) HandleStream(ctx context.Context, request *ACPContaine
 		}
 	}
 
-	ptrSize, err := p.handlestream.Call(ctx, dataPtr, dataSize)
+	ptrSize, err := p.handlemessage.Call(ctx, dataPtr, dataSize)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (p *aCPPluginPlugin) HandleStream(ctx context.Context, request *ACPContaine
 		return nil, errors.New(string(bytes))
 	}
 
-	response := new(ACPContainer)
+	response := new(ACPContainerList)
 	if err = response.UnmarshalVT(bytes); err != nil {
 		return nil, err
 	}

@@ -11,7 +11,11 @@ message ACPContainer {
   bytes content = 4;
 }
 
+message ACPContainerList {
+  repeated ACPContainer containers = 1;
+}
+
 // go:plugin type=plugin version=1
 service ACPPlugin {
-  rpc HandleStream(stream ACPContainer) returns (stream ACPContainer);
+  rpc HandleMessage(ACPContainer) returns (ACPContainerList);
 }

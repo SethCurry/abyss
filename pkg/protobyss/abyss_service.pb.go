@@ -20,5 +20,5 @@ const (
 
 // go:plugin type=plugin version=1
 type ACPPlugin interface {
-	HandleStream(context.Context, *ACPContainer) (*ACPContainer, error)
+	HandleMessage(context.Context, *ACPContainer) (*ACPContainerList, error)
 }
