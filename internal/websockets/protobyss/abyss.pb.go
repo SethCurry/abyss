@@ -7,11 +7,12 @@
 package protobyss
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -99,7 +100,9 @@ const file_abyss_proto_rawDesc = "" +
 	"\n" +
 	"message_id\x18\x02 \x01(\tR\tmessageId\x12!\n" +
 	"\fresponse_for\x18\x03 \x01(\tR\vresponseFor\x12\x18\n" +
-	"\acontent\x18\x04 \x01(\fR\acontentB\rZ\v./protobyssb\x06proto3"
+	"\acontent\x18\x04 \x01(\fR\acontent2Q\n" +
+	"\tACPPlugin\x12D\n" +
+	"\fHandleStream\x12\x17.protobyss.ACPContainer\x1a\x17.protobyss.ACPContainer(\x010\x01B\rZ\v./protobyssb\x06proto3"
 
 var (
 	file_abyss_proto_rawDescOnce sync.Once
@@ -118,8 +121,10 @@ var file_abyss_proto_goTypes = []any{
 	(*ACPContainer)(nil), // 0: protobyss.ACPContainer
 }
 var file_abyss_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
+	0, // 0: protobyss.ACPPlugin.HandleStream:input_type -> protobyss.ACPContainer
+	0, // 1: protobyss.ACPPlugin.HandleStream:output_type -> protobyss.ACPContainer
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -138,7 +143,7 @@ func file_abyss_proto_init() {
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_abyss_proto_goTypes,
 		DependencyIndexes: file_abyss_proto_depIdxs,
