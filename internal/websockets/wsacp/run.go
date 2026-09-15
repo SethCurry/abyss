@@ -55,6 +55,13 @@ func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, plug
 		}
 	})
 
+	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
+		plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+			TypeId:  int32(msg.TypeID),
+			Content: msg.Content,
+		})
+	})
+
 	proxiedAgent := NewProxiedACPAgent(router)
 
 	go func() {
