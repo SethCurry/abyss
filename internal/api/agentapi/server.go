@@ -164,7 +164,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 	})
 	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
-		newMsgs, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+		_, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
 			TypeId:  int32(msg.TypeID),
 			Content: msg.Content,
 		})
