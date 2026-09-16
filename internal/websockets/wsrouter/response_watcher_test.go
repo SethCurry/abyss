@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SethCurry/abyss/internal/websockets/protobyss"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 )
 
 // TestNewResponseWatcher initializes an empty watcher with no registered handlers.

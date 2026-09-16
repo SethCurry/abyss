@@ -38,10 +38,11 @@ type ProtoMessage struct {
 // ProtoRouter maps protobuf schema numbers to handles by their schema number.
 // It's semantically similar to HTTP routing by path.
 type ProtoRouter struct {
-	conn     *websocket.Conn
-	logger   zerolog.Logger
-	handlers map[int]func(ProtoMessage)
-	writeMut sync.Mutex
+	conn          *websocket.Conn
+	logger        zerolog.Logger
+	handlers      map[int]func(ProtoMessage)
+	writeHandlers map[int]func(ProtoMessage)
+	writeMut      sync.Mutex
 }
 
 // Serve runs a loop that reads messages and synchronously dispatches them to handlers.
@@ -83,5 +84,17 @@ func (s *ProtoRouter) Handle(mt int, handler func(ProtoMessage)) {
 func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 	s.writeMut.Lock()
 	defer s.writeMut.Unlock()
+
+	sendTo, ok := s.writeHandlers[mt]
+	if ok {
+		sendTo(ProtoMessage{
+			TypeID:  mt,
+			Content: data,
+		})
+	}
 	return s.conn.WriteMessage(mt, data)
+}
+
+func (s *ProtoRouter) WriteHandler(mt int, handler func(ProtoMessage)) {
+	s.writeHandlers[mt] = handler
 }

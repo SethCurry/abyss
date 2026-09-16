@@ -10,3 +10,12 @@ message ACPContainer {
   string response_for = 3;
   bytes content = 4;
 }
+
+message ACPContainerList {
+  repeated ACPContainer containers = 1;
+}
+
+// go:plugin type=plugin version=1
+service ACPPlugin {
+  rpc HandleMessage(ACPContainer) returns (ACPContainerList);
+}

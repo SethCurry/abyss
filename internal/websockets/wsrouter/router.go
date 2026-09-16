@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/SethCurry/abyss/internal/websockets/protobyss"
 	"github.com/SethCurry/abyss/internal/websockets/wsmessage"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"

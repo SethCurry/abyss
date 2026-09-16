@@ -1,6 +1,7 @@
 package agentapi
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"log/slog"
@@ -12,8 +13,10 @@ import (
 
 	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/SethCurry/abyss/internal/api/pacific"
+	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -55,6 +58,7 @@ type Server struct {
 	terminalTools *acptools.TerminalTools
 	fileTools     *acptools.FilesystemTools
 	activeConns   atomic.Int64
+	plugins       *plugin.ACPManager
 }
 
 // ActiveConnection returns the number of currently active websocket
@@ -143,7 +147,32 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	socket := wsrouter.NewProtoRouter()
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
-	socket.Handle(1, acpConn.Handle)
+	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
+		newMsgs, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+			TypeId:  int32(msg.TypeID),
+			Content: msg.Content,
+		})
+		if err != nil {
+			req.Logger.Error().Err(err).Msg("failed to handle message")
+			return
+		}
+		for _, msg := range newMsgs {
+			acpConn.Handle(wsrouter.ProtoMessage{
+				TypeID:  int(msg.TypeId),
+				Content: msg.Content,
+			})
+		}
+	})
+	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
+		_, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+			TypeId:  int32(msg.TypeID),
+			Content: msg.Content,
+		})
+		if err != nil {
+			req.Logger.Error().Err(err).Msg("failed to handle message")
+			return
+		}
+	})
 	router.SetConn(acpConn)
 	underlying := wsacp.NewProxiedACPClient(router)
 

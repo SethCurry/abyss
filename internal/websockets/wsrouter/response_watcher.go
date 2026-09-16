@@ -3,7 +3,7 @@ package wsrouter
 import (
 	"sync"
 
-	"github.com/SethCurry/abyss/internal/websockets/protobyss"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 )
 
 func NewResponseWatcher() *ResponseWatcher {
