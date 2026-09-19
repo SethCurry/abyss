@@ -7,51 +7,231 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+type RequestPermissionRequestPlugin interface {
+	OnRequestPermissionRequest(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type RequestPermissionResponsePlugin interface {
+	OnRequestPermissionResponse(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type RequestPermissionPlugin interface {
+	RequestPermissionRequestPlugin
+	RequestPermissionResponsePlugin
+}
+
+type WriteTextFileRequestPlugin interface {
+	OnWriteTextFileRequest(acp.WriteTextFileRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type WriteTextFileResponsePlugin interface {
+	OnWriteTextFileResponse(acp.WriteTextFileResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type ReadTextFileRequestPlugin interface {
+	OnReadTextFileRequest(acp.ReadTextFileRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type ReadTextFileResponsePlugin interface {
+	OnReadTextFileResponse(acp.ReadTextFileResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type CreateTerminalRequestPlugin interface {
+	OnCreateTerminalRequest(acp.CreateTerminalRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type TerminalOutputRequestPlugin interface {
+	OnTerminalOutputRequest(acp.TerminalOutputRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type TerminalOutputResponsePlugin interface {
+	OnTerminalOutputResponse(acp.TerminalOutputResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type ReleaseTerminalRequestPlugin interface {
+	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type ReleaseTerminalResponsePlugin interface {
+	OnReleaseTerminalResponse(acp.ReleaseTerminalResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type WaitForTerminalExitRequestPlugin interface {
+	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type KillTerminalRequestPlugin interface {
+	OnKillTerminalRequest(acp.KillTerminalRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type KillTerminalResponsePlugin interface {
+	OnKillTerminalResponse(acp.KillTerminalResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type SessionNotificationPlugin interface {
+	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type AuthenticateRequestPlugin interface {
+	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type InitializeRequestPlugin interface {
+	OnInitializeRequest(acp.InitializeRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type LogoutRequestPlugin interface {
+	OnLogoutRequest(acp.LogoutRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type CancelNotificationPlugin interface {
+	OnCancelNotification(acp.CancelNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type CloseSessionRequestPlugin interface {
+	OnCloseSessionRequest(acp.CloseSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type ListSessionsRequestPlugin interface {
+	OnListSessionsRequest(acp.ListSessionsRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type NewSessionRequestPlugin interface {
+	OnNewSessionRequest(acp.NewSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type PromptRequestPlugin interface {
+	OnPromptRequest(acp.PromptRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type ResumeSessionRequestPlugin interface {
+	OnResumeSessionRequest(acp.ResumeSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type SetSessionConfigOptionRequestPlugin interface {
+	OnSetSessionConfigOptionRequest(acp.SetSessionConfigOptionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type SetSessionModeRequestPlugin interface {
+	OnSetSessionModeRequest(acp.SetSessionModeRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type LoadSessionRequestPlugin interface {
+	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDidChangeDocumentNotificationPlugin interface {
+	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDidCloseDocumentNotificationPlugin interface {
+	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDidFocusDocumentNotificationPlugin interface {
+	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDidOpenDocumentNotificationPlugin interface {
+	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDidSaveDocumentNotificationPlugin interface {
+	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableAcceptNesNotificationPlugin interface {
+	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableCloseNesRequestPlugin interface {
+	OnUnstableCloseNesRequest(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableRejectNesNotificationPlugin interface {
+	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableStartNesRequestPlugin interface {
+	OnUnstableStartNesRequest(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableSuggestNesRequestPlugin interface {
+	OnUnstableSuggestNesRequest(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDisableProviderRequestPlugin interface {
+	OnUnstableDisableProviderRequest(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableListProvidersRequestPlugin interface {
+	OnUnstableListProvidersRequest(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableSetProviderRequestPlugin interface {
+	OnUnstableSetProviderRequest(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableDeleteSessionRequestPlugin interface {
+	OnUnstableDeleteSessionRequest(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type UnstableForkSessionRequestPlugin interface {
+	OnUnstableForkSessionRequest(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
 // ACPPlugin is a typed view of an ACP plugin: each ACP message type is
 // dispatched to a dedicated handler so plugin authors implement typed methods
 // rather than a single raw HandleMessage switch.
 type ACPPlugin interface {
+	// TODO this is missing response types
 	// Client capability requests (agent -> client).
-	OnRequestPermissionRequest(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
-	OnWriteTextFileRequest(acp.WriteTextFileRequest) ([]*protobyss.ACPContainer, error)
-	OnReadTextFileRequest(acp.ReadTextFileRequest) ([]*protobyss.ACPContainer, error)
-	OnCreateTerminalRequest(acp.CreateTerminalRequest) ([]*protobyss.ACPContainer, error)
-	OnTerminalOutputRequest(acp.TerminalOutputRequest) ([]*protobyss.ACPContainer, error)
-	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
-	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
-	OnKillTerminalRequest(acp.KillTerminalRequest) ([]*protobyss.ACPContainer, error)
-	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
+	// Client capability requests (agent -> client).
+	RequestPermissionPlugin
+	WriteTextFileRequestPlugin
+	WriteTextFileResponsePlugin
+	ReadTextFileRequestPlugin
+	ReadTextFileResponsePlugin
+	CreateTerminalRequestPlugin
+	TerminalOutputRequestPlugin
+	TerminalOutputResponsePlugin
+	ReleaseTerminalRequestPlugin
+	ReleaseTerminalResponsePlugin
+	WaitForTerminalExitRequestPlugin
+	KillTerminalRequestPlugin
+	KillTerminalResponsePlugin
+	SessionNotificationPlugin
 
 	// Agent requests (client -> agent).
-	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
-	OnInitializeRequest(acp.InitializeRequest) ([]*protobyss.ACPContainer, error)
-	OnLogoutRequest(acp.LogoutRequest) ([]*protobyss.ACPContainer, error)
-	OnCancelNotification(acp.CancelNotification) error
-	OnCloseSessionRequest(acp.CloseSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnListSessionsRequest(acp.ListSessionsRequest) ([]*protobyss.ACPContainer, error)
-	OnNewSessionRequest(acp.NewSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnPromptRequest(acp.PromptRequest) ([]*protobyss.ACPContainer, error)
-	OnResumeSessionRequest(acp.ResumeSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnSetSessionConfigOptionRequest(acp.SetSessionConfigOptionRequest) ([]*protobyss.ACPContainer, error)
-	OnSetSessionModeRequest(acp.SetSessionModeRequest) ([]*protobyss.ACPContainer, error)
-	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
+	AuthenticateRequestPlugin
+	InitializeRequestPlugin
+	LogoutRequestPlugin
+	CancelNotificationPlugin
+	CloseSessionRequestPlugin
+	ListSessionsRequestPlugin
+	NewSessionRequestPlugin
+	PromptRequestPlugin
+	ResumeSessionRequestPlugin
+	SetSessionConfigOptionRequestPlugin
+	SetSessionModeRequestPlugin
+	LoadSessionRequestPlugin
 
 	// Experimental agent requests (client -> agent).
-	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableCloseNesRequest(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableStartNesRequest(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableSuggestNesRequest(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableDisableProviderRequest(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableListProvidersRequest(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableSetProviderRequest(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableDeleteSessionRequest(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableForkSessionRequest(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
+	UnstableDidChangeDocumentNotificationPlugin
+	UnstableDidCloseDocumentNotificationPlugin
+	UnstableDidFocusDocumentNotificationPlugin
+	UnstableDidOpenDocumentNotificationPlugin
+	UnstableDidSaveDocumentNotificationPlugin
+	UnstableAcceptNesNotificationPlugin
+	UnstableCloseNesRequestPlugin
+	UnstableRejectNesNotificationPlugin
+	UnstableStartNesRequestPlugin
+	UnstableSuggestNesRequestPlugin
+	UnstableDisableProviderRequestPlugin
+	UnstableListProvidersRequestPlugin
+	UnstableSetProviderRequestPlugin
+	UnstableDeleteSessionRequestPlugin
+	UnstableForkSessionRequestPlugin
 }
 
 type ACPPluginRouter struct {
