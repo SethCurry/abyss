@@ -379,6 +379,9 @@ func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPC
 	switch MessageTypeID(msg.TypeId) {
 	// Client capability requests (agent -> client).
 	case RequestPermissionRequestType:
+		if asHandler, ok := r.underlying.(RequestPermissionRequestPlugin); ok {
+			return []*protobyss.ACPContainer{msg}, nil
+		}
 		return handleRequest(msg, r.underlying.OnRequestPermissionRequest)
 	case WriteTextFileRequestType:
 		return handleRequest(msg, r.underlying.OnWriteTextFileRequest)
