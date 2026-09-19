@@ -20,7 +20,7 @@ type ACPPlugin interface {
 	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
 	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
 	OnKillTerminalRequest(acp.KillTerminalRequest) ([]*protobyss.ACPContainer, error)
-	OnSessionNotification(acp.SessionNotification) error
+	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
 
 	// Agent requests (client -> agent).
 	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
@@ -37,14 +37,14 @@ type ACPPlugin interface {
 	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
 
 	// Experimental agent requests (client -> agent).
-	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) error
-	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) error
-	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) error
-	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) error
-	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) error
-	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) error
+	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
 	OnUnstableCloseNesRequest(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) error
+	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
 	OnUnstableStartNesRequest(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
 	OnUnstableSuggestNesRequest(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
 	OnUnstableDisableProviderRequest(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
@@ -78,7 +78,7 @@ func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPC
 	case KillTerminalRequestType:
 		return handleRequest(msg, r.underlying.OnKillTerminalRequest)
 	case SessionNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnSessionNotification)
+		return handleRequest(msg, r.underlying.OnSessionNotification)
 
 	// Agent requests (client -> agent).
 	case AuthenticateRequestType:
@@ -88,7 +88,7 @@ func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPC
 	case LogoutRequestType:
 		return handleRequest(msg, r.underlying.OnLogoutRequest)
 	case CancelNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnCancelNotification)
+		return handleRequest(msg, r.underlying.OnCancelNotification)
 	case CloseSessionRequestType:
 		return handleRequest(msg, r.underlying.OnCloseSessionRequest)
 	case ListSessionsRequestType:
@@ -108,21 +108,21 @@ func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPC
 
 	// Experimental agent requests (client -> agent).
 	case UnstableDidChangeDocumentNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableDidChangeDocumentNotification)
+		return handleRequest(msg, r.underlying.OnUnstableDidChangeDocumentNotification)
 	case UnstableDidCloseDocumentNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableDidCloseDocumentNotification)
+		return handleRequest(msg, r.underlying.OnUnstableDidCloseDocumentNotification)
 	case UnstableDidFocusDocumentNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableDidFocusDocumentNotification)
+		return handleRequest(msg, r.underlying.OnUnstableDidFocusDocumentNotification)
 	case UnstableDidOpenDocumentNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableDidOpenDocumentNotification)
+		return handleRequest(msg, r.underlying.OnUnstableDidOpenDocumentNotification)
 	case UnstableDidSaveDocumentNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableDidSaveDocumentNotification)
+		return handleRequest(msg, r.underlying.OnUnstableDidSaveDocumentNotification)
 	case UnstableAcceptNesNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableAcceptNesNotification)
+		return handleRequest(msg, r.underlying.OnUnstableAcceptNesNotification)
 	case UnstableCloseNesRequestType:
 		return handleRequest(msg, r.underlying.OnUnstableCloseNesRequest)
 	case UnstableRejectNesNotificationType:
-		return nil, handleNotification(msg, r.underlying.OnUnstableRejectNesNotification)
+		return handleRequest(msg, r.underlying.OnUnstableRejectNesNotification)
 	case UnstableStartNesRequestType:
 		return handleRequest(msg, r.underlying.OnUnstableStartNesRequest)
 	case UnstableSuggestNesRequestType:
@@ -149,16 +149,6 @@ func handleRequest[T any](msg *protobyss.ACPContainer, fn func(T) ([]*protobyss.
 	var params T
 	if err := json.Unmarshal(msg.Content, &params); err != nil {
 		return nil, err
-	}
-
-	return fn(params)
-}
-
-// handleNotification unmarshals msg into T and invokes fn for its side effects.
-func handleNotification[T any](msg *protobyss.ACPContainer, fn func(T) error) error {
-	var params T
-	if err := json.Unmarshal(msg.Content, &params); err != nil {
-		return err
 	}
 
 	return fn(params)
