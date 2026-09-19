@@ -28,6 +28,11 @@ type WriteTextFileResponsePlugin interface {
 	OnWriteTextFileResponse(acp.WriteTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
+type WriteTextFilePlugin interface {
+	WriteTextFileRequestPlugin
+	WriteTextFileResponsePlugin
+}
+
 type ReadTextFileRequestPlugin interface {
 	OnReadTextFileRequest(acp.ReadTextFileRequest) ([]*protobyss.ACPContainer, error)
 }
@@ -36,8 +41,22 @@ type ReadTextFileResponsePlugin interface {
 	OnReadTextFileResponse(acp.ReadTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
+type ReadTextFilePlugin interface {
+	ReadTextFileRequestPlugin
+	ReadTextFileResponsePlugin
+}
+
 type CreateTerminalRequestPlugin interface {
 	OnCreateTerminalRequest(acp.CreateTerminalRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type CreateTerminalResponsePlugin interface {
+	OnCreateTerminalResponse(acp.CreateTerminalResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type CreateTerminalPlugin interface {
+	CreateTerminalRequestPlugin
+	CreateTerminalResponsePlugin
 }
 
 type TerminalOutputRequestPlugin interface {
@@ -48,6 +67,11 @@ type TerminalOutputResponsePlugin interface {
 	OnTerminalOutputResponse(acp.TerminalOutputResponse) ([]*protobyss.ACPContainer, error)
 }
 
+type TerminalOutputPlugin interface {
+	TerminalOutputRequestPlugin
+	TerminalOutputResponsePlugin
+}
+
 type ReleaseTerminalRequestPlugin interface {
 	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
@@ -56,8 +80,22 @@ type ReleaseTerminalResponsePlugin interface {
 	OnReleaseTerminalResponse(acp.ReleaseTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
+type ReleaseTerminalPlugin interface {
+	ReleaseTerminalRequestPlugin
+	ReleaseTerminalResponsePlugin
+}
+
 type WaitForTerminalExitRequestPlugin interface {
 	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type WaitForTerminalExitResponsePlugin interface {
+	OnWaitForTerminalExitResponse(acp.WaitForTerminalExitResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type WaitForTerminalExitPlugin interface {
+	WaitForTerminalExitRequestPlugin
+	WaitForTerminalExitResponsePlugin
 }
 
 type KillTerminalRequestPlugin interface {
@@ -68,6 +106,11 @@ type KillTerminalResponsePlugin interface {
 	OnKillTerminalResponse(acp.KillTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
+type KillTerminalPlugin interface {
+	KillTerminalRequestPlugin
+	KillTerminalResponsePlugin
+}
+
 type SessionNotificationPlugin interface {
 	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
 }
@@ -76,12 +119,39 @@ type AuthenticateRequestPlugin interface {
 	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type AuthenticateResponsePlugin interface {
+	OnAuthenticateResponse(acp.AuthenticateResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type AuthenticatePlugin interface {
+	AuthenticateRequestPlugin
+	AuthenticateResponsePlugin
+}
+
 type InitializeRequestPlugin interface {
 	OnInitializeRequest(acp.InitializeRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type InitializeResponsePlugin interface {
+	OnInitializeResponse(acp.InitializeResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type InitializePlugin interface {
+	InitializeRequestPlugin
+	InitializeResponsePlugin
+}
+
 type LogoutRequestPlugin interface {
 	OnLogoutRequest(acp.LogoutRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type LogoutResponsePlugin interface {
+	OnLogoutResponse(acp.LogoutResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type LogoutPlugin interface {
+	LogoutRequestPlugin
+	LogoutResponsePlugin
 }
 
 type CancelNotificationPlugin interface {
@@ -92,32 +162,104 @@ type CloseSessionRequestPlugin interface {
 	OnCloseSessionRequest(acp.CloseSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type CloseSessionResponsePlugin interface {
+	OnCloseSessionResponse(acp.CloseSessionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type CloseSessionPlugin interface {
+	CloseSessionRequestPlugin
+	CloseSessionResponsePlugin
+}
+
 type ListSessionsRequestPlugin interface {
 	OnListSessionsRequest(acp.ListSessionsRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type ListSessionsResponsePlugin interface {
+	OnListSessionsResponse(acp.ListSessionsResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type ListSessionsPlugin interface {
+	ListSessionsRequestPlugin
+	ListSessionsResponsePlugin
 }
 
 type NewSessionRequestPlugin interface {
 	OnNewSessionRequest(acp.NewSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type NewSessionResponsePlugin interface {
+	OnNewSessionResponse(acp.NewSessionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type NewSessionPlugin interface {
+	NewSessionRequestPlugin
+	NewSessionResponsePlugin
+}
+
 type PromptRequestPlugin interface {
 	OnPromptRequest(acp.PromptRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type PromptResponsePlugin interface {
+	OnPromptResponse(acp.PromptResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type PromptPlugin interface {
+	PromptRequestPlugin
+	PromptResponsePlugin
 }
 
 type ResumeSessionRequestPlugin interface {
 	OnResumeSessionRequest(acp.ResumeSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type ResumeSessionResponsePlugin interface {
+	OnResumeSessionResponse(acp.ResumeSessionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type ResumeSessionPlugin interface {
+	ResumeSessionRequestPlugin
+	ResumeSessionResponsePlugin
+}
+
 type SetSessionConfigOptionRequestPlugin interface {
 	OnSetSessionConfigOptionRequest(acp.SetSessionConfigOptionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type SetSessionConfigOptionResponsePlugin interface {
+	OnSetSessionConfigOptionResponse(acp.SetSessionConfigOptionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type SetSessionConfigOptionPlugin interface {
+	SetSessionConfigOptionRequestPlugin
+	SetSessionConfigOptionResponsePlugin
 }
 
 type SetSessionModeRequestPlugin interface {
 	OnSetSessionModeRequest(acp.SetSessionModeRequest) ([]*protobyss.ACPContainer, error)
 }
 
+type SetSessionModeResponsePlugin interface {
+	OnSetSessionModeResponse(acp.SetSessionModeResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type SetSessionModePlugin interface {
+	SetSessionModeRequestPlugin
+	SetSessionModeResponsePlugin
+}
+
 type LoadSessionRequestPlugin interface {
 	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
+}
+
+type LoadSessionResponsePlugin interface {
+	OnLoadSessionResponse(acp.LoadSessionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+type LoadSessionPlugin interface {
+	LoadSessionRequestPlugin
+	LoadSessionResponsePlugin
 }
 
 type UnstableDidChangeDocumentNotificationPlugin interface {
@@ -188,33 +330,28 @@ type ACPPlugin interface {
 	// Client capability requests (agent -> client).
 	// Client capability requests (agent -> client).
 	RequestPermissionPlugin
-	WriteTextFileRequestPlugin
-	WriteTextFileResponsePlugin
-	ReadTextFileRequestPlugin
-	ReadTextFileResponsePlugin
-	CreateTerminalRequestPlugin
-	TerminalOutputRequestPlugin
-	TerminalOutputResponsePlugin
-	ReleaseTerminalRequestPlugin
-	ReleaseTerminalResponsePlugin
-	WaitForTerminalExitRequestPlugin
-	KillTerminalRequestPlugin
-	KillTerminalResponsePlugin
+	WriteTextFilePlugin
+	ReadTextFilePlugin
+	CreateTerminalPlugin
+	TerminalOutputPlugin
+	ReleaseTerminalPlugin
+	WaitForTerminalExitPlugin
+	KillTerminalPlugin
 	SessionNotificationPlugin
 
 	// Agent requests (client -> agent).
-	AuthenticateRequestPlugin
-	InitializeRequestPlugin
-	LogoutRequestPlugin
+	AuthenticatePlugin
+	InitializePlugin
+	LogoutPlugin
 	CancelNotificationPlugin
-	CloseSessionRequestPlugin
-	ListSessionsRequestPlugin
-	NewSessionRequestPlugin
-	PromptRequestPlugin
-	ResumeSessionRequestPlugin
-	SetSessionConfigOptionRequestPlugin
-	SetSessionModeRequestPlugin
-	LoadSessionRequestPlugin
+	CloseSessionPlugin
+	ListSessionsPlugin
+	NewSessionPlugin
+	PromptPlugin
+	ResumeSessionPlugin
+	SetSessionConfigOptionPlugin
+	SetSessionModePlugin
+	LoadSessionPlugin
 
 	// Experimental agent requests (client -> agent).
 	UnstableDidChangeDocumentNotificationPlugin
