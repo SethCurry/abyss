@@ -3,8 +3,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -39,31 +37,13 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 				},
 			}
 
-			marshalled, err := json.Marshal(msg)
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate JSON for SessionNotification: %w", err)
-			}
-
-			return []*protobyss.ACPContainer{
-				&protobyss.ACPContainer{
-					TypeId:  int32(abyss.SessionNotificationType),
-					Content: marshalled,
-				},
-			}, nil
+			return abyss.ACPContainers(msg)
 		}
 	}
 
-	marshalledMsg, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate default JSON response: %w", err)
-	}
-
-	return []*protobyss.ACPContainer{
-		&protobyss.ACPContainer{
-			TypeId:  int32(abyss.SessionNotificationType),
-			Content: marshalledMsg,
-		},
-	}, nil
+	return abyss.ACPContainers(
+		req,
+	)
 }
 
 func main() {}

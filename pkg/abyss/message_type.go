@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/SethCurry/abyss/internal/fp"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 )
 
@@ -161,6 +163,78 @@ func GetMessageTypeByType(msg any) (TypedMessage, error) {
 	}
 
 	return nil, fmt.Errorf("unknown router message type %T", msg)
+}
+
+type acpMessageTypes interface {
+	acp.RequestPermissionRequest | acp.RequestPermissionResponse |
+		acp.WriteTextFileRequest | acp.WriteTextFileResponse |
+		acp.ReadTextFileRequest | acp.ReadTextFileResponse |
+		acp.CreateTerminalRequest | acp.CreateTerminalResponse |
+		acp.TerminalOutputRequest | acp.TerminalOutputResponse |
+		acp.ReleaseTerminalRequest | acp.ReleaseTerminalResponse |
+		acp.WaitForTerminalExitRequest | acp.WaitForTerminalExitResponse |
+		acp.KillTerminalRequest | acp.KillTerminalResponse |
+		acp.SessionNotification |
+		acp.SetSessionModeRequest | acp.SetSessionModeResponse |
+		acp.UnstableForkSessionRequest | acp.UnstableForkSessionResponse |
+		acp.ListSessionsRequest | acp.ListSessionsResponse |
+		acp.ResumeSessionRequest | acp.ResumeSessionResponse |
+		acp.SetSessionConfigOptionRequest | acp.SetSessionConfigOptionResponse |
+		acp.LogoutRequest | acp.LogoutResponse |
+		acp.UnstableCloseNesRequest | acp.UnstableCloseNesResponse |
+		acp.UnstableStartNesRequest | acp.UnstableStartNesResponse |
+		acp.UnstableSuggestNesRequest | acp.UnstableSuggestNesResponse |
+		acp.UnstableAcceptNesNotification | acp.UnstableRejectNesNotification |
+		acp.UnstableDidChangeDocumentNotification | acp.UnstableDidCloseDocumentNotification |
+		acp.UnstableDidFocusDocumentNotification | acp.UnstableDidOpenDocumentNotification |
+		acp.UnstableDidSaveDocumentNotification |
+		acp.UnstableDisableProviderRequest | acp.UnstableDisableProviderResponse |
+		acp.UnstableListProvidersRequest | acp.UnstableListProvidersResponse |
+		acp.UnstableSetProviderRequest | acp.UnstableSetProviderResponse |
+		acp.UnstableDeleteSessionRequest | acp.UnstableDeleteSessionResponse |
+		acp.CloseSessionRequest | acp.CloseSessionResponse |
+		acp.InitializeRequest | acp.InitializeResponse |
+		acp.NewSessionRequest | acp.NewSessionResponse |
+		acp.AuthenticateRequest | acp.AuthenticateResponse |
+		acp.LoadSessionRequest | acp.LoadSessionResponse |
+		acp.PromptRequest | acp.PromptResponse |
+		acp.CancelNotification
+}
+
+func ACPContainer[T acpMessageTypes](msg T) (*protobyss.ACPContainer, error) {
+	msgType, err := GetMessageTypeByType(msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find message type for %T: %w", msg, err)
+	}
+
+	typeId := msgType.TypeID()
+
+	marshalled, err := json.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal ACP message of type %T: %w", msg, err)
+	}
+
+	return &protobyss.ACPContainer{
+		TypeId:  int32(typeId),
+		Content: marshalled,
+	}, nil
+}
+
+func ACPContainers[T acpMessageTypes](msgs ...T) ([]*protobyss.ACPContainer, error) {
+	return fp.MapE(func(msg T) (*protobyss.ACPContainer, error) {
+		return ACPContainer(msg)
+	}, msgs)
+}
+
+func ACPContainerList[T acpMessageTypes](msgs ...T) (*protobyss.ACPContainerList, error) {
+	newMsgs, err := ACPContainers(msgs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ACP containers from messages: %w", err)
+	}
+
+	return &protobyss.ACPContainerList{
+		Containers: newMsgs,
+	}, nil
 }
 
 var (
