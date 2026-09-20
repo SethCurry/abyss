@@ -323,8 +323,8 @@ type OnUnstableDeleteSessionResponseHandler interface {
 
 // NewACPPluginRouter builds an ACPPluginRouter from an object that implements
 // any subset of the *Handler interfaces. Unmatched callbacks are left nil.
-func NewACPPluginRouter(v any) ACPPluginRouter {
-	var r ACPPluginRouter
+func NewACPPluginRouter(v any) *ACPPluginRouter {
+	r := &ACPPluginRouter{}
 	var methods []string
 
 	if h, ok := v.(OnRequestPermissionRequestHandler); ok {
