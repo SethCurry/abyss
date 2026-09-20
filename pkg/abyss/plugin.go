@@ -1,12 +1,15 @@
 package abyss
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 )
+
+var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
 
 type ACPPluginRouter struct {
 	// Client capability requests (agent -> client).
@@ -79,7 +82,7 @@ type ACPPluginRouter struct {
 	OnUnstableDeleteSessionResponse         func(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPContainer, error) {
+func (r *ACPPluginRouter) HandleMessage(ctx context.Context, msg *protobyss.ACPContainer) (*protobyss.ACPContainerList, error) {
 	switch MessageTypeID(msg.TypeId) {
 	// Client capability requests (agent -> client).
 	case RequestPermissionRequestType:
@@ -221,14 +224,21 @@ func (r *ACPPluginRouter) Handle(msg *protobyss.ACPContainer) ([]*protobyss.ACPC
 }
 
 // handleRequest unmarshals msg into T, invokes fn, and returns its response.
-func handleRequest[T any](msg *protobyss.ACPContainer, fn func(T) ([]*protobyss.ACPContainer, error)) ([]*protobyss.ACPContainer, error) {
+func handleRequest[T any](msg *protobyss.ACPContainer, fn func(T) ([]*protobyss.ACPContainer, error)) (*protobyss.ACPContainerList, error) {
 	if fn == nil {
-		return []*protobyss.ACPContainer{msg}, nil
+		return &protobyss.ACPContainerList{Containers: []*protobyss.ACPContainer{msg}}, nil
 	}
 	var params T
 	if err := json.Unmarshal(msg.Content, &params); err != nil {
 		return nil, err
 	}
 
-	return fn(params)
+	resp, err := fn(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &protobyss.ACPContainerList{
+		Containers: resp,
+	}, nil
 }

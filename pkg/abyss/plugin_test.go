@@ -1,6 +1,7 @@
 package abyss
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SethCurry/abyss/pkg/protobyss"
@@ -10,7 +11,7 @@ import (
 func Test_ACPPluginRouter_Completeness(t *testing.T) {
 	plugin := &ACPPluginRouter{}
 	for _, v := range AllMessageTypes {
-		_, err := plugin.Handle(&protobyss.ACPContainer{
+		_, err := plugin.HandleMessage(context.Background(), &protobyss.ACPContainer{
 			TypeId:  int32(v.TypeID()),
 			Content: []byte("{}"),
 		})
