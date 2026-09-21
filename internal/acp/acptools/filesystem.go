@@ -24,6 +24,10 @@ type FilesystemTools struct {
 	logger zerolog.Logger
 }
 
+// WriteTextFile implements WriteTextFile by actually writing the file
+// and returning results.  This is opposed to the non-default
+// behavior of passing the request to the ACP client to execute on
+// the host.
 func (e *FilesystemTools) WriteTextFile(
 	ctx context.Context,
 	params acp.WriteTextFileRequest,
@@ -54,6 +58,10 @@ func (e *FilesystemTools) WriteTextFile(
 	return acp.WriteTextFileResponse{}, nil
 }
 
+// ReadTextFile implements ReadTextFile by actually reading the file
+// and returning results.  This is opposed to the non-default
+// behavior of passing the request to the ACP client to execute on
+// the host.
 func (e *FilesystemTools) ReadTextFile(
 	ctx context.Context,
 	params acp.ReadTextFileRequest,
