@@ -1,3 +1,4 @@
+// Package termacp implements a simple terminal ACP viewer.
 package termacp
 
 import (
@@ -14,13 +15,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Compile-time check that TermACPClient satisfies the acp.Client interface.
+var _ acp.Client = (*TermACPClient)(nil)
+
 // NewTermACPClient creates a terminal-backed ACP client. Session updates and
 // permission prompts are rendered to os.Stdout, and permission selections are
 // read from os.Stdin. File and terminal operations are backed by the built-in
 // acptools implementations.
-// Compile-time check that TermACPClient satisfies the acp.Client interface.
-var _ acp.Client = (*TermACPClient)(nil)
-
 func NewTermACPClient() *TermACPClient {
 	logger := zerolog.New(io.Discard)
 	return &TermACPClient{
