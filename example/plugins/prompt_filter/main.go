@@ -15,6 +15,7 @@ type PromptFilter struct {
 	bannedRegexes []*regexp.Regexp
 }
 
+// We only need to implement OnPromptRequest since we don't care about the other types.
 func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPContainer, error) {
 	allStringContents := strings.Builder{}
 
