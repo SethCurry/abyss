@@ -107,6 +107,8 @@ func OpenLogFile() (io.WriteCloser, error) {
 	return logFile, nil
 }
 
+// ComponentLogger returns a logger with a pre-configured "component" field.
+// Used to have consistent fields across the various structs that need logging.
 func ComponentLogger(component string) zerolog.Logger {
 	return log.Logger.With().Str("component", component).Logger()
 }

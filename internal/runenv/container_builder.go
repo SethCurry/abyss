@@ -239,7 +239,14 @@ func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Conta
 	return container, *b.config.Endpoint, nil
 }
 
+// ContainerPreBuildStep is a step that runs before the container is started.
+// They can modify the Docker configuration, but can't run bash scripts in the
+// container or things like that.
 type ContainerPreBuildStep func(*ContainerConfig) error
+
+// ContainerBuildStep is a step that runs after the Docker container has been started.
+// They have access to the container's filesystem, shell, etc, but can't change
+// the container's configuration like networking.
 type ContainerBuildStep func(context.Context, *Container) error
 
 // WithSetupScripts returns a build step that copies each setup script into the
@@ -371,6 +378,11 @@ func WithCopyFiles(files []agentconfig.FileCopyConfig) ContainerBuildStep {
 	}
 }
 
+// WithHostMounts creates a ContainerPreBuildStep that configures the container
+// to mount any host mounts in the config.
+//
+// Paths are normalized as part of this step, so relative paths are fine and
+// will be resolved to absolute paths.
 func WithHostMounts(cfg *agentconfig.DockerConfig) ContainerPreBuildStep {
 	return func(containerConfig *ContainerConfig) error {
 		hostConfig := containerConfig.Host
