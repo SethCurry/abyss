@@ -247,69 +247,194 @@ func ACPContainerList[T acpMessageTypes](msgs ...T) (*protobyss.ACPContainerList
 }
 
 var (
-	RequestPermissionRequestMsg        = newMessageTypeT[acp.RequestPermissionRequest](RequestPermissionRequestType, ToACPClient, false)
-	RequestPermissionResponseMsg       = newMessageTypeT[acp.RequestPermissionResponse](RequestPermissionResponseType, ToAgent, true)
-	WriteTextFileRequestMsg            = newMessageTypeT[acp.WriteTextFileRequest](WriteTextFileRequestType, ToACPClient, false)
-	WriteTextFileResponseMsg           = newMessageTypeT[acp.WriteTextFileResponse](WriteTextFileResponseType, ToAgent, true)
-	ReadTextFileRequestMsg             = newMessageTypeT[acp.ReadTextFileRequest](ReadTextFileRequestType, ToACPClient, false)
-	ReadTextFileResponseMsg            = newMessageTypeT[acp.ReadTextFileResponse](ReadTextFileResponseType, ToAgent, true)
-	CreateTerminalRequestMsg           = newMessageTypeT[acp.CreateTerminalRequest](CreateTerminalRequestType, ToACPClient, false)
-	CreateTerminalResponseMsg          = newMessageTypeT[acp.CreateTerminalResponse](CreateTerminalResponseType, ToAgent, true)
-	TerminalOutputRequestMsg           = newMessageTypeT[acp.TerminalOutputRequest](TerminalOutputRequestType, ToACPClient, false)
-	TerminalOutputResponseMsg          = newMessageTypeT[acp.TerminalOutputResponse](TerminalOutputResponseType, ToAgent, true)
-	ReleaseTerminalRequestMsg          = newMessageTypeT[acp.ReleaseTerminalRequest](ReleaseTerminalRequestType, ToACPClient, false)
-	ReleaseTerminalResponseMsg         = newMessageTypeT[acp.ReleaseTerminalResponse](ReleaseTerminalResponseType, ToAgent, true)
-	WaitForTerminalExitRequestMsg      = newMessageTypeT[acp.WaitForTerminalExitRequest](WaitForTerminalExitRequestType, ToACPClient, false)
-	WaitForTerminalExitResponseMsg     = newMessageTypeT[acp.WaitForTerminalExitResponse](WaitForTerminalExitResponseType, ToAgent, true)
-	KillTerminalRequestMsg             = newMessageTypeT[acp.KillTerminalRequest](KillTerminalRequestType, ToACPClient, false)
-	KillTerminalResponseMsg            = newMessageTypeT[acp.KillTerminalResponse](KillTerminalResponseType, ToAgent, true)
-	SessionNotificationMsg             = newMessageTypeT[acp.SessionNotification](SessionNotificationType, ToACPClient, false)
-	SetSessionModeRequestMsg           = newMessageTypeT[acp.SetSessionModeRequest](SetSessionModeRequestType, ToAgent, false)
-	SetSessionModeResponseMsg          = newMessageTypeT[acp.SetSessionModeResponse](SetSessionModeResponseType, ToACPClient, true)
-	UnstableForkSessionRequestMsg      = newMessageTypeT[acp.UnstableForkSessionRequest](UnstableForkSessionRequestType, ToAgent, false)
-	UnstableForkSessionResponseMsg     = newMessageTypeT[acp.UnstableForkSessionResponse](UnstableForkSessionResponseType, ToACPClient, true)
-	ListSessionsRequestMsg             = newMessageTypeT[acp.ListSessionsRequest](ListSessionsRequestType, ToAgent, false)
-	ListSessionsResponseMsg            = newMessageTypeT[acp.ListSessionsResponse](ListSessionsResponseType, ToACPClient, true)
-	ResumeSessionRequestMsg            = newMessageTypeT[acp.ResumeSessionRequest](ResumeSessionRequestType, ToAgent, false)
-	ResumeSessionResponseMsg           = newMessageTypeT[acp.ResumeSessionResponse](ResumeSessionResponseType, ToACPClient, true)
-	SetSessionConfigOptionRequestMsg   = newMessageTypeT[acp.SetSessionConfigOptionRequest](SetSessionConfigOptionRequestType, ToAgent, false)
-	SetSessionConfigOptionResponseMsg  = newMessageTypeT[acp.SetSessionConfigOptionResponse](SetSessionConfigOptionResponseType, ToACPClient, true)
-	LogoutRequestMsg                   = newMessageTypeT[acp.LogoutRequest](LogoutRequestType, ToAgent, false)
-	LogoutResponseMsg                  = newMessageTypeT[acp.LogoutResponse](LogoutResponseType, ToACPClient, true)
-	UnstableCloseNesRequestMsg         = newMessageTypeT[acp.UnstableCloseNesRequest](UnstableCloseNesRequestType, ToAgent, false)
-	UnstableCloseNesResponseMsg        = newMessageTypeT[acp.UnstableCloseNesResponse](UnstableCloseNesResponseType, ToACPClient, true)
-	UnstableStartNesRequestMsg         = newMessageTypeT[acp.UnstableStartNesRequest](UnstableStartNesRequestType, ToAgent, false)
-	UnstableStartNesResponseMsg        = newMessageTypeT[acp.UnstableStartNesResponse](UnstableStartNesResponseType, ToACPClient, true)
-	UnstableSuggestNesRequestMsg       = newMessageTypeT[acp.UnstableSuggestNesRequest](UnstableSuggestNesRequestType, ToAgent, false)
-	UnstableSuggestNesResponseMsg      = newMessageTypeT[acp.UnstableSuggestNesResponse](UnstableSuggestNesResponseType, ToACPClient, true)
-	UnstableAcceptNesNotificationMsg   = newMessageTypeT[acp.UnstableAcceptNesNotification](UnstableAcceptNesNotificationType, ToAgent, false)
-	UnstableRejectNesNotificationMsg   = newMessageTypeT[acp.UnstableRejectNesNotification](UnstableRejectNesNotificationType, ToAgent, false)
-	UnstableDidChangeDocumentNotifMsg  = newMessageTypeT[acp.UnstableDidChangeDocumentNotification](UnstableDidChangeDocumentNotificationType, ToAgent, false)
-	UnstableDidCloseDocumentNotifMsg   = newMessageTypeT[acp.UnstableDidCloseDocumentNotification](UnstableDidCloseDocumentNotificationType, ToAgent, false)
-	UnstableDidFocusDocumentNotifMsg   = newMessageTypeT[acp.UnstableDidFocusDocumentNotification](UnstableDidFocusDocumentNotificationType, ToAgent, false)
-	UnstableDidOpenDocumentNotifMsg    = newMessageTypeT[acp.UnstableDidOpenDocumentNotification](UnstableDidOpenDocumentNotificationType, ToAgent, false)
-	UnstableDidSaveDocumentNotifMsg    = newMessageTypeT[acp.UnstableDidSaveDocumentNotification](UnstableDidSaveDocumentNotificationType, ToAgent, false)
-	UnstableDisableProviderRequestMsg  = newMessageTypeT[acp.UnstableDisableProviderRequest](UnstableDisableProviderRequestType, ToAgent, false)
-	UnstableDisableProviderResponseMsg = newMessageTypeT[acp.UnstableDisableProviderResponse](UnstableDisableProviderResponseType, ToACPClient, true)
-	UnstableListProvidersRequestMsg    = newMessageTypeT[acp.UnstableListProvidersRequest](UnstableListProvidersRequestType, ToAgent, false)
-	UnstableListProvidersResponseMsg   = newMessageTypeT[acp.UnstableListProvidersResponse](UnstableListProvidersResponseType, ToACPClient, true)
-	UnstableSetProviderRequestMsg      = newMessageTypeT[acp.UnstableSetProviderRequest](UnstableSetProviderRequestType, ToAgent, false)
-	UnstableSetProviderResponseMsg     = newMessageTypeT[acp.UnstableSetProviderResponse](UnstableSetProviderResponseType, ToACPClient, true)
-	UnstableDeleteSessionRequestMsg    = newMessageTypeT[acp.UnstableDeleteSessionRequest](UnstableDeleteSessionRequestType, ToAgent, false)
-	UnstableDeleteSessionResponseMsg   = newMessageTypeT[acp.UnstableDeleteSessionResponse](UnstableDeleteSessionResponseType, ToACPClient, true)
-	CloseSessionRequestMsg             = newMessageTypeT[acp.CloseSessionRequest](CloseSessionRequestType, ToAgent, false)
-	CloseSessionResponseMsg            = newMessageTypeT[acp.CloseSessionResponse](CloseSessionResponseType, ToACPClient, true)
-	InitializeRequestMsg               = newMessageTypeT[acp.InitializeRequest](InitializeRequestType, ToAgent, false)
-	InitializeResponseMsg              = newMessageTypeT[acp.InitializeResponse](InitializeResponseType, ToACPClient, true)
-	NewSessionRequestMsg               = newMessageTypeT[acp.NewSessionRequest](NewSessionRequestType, ToAgent, false)
-	NewSessionResponseMsg              = newMessageTypeT[acp.NewSessionResponse](NewSessionResponseType, ToACPClient, true)
-	AuthenticateRequestMsg             = newMessageTypeT[acp.AuthenticateRequest](AuthenticateRequestType, ToAgent, false)
-	AuthenticateResponseMsg            = newMessageTypeT[acp.AuthenticateResponse](AuthenticateResponseType, ToACPClient, true)
-	LoadSessionRequestMsg              = newMessageTypeT[acp.LoadSessionRequest](LoadSessionRequestType, ToAgent, false)
-	LoadSessionResponseMsg             = newMessageTypeT[acp.LoadSessionResponse](LoadSessionResponseType, ToACPClient, true)
-	PromptRequestMsg                   = newMessageTypeT[acp.PromptRequest](PromptRequestType, ToAgent, false)
-	PromptResponseMsg                  = newMessageTypeT[acp.PromptResponse](PromptResponseType, ToACPClient, true)
-	CancelNotificationMsg              = newMessageTypeT[acp.CancelNotification](CancelNotificationType, ToAgent, false)
+	RequestPermissionRequestMsg = newMessageTypeT[acp.RequestPermissionRequest](
+		RequestPermissionRequestType,
+		ToACPClient,
+		false)
+
+	RequestPermissionResponseMsg = newMessageTypeT[acp.RequestPermissionResponse](
+		RequestPermissionResponseType, ToAgent, true)
+
+	WriteTextFileRequestMsg = newMessageTypeT[acp.WriteTextFileRequest](
+		WriteTextFileRequestType, ToACPClient, false)
+
+	WriteTextFileResponseMsg = newMessageTypeT[acp.WriteTextFileResponse](
+		WriteTextFileResponseType, ToAgent, true)
+
+	ReadTextFileRequestMsg = newMessageTypeT[acp.ReadTextFileRequest](
+		ReadTextFileRequestType, ToACPClient, false)
+
+	ReadTextFileResponseMsg = newMessageTypeT[acp.ReadTextFileResponse](
+		ReadTextFileResponseType, ToAgent, true)
+
+	CreateTerminalRequestMsg = newMessageTypeT[acp.CreateTerminalRequest](
+		CreateTerminalRequestType, ToACPClient, false)
+
+	CreateTerminalResponseMsg = newMessageTypeT[acp.CreateTerminalResponse](
+		CreateTerminalResponseType, ToAgent, true)
+
+	TerminalOutputRequestMsg = newMessageTypeT[acp.TerminalOutputRequest](
+		TerminalOutputRequestType, ToACPClient, false)
+
+	TerminalOutputResponseMsg = newMessageTypeT[acp.TerminalOutputResponse](
+		TerminalOutputResponseType, ToAgent, true)
+
+	ReleaseTerminalRequestMsg = newMessageTypeT[acp.ReleaseTerminalRequest](
+		ReleaseTerminalRequestType, ToACPClient, false)
+
+	ReleaseTerminalResponseMsg = newMessageTypeT[acp.ReleaseTerminalResponse](
+		ReleaseTerminalResponseType, ToAgent, true)
+
+	WaitForTerminalExitRequestMsg = newMessageTypeT[acp.WaitForTerminalExitRequest](
+		WaitForTerminalExitRequestType, ToACPClient, false)
+
+	WaitForTerminalExitResponseMsg = newMessageTypeT[acp.WaitForTerminalExitResponse](
+		WaitForTerminalExitResponseType, ToAgent, true)
+
+	KillTerminalRequestMsg = newMessageTypeT[acp.KillTerminalRequest](
+		KillTerminalRequestType, ToACPClient, false)
+
+	KillTerminalResponseMsg = newMessageTypeT[acp.KillTerminalResponse](
+		KillTerminalResponseType, ToAgent, true)
+
+	SessionNotificationMsg = newMessageTypeT[acp.SessionNotification](
+		SessionNotificationType, ToACPClient, false)
+
+	SetSessionModeRequestMsg = newMessageTypeT[acp.SetSessionModeRequest](
+		SetSessionModeRequestType, ToAgent, false)
+
+	SetSessionModeResponseMsg = newMessageTypeT[acp.SetSessionModeResponse](
+		SetSessionModeResponseType, ToACPClient, true)
+
+	UnstableForkSessionRequestMsg = newMessageTypeT[acp.UnstableForkSessionRequest](
+		UnstableForkSessionRequestType, ToAgent, false)
+
+	UnstableForkSessionResponseMsg = newMessageTypeT[acp.UnstableForkSessionResponse](
+		UnstableForkSessionResponseType, ToACPClient, true)
+
+	ListSessionsRequestMsg = newMessageTypeT[acp.ListSessionsRequest](ListSessionsRequestType, ToAgent, false)
+
+	ListSessionsResponseMsg = newMessageTypeT[acp.ListSessionsResponse](
+		ListSessionsResponseType, ToACPClient, true)
+
+	ResumeSessionRequestMsg = newMessageTypeT[acp.ResumeSessionRequest](
+		ResumeSessionRequestType, ToAgent, false)
+
+	ResumeSessionResponseMsg = newMessageTypeT[acp.ResumeSessionResponse](
+		ResumeSessionResponseType, ToACPClient, true)
+
+	SetSessionConfigOptionRequestMsg = newMessageTypeT[acp.SetSessionConfigOptionRequest](
+		SetSessionConfigOptionRequestType, ToAgent, false)
+
+	SetSessionConfigOptionResponseMsg = newMessageTypeT[acp.SetSessionConfigOptionResponse](
+		SetSessionConfigOptionResponseType, ToACPClient, true)
+
+	LogoutRequestMsg = newMessageTypeT[acp.LogoutRequest](
+		LogoutRequestType, ToAgent, false)
+
+	LogoutResponseMsg = newMessageTypeT[acp.LogoutResponse](LogoutResponseType, ToACPClient, true)
+
+	UnstableCloseNesRequestMsg = newMessageTypeT[acp.UnstableCloseNesRequest](
+		UnstableCloseNesRequestType, ToAgent, false)
+
+	UnstableCloseNesResponseMsg = newMessageTypeT[acp.UnstableCloseNesResponse](
+		UnstableCloseNesResponseType, ToACPClient, true)
+
+	UnstableStartNesRequestMsg = newMessageTypeT[acp.UnstableStartNesRequest](
+		UnstableStartNesRequestType, ToAgent, false)
+
+	UnstableStartNesResponseMsg = newMessageTypeT[acp.UnstableStartNesResponse](
+		UnstableStartNesResponseType, ToACPClient, true)
+
+	UnstableSuggestNesRequestMsg = newMessageTypeT[acp.UnstableSuggestNesRequest](
+		UnstableSuggestNesRequestType, ToAgent, false)
+
+	UnstableSuggestNesResponseMsg = newMessageTypeT[acp.UnstableSuggestNesResponse](
+		UnstableSuggestNesResponseType, ToACPClient, true)
+
+	UnstableAcceptNesNotificationMsg = newMessageTypeT[acp.UnstableAcceptNesNotification](
+		UnstableAcceptNesNotificationType, ToAgent, false)
+
+	UnstableRejectNesNotificationMsg = newMessageTypeT[acp.UnstableRejectNesNotification](
+		UnstableRejectNesNotificationType, ToAgent, false)
+
+	UnstableDidChangeDocumentNotifMsg = newMessageTypeT[acp.UnstableDidChangeDocumentNotification](
+		UnstableDidChangeDocumentNotificationType, ToAgent, false)
+
+	UnstableDidCloseDocumentNotifMsg = newMessageTypeT[acp.UnstableDidCloseDocumentNotification](
+		UnstableDidCloseDocumentNotificationType, ToAgent, false)
+
+	UnstableDidFocusDocumentNotifMsg = newMessageTypeT[acp.UnstableDidFocusDocumentNotification](
+		UnstableDidFocusDocumentNotificationType, ToAgent, false)
+
+	UnstableDidOpenDocumentNotifMsg = newMessageTypeT[acp.UnstableDidOpenDocumentNotification](
+		UnstableDidOpenDocumentNotificationType, ToAgent, false)
+
+	UnstableDidSaveDocumentNotifMsg = newMessageTypeT[acp.UnstableDidSaveDocumentNotification](
+		UnstableDidSaveDocumentNotificationType, ToAgent, false)
+
+	UnstableDisableProviderRequestMsg = newMessageTypeT[acp.UnstableDisableProviderRequest](
+		UnstableDisableProviderRequestType, ToAgent, false)
+
+	UnstableDisableProviderResponseMsg = newMessageTypeT[acp.UnstableDisableProviderResponse](
+		UnstableDisableProviderResponseType, ToACPClient, true)
+
+	UnstableListProvidersRequestMsg = newMessageTypeT[acp.UnstableListProvidersRequest](
+		UnstableListProvidersRequestType, ToAgent, false)
+
+	UnstableListProvidersResponseMsg = newMessageTypeT[acp.UnstableListProvidersResponse](
+		UnstableListProvidersResponseType, ToACPClient, true)
+
+	UnstableSetProviderRequestMsg = newMessageTypeT[acp.UnstableSetProviderRequest](
+		UnstableSetProviderRequestType, ToAgent, false)
+
+	UnstableSetProviderResponseMsg = newMessageTypeT[acp.UnstableSetProviderResponse](
+		UnstableSetProviderResponseType, ToACPClient, true)
+
+	UnstableDeleteSessionRequestMsg = newMessageTypeT[acp.UnstableDeleteSessionRequest](
+		UnstableDeleteSessionRequestType, ToAgent, false)
+
+	UnstableDeleteSessionResponseMsg = newMessageTypeT[acp.UnstableDeleteSessionResponse](
+		UnstableDeleteSessionResponseType, ToACPClient, true)
+
+	CloseSessionRequestMsg = newMessageTypeT[acp.CloseSessionRequest](
+		CloseSessionRequestType, ToAgent, false)
+
+	CloseSessionResponseMsg = newMessageTypeT[acp.CloseSessionResponse](
+		CloseSessionResponseType, ToACPClient, true)
+
+	InitializeRequestMsg = newMessageTypeT[acp.InitializeRequest](
+		InitializeRequestType, ToAgent, false)
+
+	InitializeResponseMsg = newMessageTypeT[acp.InitializeResponse](
+		InitializeResponseType, ToACPClient, true)
+
+	NewSessionRequestMsg = newMessageTypeT[acp.NewSessionRequest](
+		NewSessionRequestType, ToAgent, false)
+
+	NewSessionResponseMsg = newMessageTypeT[acp.NewSessionResponse](
+		NewSessionResponseType, ToACPClient, true)
+
+	AuthenticateRequestMsg = newMessageTypeT[acp.AuthenticateRequest](
+		AuthenticateRequestType, ToAgent, false)
+
+	AuthenticateResponseMsg = newMessageTypeT[acp.AuthenticateResponse](
+		AuthenticateResponseType, ToACPClient, true)
+
+	LoadSessionRequestMsg = newMessageTypeT[acp.LoadSessionRequest](
+		LoadSessionRequestType, ToAgent, false)
+
+	LoadSessionResponseMsg = newMessageTypeT[acp.LoadSessionResponse](
+		LoadSessionResponseType, ToACPClient, true)
+
+	PromptRequestMsg = newMessageTypeT[acp.PromptRequest](
+		PromptRequestType, ToAgent, false)
+
+	PromptResponseMsg = newMessageTypeT[acp.PromptResponse](
+		PromptResponseType, ToACPClient, true)
+
+	CancelNotificationMsg = newMessageTypeT[acp.CancelNotification](
+		CancelNotificationType, ToAgent, false)
 )
 
 // AllMessageTypes is a list of all ACP message types.

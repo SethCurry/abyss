@@ -108,7 +108,11 @@ func (r *ACPRouter) SetAgent(agent Agent) {
 	r.agent = agent
 }
 
-func (r *ACPRouter) Handle(id int32, messageType any, handler func(*ACPRouter, *protobyss.ACPContainer) any, isRPC bool) {
+func (r *ACPRouter) Handle(
+	id int32,
+	messageType any,
+	handler func(*ACPRouter, *protobyss.ACPContainer) any,
+	isRPC bool) {
 	r.messageTypes = append(r.messageTypes, MessageType{
 		ID:      id,
 		Type:    reflect.TypeOf(messageType),

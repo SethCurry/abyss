@@ -35,7 +35,9 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 	return nil
 }
 
-func (a *ACPManager) HandleMessage(ctx context.Context, req *protobyss.ACPContainer) ([]*protobyss.ACPContainer, error) {
+func (a *ACPManager) HandleMessage(
+	ctx context.Context, req *protobyss.ACPContainer,
+) ([]*protobyss.ACPContainer, error) {
 	allMessages := make([]*protobyss.ACPContainer, 1)
 	allMessages[0] = req
 	for _, v := range a.plugins {

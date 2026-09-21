@@ -19,10 +19,14 @@ import (
 // bridges it to a client over stdio.
 //
 // If prompt is not empty, it will be used as a one-shot prompt to the server.
-func runClient(ctx context.Context, prompt string, configPath string, cfg *agentconfig.AgentConfig, logger zerolog.Logger) error {
+func runClient(
+	ctx context.Context, prompt string, configPath string, cfg *agentconfig.AgentConfig, logger zerolog.Logger,
+) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
-		return erres.NewHumanError(err, "Failed to connect to Docker.\nHave you made sure Docker is running and that you have permission to connect?")
+		return erres.NewHumanError(err,
+			"Failed to connect to Docker.",
+			"Have you made sure Docker is running and that you have permission to connect?")
 	}
 	defer func() {
 		closeErr := docker.Close()
@@ -41,7 +45,8 @@ func runClient(ctx context.Context, prompt string, configPath string, cfg *agent
 		logger.Error().Err(err).Str("image", image).Msg("failed to pull Docker image")
 		return erres.NewHumanError(
 			fmt.Errorf("failed to pull Docker image: %w", err),
-			fmt.Sprintf("Failed to pull Docker image %q.  Ensure that the image exists and that you have permission to pull it.", image))
+			fmt.Sprintf("Failed to pull Docker image %q.  Ensure that the image exists and that you have permission to pull it.",
+				image))
 	}
 
 	// Generate a certificate set for mutual TLS unless the user disabled it.
@@ -71,7 +76,10 @@ func runClient(ctx context.Context, prompt string, configPath string, cfg *agent
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to build container config")
-		return erres.NewHumanError(err, "Failed to build container config.  This is likely an issue with abyss itself or the Docker image you are using.", "Please report a bug if you have time.")
+		return erres.NewHumanError(err,
+			"Failed to build container config.",
+			"This is likely an issue with abyss itself or the Docker image you are using.",
+			"Please report a bug if you have time.")
 	}
 
 	builder.AddSteps(

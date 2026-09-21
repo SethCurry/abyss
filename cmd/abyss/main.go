@@ -42,6 +42,7 @@ func main() {
 	globalLogger, closeLogger := timber.CreateLogger(zerolog.DebugLevel)
 	defer closeLogger()
 
+	//nolint:lll
 	cmd := &cli.Command{
 		Name:        "abyss",
 		Usage:       "A tool for managing and connecting to agents running in containers.",

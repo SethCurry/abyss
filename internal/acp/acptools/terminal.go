@@ -88,7 +88,10 @@ func (b *cappedBuffer) snapshot() (string, bool) {
 
 // CreateTerminal starts a new command process and returns a terminal ID that
 // can be used to inspect its output and status.
-func (e *TerminalTools) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
+func (e *TerminalTools) CreateTerminal(
+	ctx context.Context,
+	params acp.CreateTerminalRequest,
+) (acp.CreateTerminalResponse, error) {
 	e.logger.Debug().Str("method", "CreateTerminal").Str("command", params.Command).Msg("handling request")
 
 	if params.Command == "" {
@@ -150,7 +153,10 @@ func (e *TerminalTools) CreateTerminal(ctx context.Context, params acp.CreateTer
 
 // TerminalOutput returns the output captured so far for a terminal along with
 // its exit status, if the command has completed.
-func (e *TerminalTools) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
+func (e *TerminalTools) TerminalOutput(
+	ctx context.Context,
+	params acp.TerminalOutputRequest,
+) (acp.TerminalOutputResponse, error) {
 	e.logger.Debug().Str("method", "TerminalOutput").Str("terminalId", params.TerminalId).Msg("handling request")
 
 	t, ok := e.getTerminal(params.TerminalId)
@@ -188,7 +194,10 @@ func (e *TerminalTools) TerminalOutput(ctx context.Context, params acp.TerminalO
 
 // ReleaseTerminal frees the resources associated with a terminal, killing the
 // underlying process if it is still running.
-func (e *TerminalTools) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
+func (e *TerminalTools) ReleaseTerminal(
+	ctx context.Context,
+	params acp.ReleaseTerminalRequest,
+) (acp.ReleaseTerminalResponse, error) {
 	e.logger.Debug().Str("method", "ReleaseTerminal").Str("terminalId", params.TerminalId).Msg("handling request")
 
 	e.mu.Lock()
@@ -208,7 +217,10 @@ func (e *TerminalTools) ReleaseTerminal(ctx context.Context, params acp.ReleaseT
 
 // WaitForTerminalExit blocks until the terminal's command exits (or the
 // context is cancelled) and returns its exit status.
-func (e *TerminalTools) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
+func (e *TerminalTools) WaitForTerminalExit(
+	ctx context.Context,
+	params acp.WaitForTerminalExitRequest,
+) (acp.WaitForTerminalExitResponse, error) {
 	e.logger.Debug().Str("method", "WaitForTerminalExit").Str("terminalId", params.TerminalId).Msg("handling request")
 
 	t, ok := e.getTerminal(params.TerminalId)
@@ -235,7 +247,10 @@ func (e *TerminalTools) WaitForTerminalExit(ctx context.Context, params acp.Wait
 
 // KillTerminal terminates the terminal's process without releasing the
 // terminal; its output and exit status remain available afterwards.
-func (e *TerminalTools) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
+func (e *TerminalTools) KillTerminal(
+	ctx context.Context,
+	params acp.KillTerminalRequest,
+) (acp.KillTerminalResponse, error) {
 	e.logger.Debug().Str("method", "KillTerminal").Str("terminalId", params.TerminalId).Msg("handling request")
 
 	t, ok := e.getTerminal(params.TerminalId)

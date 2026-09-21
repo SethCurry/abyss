@@ -150,7 +150,9 @@ func WithHostBind(from string, to string) ContainerPreBuildStep {
 }
 
 // NewContainerBuilder creates a builder, applying any pre-build steps to the config.
-func NewContainerBuilder(configPath string, config *ContainerConfig, steps ...ContainerPreBuildStep) (*ContainerBuilder, error) {
+func NewContainerBuilder(
+	configPath string, config *ContainerConfig, steps ...ContainerPreBuildStep,
+) (*ContainerBuilder, error) {
 	if config == nil {
 		config = &ContainerConfig{
 			Host:   &container.HostConfig{},
@@ -216,7 +218,14 @@ func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Conta
 		AgentConfigPath: b.ConfigPath,
 		AgentConfigHash: stringHash,
 	}
-	container, endpoint, err := cli.StartContainer(ctx, b.config.Config, b.config.Host, md.ToMap(), b.config.Name, b.config.ContainerPort, b.config.HostPort)
+	container, endpoint, err := cli.StartContainer(
+		ctx,
+		b.config.Config,
+		b.config.Host,
+		md.ToMap(),
+		b.config.Name,
+		b.config.ContainerPort,
+		b.config.HostPort)
 	if err != nil {
 		return nil, endpoint, err
 	}
@@ -262,7 +271,11 @@ func WithSetupScripts(scripts []agentconfig.SetupScriptsConfig) ContainerBuildSt
 				return fmt.Errorf("setup script %q failed: %w", target, err)
 			}
 
-			container.logger.Debug().Str("target", target).Str("stdout", stdout).Str("stderr", stderr).Msg("setup script completed")
+			container.logger.Debug().
+				Str("target", target).
+				Str("stdout", stdout).
+				Str("stderr", stderr).
+				Msg("setup script completed")
 		}
 
 		return nil

@@ -6,317 +6,254 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
-// OnRequestPermissionRequestHandler is implemented by objects that provide the OnRequestPermissionRequest callback.
 type OnRequestPermissionRequestHandler interface {
 	OnRequestPermissionRequest(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnRequestPermissionResponseHandler is implemented by objects that provide the OnRequestPermissionResponse callback.
 type OnRequestPermissionResponseHandler interface {
 	OnRequestPermissionResponse(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnWriteTextFileRequestHandler is implemented by objects that provide the OnWriteTextFileRequest callback.
 type OnWriteTextFileRequestHandler interface {
 	OnWriteTextFileRequest(acp.WriteTextFileRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnWriteTextFileResponseHandler is implemented by objects that provide the OnWriteTextFileResponse callback.
 type OnWriteTextFileResponseHandler interface {
 	OnWriteTextFileResponse(acp.WriteTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnReadTextFileRequestHandler is implemented by objects that provide the OnReadTextFileRequest callback.
 type OnReadTextFileRequestHandler interface {
 	OnReadTextFileRequest(acp.ReadTextFileRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnCreateTerminalRequestHandler is implemented by objects that provide the OnCreateTerminalRequest callback.
 type OnCreateTerminalRequestHandler interface {
 	OnCreateTerminalRequest(acp.CreateTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnTerminalOutputRequestHandler is implemented by objects that provide the OnTerminalOutputRequest callback.
 type OnTerminalOutputRequestHandler interface {
 	OnTerminalOutputRequest(acp.TerminalOutputRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnReleaseTerminalRequestHandler is implemented by objects that provide the OnReleaseTerminalRequest callback.
 type OnReleaseTerminalRequestHandler interface {
 	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnWaitForTerminalExitRequestHandler is implemented by objects that provide the OnWaitForTerminalExitRequest callback.
 type OnWaitForTerminalExitRequestHandler interface {
 	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnKillTerminalRequestHandler is implemented by objects that provide the OnKillTerminalRequest callback.
 type OnKillTerminalRequestHandler interface {
 	OnKillTerminalRequest(acp.KillTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnSessionNotificationHandler is implemented by objects that provide the OnSessionNotification callback.
 type OnSessionNotificationHandler interface {
 	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnReadTextFileResponseHandler is implemented by objects that provide the OnReadTextFileResponse callback.
 type OnReadTextFileResponseHandler interface {
 	OnReadTextFileResponse(acp.ReadTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnCreateTerminalResponseHandler is implemented by objects that provide the OnCreateTerminalResponse callback.
 type OnCreateTerminalResponseHandler interface {
 	OnCreateTerminalResponse(acp.CreateTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnTerminalOutputResponseHandler is implemented by objects that provide the OnTerminalOutputResponse callback.
 type OnTerminalOutputResponseHandler interface {
 	OnTerminalOutputResponse(acp.TerminalOutputResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnReleaseTerminalResponseHandler is implemented by objects that provide the OnReleaseTerminalResponse callback.
 type OnReleaseTerminalResponseHandler interface {
 	OnReleaseTerminalResponse(acp.ReleaseTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnWaitForTerminalExitResponseHandler is implemented by objects that provide the OnWaitForTerminalExitResponse callback.
 type OnWaitForTerminalExitResponseHandler interface {
 	OnWaitForTerminalExitResponse(acp.WaitForTerminalExitResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnKillTerminalResponseHandler is implemented by objects that provide the OnKillTerminalResponse callback.
 type OnKillTerminalResponseHandler interface {
 	OnKillTerminalResponse(acp.KillTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnAuthenticateRequestHandler is implemented by objects that provide the OnAuthenticateRequest callback.
 type OnAuthenticateRequestHandler interface {
 	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnInitializeRequestHandler is implemented by objects that provide the OnInitializeRequest callback.
 type OnInitializeRequestHandler interface {
 	OnInitializeRequest(acp.InitializeRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnLogoutRequestHandler is implemented by objects that provide the OnLogoutRequest callback.
 type OnLogoutRequestHandler interface {
 	OnLogoutRequest(acp.LogoutRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnCancelNotificationHandler is implemented by objects that provide the OnCancelNotification callback.
 type OnCancelNotificationHandler interface {
 	OnCancelNotification(acp.CancelNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnCloseSessionRequestHandler is implemented by objects that provide the OnCloseSessionRequest callback.
 type OnCloseSessionRequestHandler interface {
 	OnCloseSessionRequest(acp.CloseSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnListSessionsRequestHandler is implemented by objects that provide the OnListSessionsRequest callback.
 type OnListSessionsRequestHandler interface {
 	OnListSessionsRequest(acp.ListSessionsRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnNewSessionRequestHandler is implemented by objects that provide the OnNewSessionRequest callback.
 type OnNewSessionRequestHandler interface {
 	OnNewSessionRequest(acp.NewSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnPromptRequestHandler is implemented by objects that provide the OnPromptRequest callback.
 type OnPromptRequestHandler interface {
 	OnPromptRequest(acp.PromptRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnResumeSessionRequestHandler is implemented by objects that provide the OnResumeSessionRequest callback.
 type OnResumeSessionRequestHandler interface {
 	OnResumeSessionRequest(acp.ResumeSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnSetSessionConfigOptionRequestHandler is implemented by objects that provide the OnSetSessionConfigOptionRequest callback.
 type OnSetSessionConfigOptionRequestHandler interface {
 	OnSetSessionConfigOptionRequest(acp.SetSessionConfigOptionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnSetSessionModeRequestHandler is implemented by objects that provide the OnSetSessionModeRequest callback.
 type OnSetSessionModeRequestHandler interface {
 	OnSetSessionModeRequest(acp.SetSessionModeRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnLoadSessionRequestHandler is implemented by objects that provide the OnLoadSessionRequest callback.
 type OnLoadSessionRequestHandler interface {
 	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnLoadSessionResponseHandler is implemented by objects that provide the OnLoadSessionResponse callback.
 type OnLoadSessionResponseHandler interface {
 	OnLoadSessionResponse(acp.LoadSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnSetSessionModeResponseHandler is implemented by objects that provide the OnSetSessionModeResponse callback.
 type OnSetSessionModeResponseHandler interface {
 	OnSetSessionModeResponse(acp.SetSessionModeResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnListSessionsResponseHandler is implemented by objects that provide the OnListSessionsResponse callback.
 type OnListSessionsResponseHandler interface {
 	OnListSessionsResponse(acp.ListSessionsResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnResumeSessionResponseHandler is implemented by objects that provide the OnResumeSessionResponse callback.
 type OnResumeSessionResponseHandler interface {
 	OnResumeSessionResponse(acp.ResumeSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnSetSessionConfigOptionResponseHandler is implemented by objects that provide the OnSetSessionConfigOptionResponse callback.
 type OnSetSessionConfigOptionResponseHandler interface {
 	OnSetSessionConfigOptionResponse(acp.SetSessionConfigOptionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnLogoutResponseHandler is implemented by objects that provide the OnLogoutResponse callback.
 type OnLogoutResponseHandler interface {
 	OnLogoutResponse(acp.LogoutResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnCloseSessionResponseHandler is implemented by objects that provide the OnCloseSessionResponse callback.
 type OnCloseSessionResponseHandler interface {
 	OnCloseSessionResponse(acp.CloseSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnInitializeResponseHandler is implemented by objects that provide the OnInitializeResponse callback.
 type OnInitializeResponseHandler interface {
 	OnInitializeResponse(acp.InitializeResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnNewSessionResponseHandler is implemented by objects that provide the OnNewSessionResponse callback.
 type OnNewSessionResponseHandler interface {
 	OnNewSessionResponse(acp.NewSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnAuthenticateResponseHandler is implemented by objects that provide the OnAuthenticateResponse callback.
 type OnAuthenticateResponseHandler interface {
 	OnAuthenticateResponse(acp.AuthenticateResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnPromptResponseHandler is implemented by objects that provide the OnPromptResponse callback.
 type OnPromptResponseHandler interface {
 	OnPromptResponse(acp.PromptResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDidChangeDocumentNotificationHandler is implemented by objects that provide the OnUnstableDidChangeDocumentNotification callback.
 type OnUnstableDidChangeDocumentNotificationHandler interface {
 	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDidCloseDocumentNotificationHandler is implemented by objects that provide the OnUnstableDidCloseDocumentNotification callback.
 type OnUnstableDidCloseDocumentNotificationHandler interface {
 	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDidFocusDocumentNotificationHandler is implemented by objects that provide the OnUnstableDidFocusDocumentNotification callback.
 type OnUnstableDidFocusDocumentNotificationHandler interface {
 	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDidOpenDocumentNotificationHandler is implemented by objects that provide the OnUnstableDidOpenDocumentNotification callback.
 type OnUnstableDidOpenDocumentNotificationHandler interface {
 	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDidSaveDocumentNotificationHandler is implemented by objects that provide the OnUnstableDidSaveDocumentNotification callback.
 type OnUnstableDidSaveDocumentNotificationHandler interface {
 	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableAcceptNesNotificationHandler is implemented by objects that provide the OnUnstableAcceptNesNotification callback.
 type OnUnstableAcceptNesNotificationHandler interface {
 	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableCloseNesRequestHandler is implemented by objects that provide the OnUnstableCloseNesRequest callback.
 type OnUnstableCloseNesRequestHandler interface {
 	OnUnstableCloseNesRequest(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableRejectNesNotificationHandler is implemented by objects that provide the OnUnstableRejectNesNotification callback.
 type OnUnstableRejectNesNotificationHandler interface {
 	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableStartNesRequestHandler is implemented by objects that provide the OnUnstableStartNesRequest callback.
 type OnUnstableStartNesRequestHandler interface {
 	OnUnstableStartNesRequest(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableSuggestNesRequestHandler is implemented by objects that provide the OnUnstableSuggestNesRequest callback.
 type OnUnstableSuggestNesRequestHandler interface {
 	OnUnstableSuggestNesRequest(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDisableProviderRequestHandler is implemented by objects that provide the OnUnstableDisableProviderRequest callback.
 type OnUnstableDisableProviderRequestHandler interface {
 	OnUnstableDisableProviderRequest(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableListProvidersRequestHandler is implemented by objects that provide the OnUnstableListProvidersRequest callback.
 type OnUnstableListProvidersRequestHandler interface {
 	OnUnstableListProvidersRequest(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableSetProviderRequestHandler is implemented by objects that provide the OnUnstableSetProviderRequest callback.
 type OnUnstableSetProviderRequestHandler interface {
 	OnUnstableSetProviderRequest(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDeleteSessionRequestHandler is implemented by objects that provide the OnUnstableDeleteSessionRequest callback.
 type OnUnstableDeleteSessionRequestHandler interface {
 	OnUnstableDeleteSessionRequest(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableForkSessionRequestHandler is implemented by objects that provide the OnUnstableForkSessionRequest callback.
 type OnUnstableForkSessionRequestHandler interface {
 	OnUnstableForkSessionRequest(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableForkSessionResponseHandler is implemented by objects that provide the OnUnstableForkSessionResponse callback.
 type OnUnstableForkSessionResponseHandler interface {
 	OnUnstableForkSessionResponse(acp.UnstableForkSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableCloseNesResponseHandler is implemented by objects that provide the OnUnstableCloseNesResponse callback.
 type OnUnstableCloseNesResponseHandler interface {
 	OnUnstableCloseNesResponse(acp.UnstableCloseNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableStartNesResponseHandler is implemented by objects that provide the OnUnstableStartNesResponse callback.
 type OnUnstableStartNesResponseHandler interface {
 	OnUnstableStartNesResponse(acp.UnstableStartNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableSuggestNesResponseHandler is implemented by objects that provide the OnUnstableSuggestNesResponse callback.
 type OnUnstableSuggestNesResponseHandler interface {
 	OnUnstableSuggestNesResponse(acp.UnstableSuggestNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDisableProviderResponseHandler is implemented by objects that provide the OnUnstableDisableProviderResponse callback.
 type OnUnstableDisableProviderResponseHandler interface {
 	OnUnstableDisableProviderResponse(acp.UnstableDisableProviderResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableListProvidersResponseHandler is implemented by objects that provide the OnUnstableListProvidersResponse callback.
 type OnUnstableListProvidersResponseHandler interface {
 	OnUnstableListProvidersResponse(acp.UnstableListProvidersResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableSetProviderResponseHandler is implemented by objects that provide the OnUnstableSetProviderResponse callback.
 type OnUnstableSetProviderResponseHandler interface {
 	OnUnstableSetProviderResponse(acp.UnstableSetProviderResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// OnUnstableDeleteSessionResponseHandler is implemented by objects that provide the OnUnstableDeleteSessionResponse callback.
 type OnUnstableDeleteSessionResponseHandler interface {
 	OnUnstableDeleteSessionResponse(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
 }

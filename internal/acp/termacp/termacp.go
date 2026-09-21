@@ -47,7 +47,10 @@ type TermACPClient struct {
 // provided permission options for a tool call. An invalid or empty selection
 // (or a cancelled context) is reported as cancelled rather than erroring, so
 // the agent can wind down the turn cleanly.
-func (e *TermACPClient) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
+func (e *TermACPClient) RequestPermission(
+	ctx context.Context,
+	params acp.RequestPermissionRequest,
+) (acp.RequestPermissionResponse, error) {
 	title := toolCallTitle(params.ToolCall)
 
 	_, _ = fmt.Fprintf(e.out, "\n\033[1mPermission required\033[0m")
@@ -128,37 +131,51 @@ func (e *TermACPClient) SessionUpdate(ctx context.Context, params acp.SessionNot
 }
 
 // WriteTextFile delegates to the local filesystem implementation.
-func (e *TermACPClient) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
+func (e *TermACPClient) WriteTextFile(
+	ctx context.Context, params acp.WriteTextFileRequest,
+) (acp.WriteTextFileResponse, error) {
 	return e.fs.WriteTextFile(ctx, params)
 }
 
 // ReadTextFile delegates to the local filesystem implementation.
-func (e *TermACPClient) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
+func (e *TermACPClient) ReadTextFile(
+	ctx context.Context, params acp.ReadTextFileRequest,
+) (acp.ReadTextFileResponse, error) {
 	return e.fs.ReadTextFile(ctx, params)
 }
 
 // CreateTerminal delegates to the local terminal implementation.
-func (e *TermACPClient) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
+func (e *TermACPClient) CreateTerminal(
+	ctx context.Context, params acp.CreateTerminalRequest,
+) (acp.CreateTerminalResponse, error) {
 	return e.term.CreateTerminal(ctx, params)
 }
 
 // TerminalOutput delegates to the local terminal implementation.
-func (e *TermACPClient) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
+func (e *TermACPClient) TerminalOutput(
+	ctx context.Context, params acp.TerminalOutputRequest,
+) (acp.TerminalOutputResponse, error) {
 	return e.term.TerminalOutput(ctx, params)
 }
 
 // ReleaseTerminal delegates to the local terminal implementation.
-func (e *TermACPClient) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
+func (e *TermACPClient) ReleaseTerminal(
+	ctx context.Context, params acp.ReleaseTerminalRequest,
+) (acp.ReleaseTerminalResponse, error) {
 	return e.term.ReleaseTerminal(ctx, params)
 }
 
 // WaitForTerminalExit delegates to the local terminal implementation.
-func (e *TermACPClient) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
+func (e *TermACPClient) WaitForTerminalExit(
+	ctx context.Context, params acp.WaitForTerminalExitRequest,
+) (acp.WaitForTerminalExitResponse, error) {
 	return e.term.WaitForTerminalExit(ctx, params)
 }
 
 // KillTerminal implements acp.Client.
-func (e *TermACPClient) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
+func (e *TermACPClient) KillTerminal(
+	ctx context.Context, params acp.KillTerminalRequest,
+) (acp.KillTerminalResponse, error) {
 	return e.term.KillTerminal(ctx, params)
 }
 

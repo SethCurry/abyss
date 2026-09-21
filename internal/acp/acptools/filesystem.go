@@ -24,7 +24,10 @@ type FilesystemTools struct {
 	logger zerolog.Logger
 }
 
-func (e *FilesystemTools) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
+func (e *FilesystemTools) WriteTextFile(
+	ctx context.Context,
+	params acp.WriteTextFileRequest,
+) (acp.WriteTextFileResponse, error) {
 	e.logger.Debug().Str("method", "WriteTextFile").Msg("handling request")
 
 	path := params.Path
@@ -51,7 +54,10 @@ func (e *FilesystemTools) WriteTextFile(ctx context.Context, params acp.WriteTex
 	return acp.WriteTextFileResponse{}, nil
 }
 
-func (e *FilesystemTools) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
+func (e *FilesystemTools) ReadTextFile(
+	ctx context.Context,
+	params acp.ReadTextFileRequest,
+) (acp.ReadTextFileResponse, error) {
 	var limit int
 	if params.Limit != nil {
 		limit = *params.Limit

@@ -61,32 +61,38 @@ type ACPPluginRouter struct {
 	OnPromptResponse                 func(acp.PromptResponse) ([]*protobyss.ACPContainer, error)
 
 	// Experimental agent requests (client -> agent).
-	OnUnstableDidChangeDocumentNotification func(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidCloseDocumentNotification  func(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidFocusDocumentNotification  func(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidOpenDocumentNotification   func(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableDidSaveDocumentNotification   func(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableAcceptNesNotification         func(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableCloseNesRequest               func(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableRejectNesNotification         func(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
-	OnUnstableStartNesRequest               func(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableSuggestNesRequest             func(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableDisableProviderRequest        func(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableListProvidersRequest          func(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableSetProviderRequest            func(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableDeleteSessionRequest          func(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableForkSessionRequest            func(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
-	OnUnstableForkSessionResponse           func(acp.UnstableForkSessionResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableCloseNesResponse              func(acp.UnstableCloseNesResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableStartNesResponse              func(acp.UnstableStartNesResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableSuggestNesResponse            func(acp.UnstableSuggestNesResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableDisableProviderResponse       func(acp.UnstableDisableProviderResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableListProvidersResponse         func(acp.UnstableListProvidersResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableSetProviderResponse           func(acp.UnstableSetProviderResponse) ([]*protobyss.ACPContainer, error)
-	OnUnstableDeleteSessionResponse         func(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidChangeDocumentNotification func(acp.UnstableDidChangeDocumentNotification) (
+		[]*protobyss.ACPContainer, error)
+	OnUnstableDidCloseDocumentNotification func(acp.UnstableDidCloseDocumentNotification) (
+		[]*protobyss.ACPContainer, error)
+	OnUnstableDidFocusDocumentNotification func(acp.UnstableDidFocusDocumentNotification) (
+		[]*protobyss.ACPContainer, error)
+	OnUnstableDidOpenDocumentNotification func(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableDidSaveDocumentNotification func(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableAcceptNesNotification       func(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableCloseNesRequest             func(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableRejectNesNotification       func(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
+	OnUnstableStartNesRequest             func(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableSuggestNesRequest           func(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableDisableProviderRequest      func(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableListProvidersRequest        func(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableSetProviderRequest          func(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableDeleteSessionRequest        func(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableForkSessionRequest          func(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
+	OnUnstableForkSessionResponse         func(acp.UnstableForkSessionResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableCloseNesResponse            func(acp.UnstableCloseNesResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableStartNesResponse            func(acp.UnstableStartNesResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableSuggestNesResponse          func(acp.UnstableSuggestNesResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableDisableProviderResponse     func(acp.UnstableDisableProviderResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableListProvidersResponse       func(acp.UnstableListProvidersResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableSetProviderResponse         func(acp.UnstableSetProviderResponse) ([]*protobyss.ACPContainer, error)
+	OnUnstableDeleteSessionResponse       func(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-func (r *ACPPluginRouter) HandleMessage(ctx context.Context, msg *protobyss.ACPContainer) (*protobyss.ACPContainerList, error) {
+func (r *ACPPluginRouter) HandleMessage(
+	ctx context.Context,
+	msg *protobyss.ACPContainer,
+) (*protobyss.ACPContainerList, error) {
 	switch MessageTypeID(msg.TypeId) {
 	// Client capability requests (agent -> client).
 	case RequestPermissionRequestType:
@@ -228,7 +234,10 @@ func (r *ACPPluginRouter) HandleMessage(ctx context.Context, msg *protobyss.ACPC
 }
 
 // handleRequest unmarshals msg into T, invokes fn, and returns its response.
-func handleRequest[T any](msg *protobyss.ACPContainer, fn func(T) ([]*protobyss.ACPContainer, error)) (*protobyss.ACPContainerList, error) {
+func handleRequest[T any](
+	msg *protobyss.ACPContainer,
+	fn func(T) ([]*protobyss.ACPContainer, error),
+) (*protobyss.ACPContainerList, error) {
 	if fn == nil {
 		return &protobyss.ACPContainerList{Containers: []*protobyss.ACPContainer{msg}}, nil
 	}

@@ -39,7 +39,11 @@ func GenerateCertificates() (*Certificates, error) {
 		return nil, err
 	}
 
-	serverCertPEM, serverKeyPEM, err := generateSignedCert(caCert, caKey, x509.ExtKeyUsageServerAuth, []string{"localhost", "127.0.0.1"})
+	serverCertPEM, serverKeyPEM, err := generateSignedCert(
+		caCert,
+		caKey,
+		x509.ExtKeyUsageServerAuth,
+		[]string{"localhost", "127.0.0.1"})
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +163,12 @@ func generateCA() (certPEM, keyPEM []byte, err error) {
 
 // generateSignedCert creates a certificate signed by the given CA for the
 // provided usage and DNS names.
-func generateSignedCert(caCert *x509.Certificate, caKey *ecdsa.PrivateKey, usage x509.ExtKeyUsage, dnsNames []string) (certPEM, keyPEM []byte, err error) {
+func generateSignedCert(
+	caCert *x509.Certificate,
+	caKey *ecdsa.PrivateKey,
+	usage x509.ExtKeyUsage,
+	dnsNames []string,
+) (certPEM, keyPEM []byte, err error) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate key: %w", err)
