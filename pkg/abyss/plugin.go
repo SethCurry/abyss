@@ -7,6 +7,7 @@ import (
 
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
+	"github.com/google/uuid"
 )
 
 var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
@@ -239,6 +240,21 @@ func handleRequest[T any](msg *protobyss.ACPContainer, fn func(T) ([]*protobyss.
 	resp, err := fn(params)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, v := range resp {
+		msgType, err := GetMessageTypeByID(v.TypeId)
+		if err != nil {
+			return nil, err
+		}
+
+		if msgType.IsResponse() && v.ResponseFor == "" {
+			v.ResponseFor = msg.MessageId
+		}
+
+		if v.MessageId == "" {
+			v.MessageId = uuid.NewString()
+		}
 	}
 
 	return &protobyss.ACPContainerList{
