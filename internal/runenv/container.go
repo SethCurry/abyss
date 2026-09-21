@@ -206,7 +206,8 @@ func (d *Container) CopyFileFromHost(
 		DestinationPath: dir,
 		Content:         pr,
 	}); err != nil {
-		d.logger.Error().Err(err).
+		d.logger.Error().
+			Err(err).
 			Str("container_path", containerPath).
 			Msg("failed to copy file into container")
 		return fmt.Errorf("copy file into container %q: %w", containerPath, err)
