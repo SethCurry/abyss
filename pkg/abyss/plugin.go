@@ -11,6 +11,9 @@ import (
 
 var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
 
+// ACPPluginRouter wraps a struct that implements one or more event handler and manages
+// translating protobyss.ACPContainer messages into appropriate acp structs and then
+// dispatching ACP messages to the appropriate handler if configured.
 type ACPPluginRouter struct {
 	// Client capability requests (agent -> client).
 	OnRequestPermissionRequest    func(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)

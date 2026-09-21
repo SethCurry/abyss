@@ -10,6 +10,8 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+// MessageTypeID is an enum used to identify which ACP struct the contents
+// of a protobyss.ACPContainer should be unmarshalled into.
 type MessageTypeID int32
 
 const (
