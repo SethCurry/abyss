@@ -45,14 +45,24 @@ func (c *Container) ID() string {
 func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
 	c.logger.Info().Msg("stopping container")
 
-	if _, err := c.client.Client.ContainerStop(ctx, c.containerID, client.ContainerStopOptions{Signal: "SIGTERM", Timeout: ptr(int(timeout.Seconds()))}); err != nil {
+	if _, err := c.client.Client.ContainerStop(
+		ctx,
+		c.containerID,
+		client.ContainerStopOptions{
+			Signal:  "SIGTERM",
+			Timeout: ptr(int(timeout.Seconds()))},
+	); err != nil {
 		c.logger.Warn().
 			Err(err).
 			Msg("container stop failed, attempting remove")
 	}
 
 	c.logger.Info().Msg("removing container")
-	if _, err := c.client.Client.ContainerRemove(ctx, c.containerID, client.ContainerRemoveOptions{Force: true}); err != nil {
+	if _, err := c.client.Client.ContainerRemove(
+		ctx,
+		c.containerID,
+		client.ContainerRemoveOptions{Force: true},
+	); err != nil {
 		c.logger.Error().
 			Err(err).
 			Msg("failed to remove container")
@@ -166,7 +176,9 @@ func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, con
 
 // CopyFileFromHost copies a single file's content into the container
 // identified by containerID. Parent directories of containerPath are created as needed.
-func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, containerPath string, mode os.FileMode) error {
+func (d *Container) CopyFileFromHost(
+	ctx context.Context, content []byte, containerPath string, mode os.FileMode,
+) error {
 	dir := filepath.Dir(containerPath)
 	base := filepath.Base(containerPath)
 
@@ -176,7 +188,12 @@ func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, contai
 		Msg("copying file into container")
 
 	if stdout, stderr, err := d.ExecBash(ctx, fmt.Sprintf("mkdir -p %s", dir)); err != nil {
-		d.logger.Error().Str("path", dir).Err(err).Str("stdout", stdout).Str("stderr", stderr).Msg("failed to create directory for copying files")
+		d.logger.Error().
+			Err(err).
+			Str("path", dir).
+			Str("stdout", stdout).
+			Str("stderr", stderr).
+			Msg("failed to create directory for copying files")
 		return fmt.Errorf("create container directory %q: %w.  Stdout: %q. Stderr: %q", dir, err, stdout, stderr)
 	}
 
@@ -189,7 +206,8 @@ func (d *Container) CopyFileFromHost(ctx context.Context, content []byte, contai
 		DestinationPath: dir,
 		Content:         pr,
 	}); err != nil {
-		d.logger.Error().Err(err).
+		d.logger.Error().
+			Err(err).
 			Str("container_path", containerPath).
 			Msg("failed to copy file into container")
 		return fmt.Errorf("copy file into container %q: %w", containerPath, err)

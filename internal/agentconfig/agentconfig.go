@@ -18,10 +18,16 @@ import (
  *  - These are just shims to apt-get/apk/etc
  */
 
+// WebsocketConfig stores websocket-related configuration options like
+// whether TLS is enabled or not.
 type WebsocketConfig struct {
 	DisableTLS bool `yaml:"disable_tls"`
 }
 
+// AgentConfig stores the entirety of a single agent's configuration.
+// Its 2 uses are:
+//  1. To be used in unmarshalling an agent config from YAML
+//  2. To validate that an unmarshalled config is valid via Validate()
 type AgentConfig struct {
 	Docker       DockerConfig         `yaml:"docker"`
 	SetupScripts []SetupScriptsConfig `yaml:"setup_scripts"`
@@ -31,6 +37,8 @@ type AgentConfig struct {
 }
 
 // Validate implements types.Validator by validating each nested config.
+// Returns an error if any of its attributes return an error from their
+// Validate function.
 func (a AgentConfig) Validate() error {
 	if err := a.Docker.Validate(); err != nil {
 		return err
@@ -52,7 +60,8 @@ func (a AgentConfig) Validate() error {
 }
 
 // FromYAMLFile reads the YAML file at the given path and unmarshals it
-// into an *AgentConfig.
+// into an *AgentConfig.  Paths are not normalized, so ~ characters
+// will not be expanded.
 func FromYAMLFile(path string) (*AgentConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -67,6 +76,9 @@ func FromYAMLFile(path string) (*AgentConfig, error) {
 	return &cfg, nil
 }
 
+// BuildAgentProxyArgs converts the configuration options from a *AgentConfig
+// into a string containing the bash command to run to start the agent proxy
+// inside the container.
 func BuildAgentProxyArgs(cfg *AgentConfig) string {
 	agent := cfg.Docker.AgentCommand
 

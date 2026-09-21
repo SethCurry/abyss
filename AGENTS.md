@@ -1,3 +1,7 @@
+## Docker
+
+Dockerfiles are in `build/docker`.  You can build them by running `task build-docker`.
+
 ## Code Style
 
 ### Comments

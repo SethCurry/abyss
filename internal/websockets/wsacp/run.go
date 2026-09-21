@@ -20,7 +20,12 @@ import (
 // router, and ACP connection. It launches the demultiplexing read loop in a
 // goroutine and returns the constructed proxied agent along with the close
 // behavior. A non-nil tlsConfig enables TLS for the connection.
-func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, plugins *plugin.ACPManager, logger zerolog.Logger) (*websocket.Conn, *wsrouter.ProtoRouter, *ProxiedACPAgent, error) {
+func dialAndServe(
+	ctx context.Context,
+	wsURL string,
+	tlsConfig *tls.Config,
+	plugins *plugin.ACPManager,
+	logger zerolog.Logger) (*websocket.Conn, *wsrouter.ProtoRouter, *ProxiedACPAgent, error) {
 	dialer := websocket.DefaultDialer
 	if tlsConfig != nil {
 		dialer = &websocket.Dialer{TLSClientConfig: tlsConfig}
@@ -56,7 +61,7 @@ func dialAndServe(ctx context.Context, wsURL string, tlsConfig *tls.Config, plug
 	})
 
 	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
-		plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+		_, _ = plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
 			TypeId:  int32(msg.TypeID),
 			Content: msg.Content,
 		})

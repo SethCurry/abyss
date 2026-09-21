@@ -20,7 +20,12 @@ type ContainerProxy struct {
 
 var _ acp.Client = (*ContainerProxy)(nil)
 
-func NewContainerProxy(underlying *ProxiedACPClient, router *wsrouter.ACPRouter, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools, logger zerolog.Logger) *ContainerProxy {
+func NewContainerProxy(
+	underlying *ProxiedACPClient,
+	router *wsrouter.ACPRouter,
+	terminalTools *acptools.TerminalTools,
+	fileTools *acptools.FilesystemTools,
+	logger zerolog.Logger) *ContainerProxy {
 	return &ContainerProxy{
 		logger:        logger,
 		underlying:    underlying,
@@ -37,7 +42,9 @@ func (e *ContainerProxy) SetClientConnection(conn *acp.ClientSideConnection) {
 	e.router.SetAgent(conn)
 }
 
-func (e *ContainerProxy) RequestPermission(ctx context.Context, params acp.RequestPermissionRequest) (acp.RequestPermissionResponse, error) {
+func (e *ContainerProxy) RequestPermission(
+	ctx context.Context, params acp.RequestPermissionRequest,
+) (acp.RequestPermissionResponse, error) {
 	e.logger.Debug().
 		Str("method", "RequestPermission").
 		Msg("handling request")
@@ -51,7 +58,10 @@ func (e *ContainerProxy) SessionUpdate(ctx context.Context, params acp.SessionNo
 	return e.underlying.SessionUpdate(ctx, params)
 }
 
-func (e *ContainerProxy) WriteTextFile(ctx context.Context, params acp.WriteTextFileRequest) (acp.WriteTextFileResponse, error) {
+func (e *ContainerProxy) WriteTextFile(
+	ctx context.Context,
+	params acp.WriteTextFileRequest,
+) (acp.WriteTextFileResponse, error) {
 	if e.fileTools != nil {
 		e.logger.Debug().
 			Str("method", "WriteTextFile").
@@ -67,7 +77,9 @@ func (e *ContainerProxy) WriteTextFile(ctx context.Context, params acp.WriteText
 	return e.underlying.WriteTextFile(ctx, params)
 }
 
-func (e *ContainerProxy) ReadTextFile(ctx context.Context, params acp.ReadTextFileRequest) (acp.ReadTextFileResponse, error) {
+func (e *ContainerProxy) ReadTextFile(
+	ctx context.Context, params acp.ReadTextFileRequest,
+) (acp.ReadTextFileResponse, error) {
 	if e.fileTools != nil {
 		e.logger.Debug().
 			Str("method", "ReadTextFile").
@@ -83,7 +95,9 @@ func (e *ContainerProxy) ReadTextFile(ctx context.Context, params acp.ReadTextFi
 	return e.underlying.ReadTextFile(ctx, params)
 }
 
-func (e *ContainerProxy) CreateTerminal(ctx context.Context, params acp.CreateTerminalRequest) (acp.CreateTerminalResponse, error) {
+func (e *ContainerProxy) CreateTerminal(
+	ctx context.Context, params acp.CreateTerminalRequest,
+) (acp.CreateTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "CreateTerminal").
 		Msg("handling request")
@@ -99,7 +113,9 @@ func (e *ContainerProxy) CreateTerminal(ctx context.Context, params acp.CreateTe
 	return e.underlying.CreateTerminal(ctx, params)
 }
 
-func (e *ContainerProxy) TerminalOutput(ctx context.Context, params acp.TerminalOutputRequest) (acp.TerminalOutputResponse, error) {
+func (e *ContainerProxy) TerminalOutput(
+	ctx context.Context, params acp.TerminalOutputRequest,
+) (acp.TerminalOutputResponse, error) {
 	e.logger.Debug().
 		Str("method", "TerminalOutput").
 		Msg("handling request")
@@ -115,7 +131,9 @@ func (e *ContainerProxy) TerminalOutput(ctx context.Context, params acp.Terminal
 	return e.underlying.TerminalOutput(ctx, params)
 }
 
-func (e *ContainerProxy) ReleaseTerminal(ctx context.Context, params acp.ReleaseTerminalRequest) (acp.ReleaseTerminalResponse, error) {
+func (e *ContainerProxy) ReleaseTerminal(
+	ctx context.Context, params acp.ReleaseTerminalRequest,
+) (acp.ReleaseTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "ReleaseTerminal").
 		Msg("handling request")
@@ -131,7 +149,9 @@ func (e *ContainerProxy) ReleaseTerminal(ctx context.Context, params acp.Release
 	return e.underlying.ReleaseTerminal(ctx, params)
 }
 
-func (e *ContainerProxy) WaitForTerminalExit(ctx context.Context, params acp.WaitForTerminalExitRequest) (acp.WaitForTerminalExitResponse, error) {
+func (e *ContainerProxy) WaitForTerminalExit(
+	ctx context.Context, params acp.WaitForTerminalExitRequest,
+) (acp.WaitForTerminalExitResponse, error) {
 	e.logger.Debug().
 		Str("method", "WaitForTerminalExit").
 		Msg("handling request")
@@ -148,7 +168,9 @@ func (e *ContainerProxy) WaitForTerminalExit(ctx context.Context, params acp.Wai
 }
 
 // KillTerminal implements acp.Client.
-func (e *ContainerProxy) KillTerminal(ctx context.Context, params acp.KillTerminalRequest) (acp.KillTerminalResponse, error) {
+func (e *ContainerProxy) KillTerminal(
+	ctx context.Context, params acp.KillTerminalRequest,
+) (acp.KillTerminalResponse, error) {
 	e.logger.Debug().
 		Str("method", "KillTerminal").
 		Msg("handling request")

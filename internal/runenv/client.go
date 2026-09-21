@@ -297,7 +297,10 @@ func writeTarEntry(tw *tar.Writer, src, name string, fi os.FileInfo) error {
 func (d *DockerClient) hostIP() string {
 	u, err := url.Parse(d.Client.DaemonHost())
 	if err != nil {
-		d.logger.Warn().Err(err).Str("daemon_host", d.Client.DaemonHost()).Msg("failed to parse docker daemon host, defaulting to loopback")
+		d.logger.Warn().
+			Err(err).
+			Str("daemon_host", d.Client.DaemonHost()).
+			Msg("failed to parse docker daemon host, defaulting to loopback")
 		return "127.0.0.1"
 	}
 

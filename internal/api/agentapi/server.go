@@ -37,7 +37,10 @@ func contextCreator(w http.ResponseWriter, r *http.Request) *RequestContext {
 	}
 }
 
-func NewServer(agentCommand []string, terminalTools *acptools.TerminalTools, fileTools *acptools.FilesystemTools) *Server {
+func NewServer(agentCommand []string,
+	terminalTools *acptools.TerminalTools,
+	fileTools *acptools.FilesystemTools,
+) *Server {
 	httpSrv := pacific.NewServer(contextCreator)
 	return &Server{
 		httpServer: httpSrv,

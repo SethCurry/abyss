@@ -28,7 +28,10 @@ func (t *SetupScriptType) UnmarshalYAML(value *yaml.Node) error {
 		*t = SetupScriptType(s)
 		return nil
 	default:
-		return fmt.Errorf("invalid setup script type %q: must be %q or %q", s, SetupScriptTypeFile, SetupScriptTypeInline)
+		return fmt.Errorf("invalid setup script type %q: must be %q or %q",
+			s,
+			SetupScriptTypeFile,
+			SetupScriptTypeInline)
 	}
 }
 
@@ -50,6 +53,8 @@ func (s SetupScriptsConfig) Validate() error {
 	case "", SetupScriptTypeFile, SetupScriptTypeInline:
 		return nil
 	default:
-		return types.NewValidationError(s, "type", fmt.Sprintf("must be %q or %q", SetupScriptTypeFile, SetupScriptTypeInline))
+		return types.NewValidationError(s,
+			"type",
+			fmt.Sprintf("must be %q or %q", SetupScriptTypeFile, SetupScriptTypeInline))
 	}
 }
