@@ -47,7 +47,7 @@ func (a *ACPManager) HandleMessage(
 			if err != nil {
 				return nil, err
 			}
-			newMsgs = append(newMsgs, gotMsgs.Containers...)
+			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)
 		}
 		allMessages = newMsgs
 	}

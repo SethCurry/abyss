@@ -129,7 +129,7 @@ func (d *Container) CreateAgentStartFile(ctx context.Context) error {
 	return err
 }
 
-// CopyToContainer copies the file or directory at hostPath into the container
+// CopyFromHost copies the file or directory at hostPath into the container
 // identified by containerID, placing it under containerDir. Any parent
 // directories of containerDir that do not already exist inside the container are
 // created. The basename of hostPath is preserved, so a host path of

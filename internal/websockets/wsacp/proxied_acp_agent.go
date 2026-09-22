@@ -19,7 +19,7 @@ func proxyRoundTrip[T, P any](router *wsrouter.ACPRouter, params T) (P, error) {
 
 	container := prom.Wait()
 
-	err = json.Unmarshal(container.Content, &ret)
+	err = json.Unmarshal(container.GetContent(), &ret)
 	if err != nil {
 		return ret, fmt.Errorf("failed to unmarshal response content: %w", err)
 	}

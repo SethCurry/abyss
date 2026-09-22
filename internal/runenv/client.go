@@ -23,6 +23,10 @@ import (
 	"github.com/SethCurry/abyss/internal/timber"
 )
 
+// loopbackIP is the address used to reach containers when the Docker
+// daemon is local (unix socket or named pipe).
+const loopbackIP = "127.0.0.1"
+
 // ContainerEndpoint describes how the host can reach a started container.
 type ContainerEndpoint struct {
 	// ContainerID is the ID of the started container.
@@ -109,7 +113,7 @@ func (d *DockerClient) StartContainer(
 		Uint16("host_port", hostPort).
 		Msg("starting container")
 
-	//if err := d.pullImage(ctx, imageRef); err != nil {
+	// if err := d.pullImage(ctx, imageRef); err != nil {
 	//	return ContainerEndpoint{}, err
 	//}
 
@@ -301,7 +305,7 @@ func (d *DockerClient) hostIP() string {
 			Err(err).
 			Str("daemon_host", d.Client.DaemonHost()).
 			Msg("failed to parse docker daemon host, defaulting to loopback")
-		return "127.0.0.1"
+		return loopbackIP
 	}
 
 	switch u.Scheme {
@@ -311,7 +315,7 @@ func (d *DockerClient) hostIP() string {
 		}
 	}
 
-	return "127.0.0.1"
+	return loopbackIP
 }
 
 // PullImage pulls imageRef according to policy using the Docker API client.

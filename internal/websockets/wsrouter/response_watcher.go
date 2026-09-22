@@ -25,9 +25,9 @@ type ResponseWatcher struct {
 func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
-	if handler, ok := r.handlers[msg.ResponseFor]; ok {
+	if handler, ok := r.handlers[msg.GetResponseFor()]; ok {
 		handler.Resolve(msg)
-		delete(r.handlers, msg.ResponseFor)
+		delete(r.handlers, msg.GetResponseFor())
 	}
 }
 
@@ -49,13 +49,13 @@ type Promise[T any] struct {
 	resolveChan chan T
 }
 
-// Resolves the promise with the provided value.
+// Resolve resolves the promise with the provided value.
 func (p *Promise[T]) Resolve(value T) {
 	p.resolveChan <- value
 	close(p.resolveChan)
 }
 
-// Blocks until the promise is resolved with a value.
+// Wait blocks until the promise is resolved with a value.
 func (p *Promise[T]) Wait() T {
 	return <-p.resolveChan
 }

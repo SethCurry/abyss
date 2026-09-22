@@ -230,9 +230,7 @@ func ACPContainer[T acpMessageTypes](msg T) (*protobyss.ACPContainer, error) {
 }
 
 func ACPContainers[T acpMessageTypes](msgs ...T) ([]*protobyss.ACPContainer, error) {
-	return fp.MapE(func(msg T) (*protobyss.ACPContainer, error) {
-		return ACPContainer(msg)
-	}, msgs)
+	return fp.MapE(ACPContainer[T], msgs)
 }
 
 func ACPContainerList[T acpMessageTypes](msgs ...T) (*protobyss.ACPContainerList, error) {

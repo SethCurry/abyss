@@ -121,7 +121,7 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 
 		config.Endpoint = &ContainerEndpoint{
 			ContainerID: "",
-			IP:          "127.0.0.1",
+			IP:          loopbackIP,
 			Port:        hostPort.Num(),
 		}
 

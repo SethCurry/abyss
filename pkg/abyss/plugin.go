@@ -93,7 +93,7 @@ func (r *ACPPluginRouter) HandleMessage(
 	ctx context.Context,
 	msg *protobyss.ACPContainer,
 ) (*protobyss.ACPContainerList, error) {
-	switch MessageTypeID(msg.TypeId) {
+	switch MessageTypeID(msg.GetTypeId()) {
 	// Client capability requests (agent -> client).
 	case RequestPermissionRequestType:
 		return handleRequest(msg, r.OnRequestPermissionRequest)
@@ -229,7 +229,7 @@ func (r *ACPPluginRouter) HandleMessage(
 	default:
 		// Return an error for unhandled message types.
 		// This allows testing completeness of this switch in unit tests.
-		return nil, fmt.Errorf("unhandled message type: %d", msg.TypeId)
+		return nil, fmt.Errorf("unhandled message type: %d", msg.GetTypeId())
 	}
 }
 
@@ -242,7 +242,7 @@ func handleRequest[T any](
 		return &protobyss.ACPContainerList{Containers: []*protobyss.ACPContainer{msg}}, nil
 	}
 	var params T
-	if err := json.Unmarshal(msg.Content, &params); err != nil {
+	if err := json.Unmarshal(msg.GetContent(), &params); err != nil {
 		return nil, err
 	}
 
@@ -252,16 +252,16 @@ func handleRequest[T any](
 	}
 
 	for _, v := range resp {
-		msgType, err := GetMessageTypeByID(v.TypeId)
+		msgType, err := GetMessageTypeByID(v.GetTypeId())
 		if err != nil {
 			return nil, err
 		}
 
-		if msgType.IsResponse() && v.ResponseFor == "" {
-			v.ResponseFor = msg.MessageId
+		if msgType.IsResponse() && v.GetResponseFor() == "" {
+			v.ResponseFor = msg.GetMessageId()
 		}
 
-		if v.MessageId == "" {
+		if v.GetMessageId() == "" {
 			v.MessageId = uuid.NewString()
 		}
 	}

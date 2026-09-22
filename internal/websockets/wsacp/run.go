@@ -40,7 +40,7 @@ func dialAndServe(
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	router.SetConn(acpConn)
-	//socket.Handle(1, acpConn.Handle)
+	// socket.Handle(1, acpConn.Handle)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
 		newMsgs, err := plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
 			TypeId:  int32(msg.TypeID),
@@ -54,8 +54,8 @@ func dialAndServe(
 
 		for _, v := range newMsgs {
 			acpConn.Handle(wsrouter.ProtoMessage{
-				TypeID:  int(v.TypeId),
-				Content: v.Content,
+				TypeID:  int(v.GetTypeId()),
+				Content: v.GetContent(),
 			})
 		}
 	})
