@@ -1,5 +1,8 @@
 /abyss
 .task
 /site/hugo_stats.json
+node_modules
+
+
 # Added by goreleaser init:
 dist/

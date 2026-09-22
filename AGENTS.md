@@ -1,3 +1,11 @@
+## Common Commands
+
+| Command | Description |
+| ------- | ----------- |
+| `task build:binary` | Builds the Go binary |
+| `task binary:lint` | Executes a linter on the Go code |
+| `task build-docker` | Builds all of the Docker images |
+
 ## Docker
 
 Dockerfiles are in `build/docker`.  You can build them by running `task build-docker`.

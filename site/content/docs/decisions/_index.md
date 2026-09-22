@@ -1,14 +1,14 @@
 ---
-title: "Reference"
-description: "Find detailed, structured reference pages that explain concepts, configuration options, and behavior so you can quickly look up precise information as you work."
+title: "Decisions"
+description: "Find information about decisions that were made as part of abyss' development, why they were made, alternatives considered, etc."
 summary: ""
 date: 2023-09-07T16:12:37+02:00
 lastmod: 2023-09-07T16:12:37+02:00
 draft: false
-weight: 2
+weight: 900
 toc: true
 sidebar:
-  collapsed: false
+  collapsed: true
 params:
   seo:
     title: "" # custom title (optional)

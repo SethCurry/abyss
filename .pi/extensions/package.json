@@ -1,0 +1,19 @@
+{
+  "name": "abyss-pi-extensions",
+  "version": "0.0.1",
+  "private": "true",
+  "description": "Extensions for Pi in abyss",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {},
+  "pi": {
+    "extensions": [
+      "./golangci_lint.ts"
+    ]
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.87.0"
+  }
+}
