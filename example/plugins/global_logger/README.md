@@ -54,12 +54,6 @@ func init() {
 }
 ```
 
-A compile-time assertion like the one in `main.go` catches interface mismatches at build time instead of at plugin load:
-
-```go
-var _ protobyss.ACPPlugin = (*MyPlugin)(nil)
-```
-
 ### 5. Build
 
 ```bash
