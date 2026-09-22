@@ -22,15 +22,12 @@
   {{ if eq $.Site.Language.LanguageName "English" }}
   <section class="section section-md section-features">
     <div class="container">
-      <div class="column justify-content-center text-center">
-      <p class="text-lg">Abyss is the easy way to sandbox your AI agents without the hassle of manual Docker configs.</p>
-      <p class="text-xl">Think of it like Docker Compose, but with agent-specific features like copying directories into the container.</p>
-      <p>It's a playpen for AI.  You choose what you want to copy in, what you want to actually expose,
-        and Abyss takes care of managing the container for you.</p>
-      <p>When you're done, just disconnect from the agent and Abyss will clean up the container for you.</p>
-      <p>You can even manage separate agents, with separate containers and resources.  Swap seamlessly between them
-        with Zed, or any of your other favorite ACP clients.</p>
-      <p>This config file is all you need to get started:</p>
+      <div class="text-box">
+        <p class="text-lg">Give your AI agents a sandbox they can't escape. Abyss wraps every agent in its own container &mdash; no manual Docker configs, no YAML archaeology, no surprises.</p>
+        <p class="text-xl">It's Docker Compose for the agent era. You decide what your agent can see, what it can touch, and what it can never reach.</p>
+        <p>Every agent gets a clean, disposable workspace. When you disconnect, Abyss tears it down automatically &mdash; nothing lingers, nothing leaks.</p>
+        <p>Spin up separate, isolated agents with their own containers and resources, then swap between them instantly in Zed or any ACP client you already love.</p>
+        <p>One config file. That's it.</p>
       </div>
 
   <div class="expressive-code homepage-example">
@@ -67,21 +64,27 @@
   <div>
 
 
-      <div class="row justify-content-center text-center">
+      <div class="row justify-content-center text-center g-4">
         <div class="col-lg-5">
-          <img style="width: 100%" src="/img/ragebait/see-no-evil.png" />
-          <h2 class="h4">See No Evil</h2></p>
-          <p>Keep secrets from your agent.  Abyss only makes things visible to your agent when you tell it to, otherwise your agent lives in the dark.</p>
+          <div class="feature-card">
+            <img src="/img/ragebait/see-no-evil.png" />
+            <h2 class="h4">See No Evil</h2>
+            <p>Your secrets stay secret. Abyss keeps your agent in the dark until you explicitly shine a light on something &mdash; nothing is visible by default.</p>
+          </div>
         </div>
         <div class="col-lg-5">
-          <img src="/img/ragebait/hear-no-evil.png" />
-          <h2 class="h4">Hear No Evil</h2>
-          <p>Abyss intercepts ACP requests for filesystem and shell access and executes them inside the container.</p>
+          <div class="feature-card">
+            <img src="/img/ragebait/hear-no-evil.png" />
+            <h2 class="h4">Hear No Evil</h2>
+            <p>Every filesystem and shell request your agent makes is intercepted and executed inside the container &mdash; never on your real machine.</p>
+          </div>
         </div>
         <div class="col-lg-5">
-          <img src="/img/ragebait/fish-need-fingers-too.png" />
-          <h2 class="h4">Speak No Evil</h2>
-          <p>Easily copy files, create bind mounts, and execute setup scripts all as part of your agent definition.</p>
+          <div class="feature-card">
+            <img src="/img/ragebait/fish-need-fingers-too.png" />
+            <h2 class="h4">Speak No Evil</h2>
+            <p>Declare your environment once: files to copy, mounts to create, scripts to run. Abyss provisions the whole thing for you, every time.</p>
+          </div>
         </div>
       </div>
       <div class="column justify-content-center text-center">
@@ -101,7 +104,7 @@
 <section class="section section-md container-fluid bg-light">
   <div class="row justify-content-center text-center">
     <div class="col-lg-7">
-      <h2 class="mt-2">Start building with Doks today</h2>
+      <h2 class="mt-2">Start sandboxing your agents today</h2>
       <a class="btn btn-primary rounded-pill px-4 my-2" href="/docs/guides/getting-started/" role="button">{{ i18n "get-started" }}</a>
     </div>
   </div>
