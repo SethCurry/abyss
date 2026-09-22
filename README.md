@@ -57,9 +57,12 @@ so you don't need to memorize a weird path scheme.
 models you can find, give them the most aggressive prompts you want — and know
 that the worst an agent can do is wreck its own sandbox, not your system.
 
-## Status
+## Supports Batch Processing
 
-Abyss has had its first MVP release!
+You can use the `abyss oneshot` command to execute a single prompt, allowing you to execute
+bash/Python/etc cronjobs that call your agent while maintaining its isolation.
+
+## Releases
 
 You can grab a copy of the binary from the [releases page](https://github.com/SethCurry/abyss/releases),
 and Docker images are under Packages on the right of the project home.
