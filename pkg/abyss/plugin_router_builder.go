@@ -6,260 +6,369 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+// OnRequestPermissionRequestHandler handles ACP request-permission-request
+// callbacks.
 type OnRequestPermissionRequestHandler interface {
 	OnRequestPermissionRequest(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnRequestPermissionResponseHandler handles ACP request-permission-response
+// callbacks.
 type OnRequestPermissionResponseHandler interface {
 	OnRequestPermissionResponse(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnWriteTextFileRequestHandler handles ACP write-text-file-request
+// callbacks.
 type OnWriteTextFileRequestHandler interface {
 	OnWriteTextFileRequest(acp.WriteTextFileRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnWriteTextFileResponseHandler handles ACP write-text-file-response
+// callbacks.
 type OnWriteTextFileResponseHandler interface {
 	OnWriteTextFileResponse(acp.WriteTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnReadTextFileRequestHandler handles ACP read-text-file-request callbacks.
 type OnReadTextFileRequestHandler interface {
 	OnReadTextFileRequest(acp.ReadTextFileRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnCreateTerminalRequestHandler handles ACP create-terminal-request
+// callbacks.
 type OnCreateTerminalRequestHandler interface {
 	OnCreateTerminalRequest(acp.CreateTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnTerminalOutputRequestHandler handles ACP terminal-output-request
+// callbacks.
 type OnTerminalOutputRequestHandler interface {
 	OnTerminalOutputRequest(acp.TerminalOutputRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnReleaseTerminalRequestHandler handles ACP release-terminal-request
+// callbacks.
 type OnReleaseTerminalRequestHandler interface {
 	OnReleaseTerminalRequest(acp.ReleaseTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnWaitForTerminalExitRequestHandler handles ACP
+// wait-for-terminal-exit-request callbacks.
 type OnWaitForTerminalExitRequestHandler interface {
 	OnWaitForTerminalExitRequest(acp.WaitForTerminalExitRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnKillTerminalRequestHandler handles ACP kill-terminal-request callbacks.
 type OnKillTerminalRequestHandler interface {
 	OnKillTerminalRequest(acp.KillTerminalRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnSessionNotificationHandler handles ACP session-notification callbacks.
 type OnSessionNotificationHandler interface {
 	OnSessionNotification(acp.SessionNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnReadTextFileResponseHandler handles ACP read-text-file-response
+// callbacks.
 type OnReadTextFileResponseHandler interface {
 	OnReadTextFileResponse(acp.ReadTextFileResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnCreateTerminalResponseHandler handles ACP create-terminal-response
+// callbacks.
 type OnCreateTerminalResponseHandler interface {
 	OnCreateTerminalResponse(acp.CreateTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnTerminalOutputResponseHandler handles ACP terminal-output-response
+// callbacks.
 type OnTerminalOutputResponseHandler interface {
 	OnTerminalOutputResponse(acp.TerminalOutputResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnReleaseTerminalResponseHandler handles ACP release-terminal-response
+// callbacks.
 type OnReleaseTerminalResponseHandler interface {
 	OnReleaseTerminalResponse(acp.ReleaseTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnWaitForTerminalExitResponseHandler handles ACP
+// wait-for-terminal-exit-response callbacks.
 type OnWaitForTerminalExitResponseHandler interface {
 	OnWaitForTerminalExitResponse(acp.WaitForTerminalExitResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnKillTerminalResponseHandler handles ACP kill-terminal-response
+// callbacks.
 type OnKillTerminalResponseHandler interface {
 	OnKillTerminalResponse(acp.KillTerminalResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnAuthenticateRequestHandler handles ACP authenticate-request callbacks.
 type OnAuthenticateRequestHandler interface {
 	OnAuthenticateRequest(acp.AuthenticateRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnInitializeRequestHandler handles ACP initialize-request callbacks.
 type OnInitializeRequestHandler interface {
 	OnInitializeRequest(acp.InitializeRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnLogoutRequestHandler handles ACP logout-request callbacks.
 type OnLogoutRequestHandler interface {
 	OnLogoutRequest(acp.LogoutRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnCancelNotificationHandler handles ACP cancel-notification callbacks.
 type OnCancelNotificationHandler interface {
 	OnCancelNotification(acp.CancelNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnCloseSessionRequestHandler handles ACP close-session-request callbacks.
 type OnCloseSessionRequestHandler interface {
 	OnCloseSessionRequest(acp.CloseSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnListSessionsRequestHandler handles ACP list-sessions-request callbacks.
 type OnListSessionsRequestHandler interface {
 	OnListSessionsRequest(acp.ListSessionsRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnNewSessionRequestHandler handles ACP new-session-request callbacks.
 type OnNewSessionRequestHandler interface {
 	OnNewSessionRequest(acp.NewSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnPromptRequestHandler handles ACP prompt-request callbacks.
 type OnPromptRequestHandler interface {
 	OnPromptRequest(acp.PromptRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnResumeSessionRequestHandler handles ACP resume-session-request
+// callbacks.
 type OnResumeSessionRequestHandler interface {
 	OnResumeSessionRequest(acp.ResumeSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnSetSessionConfigOptionRequestHandler handles ACP
+// set-session-config-option-request callbacks.
 type OnSetSessionConfigOptionRequestHandler interface {
 	OnSetSessionConfigOptionRequest(acp.SetSessionConfigOptionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnSetSessionModeRequestHandler handles ACP set-session-mode-request
+// callbacks.
 type OnSetSessionModeRequestHandler interface {
 	OnSetSessionModeRequest(acp.SetSessionModeRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnLoadSessionRequestHandler handles ACP load-session-request callbacks.
 type OnLoadSessionRequestHandler interface {
 	OnLoadSessionRequest(acp.LoadSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnLoadSessionResponseHandler handles ACP load-session-response callbacks.
 type OnLoadSessionResponseHandler interface {
 	OnLoadSessionResponse(acp.LoadSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnSetSessionModeResponseHandler handles ACP set-session-mode-response
+// callbacks.
 type OnSetSessionModeResponseHandler interface {
 	OnSetSessionModeResponse(acp.SetSessionModeResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnListSessionsResponseHandler handles ACP list-sessions-response
+// callbacks.
 type OnListSessionsResponseHandler interface {
 	OnListSessionsResponse(acp.ListSessionsResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnResumeSessionResponseHandler handles ACP resume-session-response
+// callbacks.
 type OnResumeSessionResponseHandler interface {
 	OnResumeSessionResponse(acp.ResumeSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnSetSessionConfigOptionResponseHandler handles ACP
+// set-session-config-option-response callbacks.
 type OnSetSessionConfigOptionResponseHandler interface {
 	OnSetSessionConfigOptionResponse(acp.SetSessionConfigOptionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnLogoutResponseHandler handles ACP logout-response callbacks.
 type OnLogoutResponseHandler interface {
 	OnLogoutResponse(acp.LogoutResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnCloseSessionResponseHandler handles ACP close-session-response
+// callbacks.
 type OnCloseSessionResponseHandler interface {
 	OnCloseSessionResponse(acp.CloseSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnInitializeResponseHandler handles ACP initialize-response callbacks.
 type OnInitializeResponseHandler interface {
 	OnInitializeResponse(acp.InitializeResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnNewSessionResponseHandler handles ACP new-session-response callbacks.
 type OnNewSessionResponseHandler interface {
 	OnNewSessionResponse(acp.NewSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnAuthenticateResponseHandler handles ACP authenticate-response callbacks.
 type OnAuthenticateResponseHandler interface {
 	OnAuthenticateResponse(acp.AuthenticateResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnPromptResponseHandler handles ACP prompt-response callbacks.
 type OnPromptResponseHandler interface {
 	OnPromptResponse(acp.PromptResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDidChangeDocumentNotificationHandler handles ACP
+// unstable-did-change-document-notification callbacks.
 type OnUnstableDidChangeDocumentNotificationHandler interface {
 	OnUnstableDidChangeDocumentNotification(acp.UnstableDidChangeDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDidCloseDocumentNotificationHandler handles ACP
+// unstable-did-close-document-notification callbacks.
 type OnUnstableDidCloseDocumentNotificationHandler interface {
 	OnUnstableDidCloseDocumentNotification(acp.UnstableDidCloseDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDidFocusDocumentNotificationHandler handles ACP
+// unstable-did-focus-document-notification callbacks.
 type OnUnstableDidFocusDocumentNotificationHandler interface {
 	OnUnstableDidFocusDocumentNotification(acp.UnstableDidFocusDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDidOpenDocumentNotificationHandler handles ACP
+// unstable-did-open-document-notification callbacks.
 type OnUnstableDidOpenDocumentNotificationHandler interface {
 	OnUnstableDidOpenDocumentNotification(acp.UnstableDidOpenDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDidSaveDocumentNotificationHandler handles ACP
+// unstable-did-save-document-notification callbacks.
 type OnUnstableDidSaveDocumentNotificationHandler interface {
 	OnUnstableDidSaveDocumentNotification(acp.UnstableDidSaveDocumentNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableAcceptNesNotificationHandler handles ACP
+// unstable-accept-nes-notification callbacks.
 type OnUnstableAcceptNesNotificationHandler interface {
 	OnUnstableAcceptNesNotification(acp.UnstableAcceptNesNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableCloseNesRequestHandler handles ACP unstable-close-nes-request
+// callbacks.
 type OnUnstableCloseNesRequestHandler interface {
 	OnUnstableCloseNesRequest(acp.UnstableCloseNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableRejectNesNotificationHandler handles ACP
+// unstable-reject-nes-notification callbacks.
 type OnUnstableRejectNesNotificationHandler interface {
 	OnUnstableRejectNesNotification(acp.UnstableRejectNesNotification) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableStartNesRequestHandler handles ACP unstable-start-nes-request
+// callbacks.
 type OnUnstableStartNesRequestHandler interface {
 	OnUnstableStartNesRequest(acp.UnstableStartNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableSuggestNesRequestHandler handles ACP
+// unstable-suggest-nes-request callbacks.
 type OnUnstableSuggestNesRequestHandler interface {
 	OnUnstableSuggestNesRequest(acp.UnstableSuggestNesRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDisableProviderRequestHandler handles ACP
+// unstable-disable-provider-request callbacks.
 type OnUnstableDisableProviderRequestHandler interface {
 	OnUnstableDisableProviderRequest(acp.UnstableDisableProviderRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableListProvidersRequestHandler handles ACP
+// unstable-list-providers-request callbacks.
 type OnUnstableListProvidersRequestHandler interface {
 	OnUnstableListProvidersRequest(acp.UnstableListProvidersRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableSetProviderRequestHandler handles ACP
+// unstable-set-provider-request callbacks.
 type OnUnstableSetProviderRequestHandler interface {
 	OnUnstableSetProviderRequest(acp.UnstableSetProviderRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDeleteSessionRequestHandler handles ACP
+// unstable-delete-session-request callbacks.
 type OnUnstableDeleteSessionRequestHandler interface {
 	OnUnstableDeleteSessionRequest(acp.UnstableDeleteSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableForkSessionRequestHandler handles ACP
+// unstable-fork-session-request callbacks.
 type OnUnstableForkSessionRequestHandler interface {
 	OnUnstableForkSessionRequest(acp.UnstableForkSessionRequest) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableForkSessionResponseHandler handles ACP
+// unstable-fork-session-response callbacks.
 type OnUnstableForkSessionResponseHandler interface {
 	OnUnstableForkSessionResponse(acp.UnstableForkSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableCloseNesResponseHandler handles ACP unstable-close-nes-response
+// callbacks.
 type OnUnstableCloseNesResponseHandler interface {
 	OnUnstableCloseNesResponse(acp.UnstableCloseNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableStartNesResponseHandler handles ACP unstable-start-nes-response
+// callbacks.
 type OnUnstableStartNesResponseHandler interface {
 	OnUnstableStartNesResponse(acp.UnstableStartNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableSuggestNesResponseHandler handles ACP
+// unstable-suggest-nes-response callbacks.
 type OnUnstableSuggestNesResponseHandler interface {
 	OnUnstableSuggestNesResponse(acp.UnstableSuggestNesResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDisableProviderResponseHandler handles ACP
+// unstable-disable-provider-response callbacks.
 type OnUnstableDisableProviderResponseHandler interface {
 	OnUnstableDisableProviderResponse(acp.UnstableDisableProviderResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableListProvidersResponseHandler handles ACP
+// unstable-list-providers-response callbacks.
 type OnUnstableListProvidersResponseHandler interface {
 	OnUnstableListProvidersResponse(acp.UnstableListProvidersResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableSetProviderResponseHandler handles ACP
+// unstable-set-provider-response callbacks.
 type OnUnstableSetProviderResponseHandler interface {
 	OnUnstableSetProviderResponse(acp.UnstableSetProviderResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// OnUnstableDeleteSessionResponseHandler handles ACP
+// unstable-delete-session-response callbacks.
 type OnUnstableDeleteSessionResponseHandler interface {
 	OnUnstableDeleteSessionResponse(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
-// NewACPPluginRouter builds an ACPPluginRouter from an object that implements
-// any subset of the *Handler interfaces. Unmatched callbacks are left nil.
+// NewACPPluginRouter builds an ACPPluginRouter from an object that
+// implements any subset of the *Handler interfaces. Unmatched callbacks
+// are left nil.
 func NewACPPluginRouter(v any) *ACPPluginRouter {
 	r := &ACPPluginRouter{}
 	var methods []string

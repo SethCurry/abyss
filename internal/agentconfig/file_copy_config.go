@@ -12,8 +12,10 @@ import (
 type FileCopyType string
 
 const (
+	// FileCopyTypeInline indicates the file's content is inlined in the config.
 	FileCopyTypeInline FileCopyType = "inline"
-	FileCopyTypePath   FileCopyType = "path"
+	// FileCopyTypePath indicates the file's content is read from a path.
+	FileCopyTypePath FileCopyType = "path"
 )
 
 // UnmarshalYAML validates that the Type field is either "inline" or "path".
@@ -32,6 +34,8 @@ func (t *FileCopyType) UnmarshalYAML(value *yaml.Node) error {
 	}
 }
 
+// FileCopyConfig represents a file to be copied onto an agent, either
+// with inline content or from a source path.
 type FileCopyConfig struct {
 	// Type is currently either "inline" or "path"
 	Type FileCopyType `yaml:"type"`

@@ -25,6 +25,8 @@ func newID() (string, error) {
 	return gotUUID.String(), nil
 }
 
+// NewACPConn creates an ACPConn that demuxes incoming proto messages from conn
+// into handler.
 func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPConn {
 	return &ACPConn{
 		logger:    log.Logger.With().Str("from", "ACPConn").Logger(),
@@ -33,12 +35,15 @@ func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPCo
 	}
 }
 
+// ACPConn demuxes incoming proto messages into a handler and sends outgoing
+// proto messages over an IProtoRouter.
 type ACPConn struct {
 	logger    zerolog.Logger
 	protoConn IProtoRouter
 	handler   func(*protobyss.ACPContainer)
 }
 
+// Handle unmarshals an incoming proto message and dispatches it to the handler.
 func (c *ACPConn) Handle(msg ProtoMessage) {
 	protoMsg := &protobyss.ACPContainer{}
 	err := proto.Unmarshal(msg.Content, protoMsg)
@@ -50,6 +55,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 	c.handler(protoMsg)
 }
 
+// Send marshals and writes an outgoing proto message over the connection.
 func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	data, err := proto.Marshal(msg)
 	if err != nil {
@@ -66,6 +72,8 @@ func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	return nil
 }
 
+// MessageType describes a registered ACP message, pairing its numeric ID with the
+// concrete payload type and the handler that processes it.
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
@@ -73,6 +81,7 @@ type MessageType struct {
 	IsRPC   bool
 }
 
+// NewACPRouter creates a new ACPRouter with a logger and response watcher.
 func NewACPRouter() *ACPRouter {
 	return &ACPRouter{
 		logger:          log.Logger.With().Str("from", "ACPRouter").Logger(),
@@ -87,6 +96,7 @@ type Agent interface {
 	acp.AgentExperimental
 }
 
+// ACPRouter is a router for the ACP websockets protocol.
 type ACPRouter struct {
 	messageTypes    []MessageType
 	conn            *ACPConn

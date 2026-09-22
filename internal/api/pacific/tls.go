@@ -63,7 +63,7 @@ func GenerateCertificates() (*Certificates, error) {
 	}, nil
 }
 
-// ServerTLSConfig returns a tls.Config that presents the server certificate
+// ServerTLSConfig returns a [tls.Config] that presents the server certificate
 // and requires clients to present a certificate signed by the CA.
 func (c *Certificates) ServerTLSConfig() (*tls.Config, error) {
 	cert, err := tls.X509KeyPair(c.ServerCertPEM, c.ServerKeyPEM)
@@ -84,7 +84,7 @@ func (c *Certificates) ServerTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
-// ClientTLSConfig returns a tls.Config that presents the client certificate
+// ClientTLSConfig returns a [tls.Config] that presents the client certificate
 // and verifies the server against the CA.
 func (c *Certificates) ClientTLSConfig() (*tls.Config, error) {
 	cert, err := tls.X509KeyPair(c.ClientCertPEM, c.ClientKeyPEM)
@@ -105,7 +105,7 @@ func (c *Certificates) ClientTLSConfig() (*tls.Config, error) {
 }
 
 // LoadServerTLSConfig reads the server certificate, key, and CA certificate
-// from the given paths and returns a tls.Config for mutual TLS.
+// from the given paths and returns a [tls.Config] for mutual TLS.
 func LoadServerTLSConfig(certPath, keyPath, caPath string) (*tls.Config, error) {
 	certPEM, err := os.ReadFile(certPath)
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package plugin provides access control policy management for plugins.
 package plugin
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// NewACPManager creates and initializes a new ACPManager instance.
 func NewACPManager(ctx context.Context) (*ACPManager, error) {
 	loader, err := protobyss.NewACPPluginPlugin(ctx)
 	if err != nil {
@@ -19,12 +21,14 @@ func NewACPManager(ctx context.Context) (*ACPManager, error) {
 	}, nil
 }
 
+// ACPManager manages access control policy plugins and their lifecycle.
 type ACPManager struct {
 	loader  *protobyss.ACPPluginPlugin
 	plugins []protobyss.ACPPlugin
 	logger  zerolog.Logger
 }
 
+// Load loads an ACP plugin from the given path.
 func (a *ACPManager) Load(ctx context.Context, path string) error {
 	a.logger.Info().Str("path", path).Msg("loading ACP plugin")
 	plugin, err := a.loader.Load(ctx, path)
@@ -35,6 +39,8 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 	return nil
 }
 
+// HandleMessage passes a message through all loaded ACP plugins and returns
+// the resulting messages.
 func (a *ACPManager) HandleMessage(
 	ctx context.Context, req *protobyss.ACPContainer,
 ) ([]*protobyss.ACPContainer, error) {

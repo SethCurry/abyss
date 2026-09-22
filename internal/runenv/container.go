@@ -123,6 +123,8 @@ func (c *Container) ExecBash(ctx context.Context, script string) (stdout, stderr
 	return out.String(), errOut.String(), nil
 }
 
+// CreateAgentStartFile creates an empty start file inside the container at the
+// default start file path, signaling that the agent should begin its work.
 func (d *Container) CreateAgentStartFile(ctx context.Context) error {
 	d.logger.Debug().Str("path", agentconfig.DefaultStartFilePath).Msg("creating start file")
 	_, _, err := d.ExecBash(ctx, "touch "+agentconfig.DefaultStartFilePath)
@@ -130,9 +132,9 @@ func (d *Container) CreateAgentStartFile(ctx context.Context) error {
 }
 
 // CopyFromHost copies the file or directory at hostPath into the container
-// identified by containerID, placing it under containerDir. Any parent
-// directories of containerDir that do not already exist inside the container are
-// created. The basename of hostPath is preserved, so a host path of
+// identified by containerID, placing it under containerDir. Parent
+// directories of containerDir that do not already exist inside the container
+// are created. The basename of hostPath is preserved, so a host path of
 // "/tmp/foo.txt" copied into "/opt/app" lands at "/opt/app/foo.txt".
 func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, containerDir string) error {
 	d.logger.Debug().
@@ -175,7 +177,8 @@ func (d *Container) CopyFromHost(ctx context.Context, containerID, hostPath, con
 }
 
 // CopyFileFromHost copies a single file's content into the container
-// identified by containerID. Parent directories of containerPath are created as needed.
+// identified by containerID. Parent directories of containerPath are created
+// as needed.
 func (d *Container) CopyFileFromHost(
 	ctx context.Context, content []byte, containerPath string, mode os.FileMode,
 ) error {
