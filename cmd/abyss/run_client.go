@@ -103,6 +103,9 @@ func runClient(
 		return err
 	}
 
+	// Sleep for as long as the agent does between checking for the file
+	// Prevents a race-condition where the start file was created but the
+	// container-side proxy hasn't seen it yet.
 	time.Sleep(agentconfig.WaitForStartFileSleepDuration)
 
 	scheme := "ws"
@@ -122,6 +125,7 @@ func runClient(
 		Str("container_id", endpoint.ContainerID).
 		Msg("connecting to agent container")
 
+	// TODO clean this up, there's no need to have an if here
 	if prompt == "" {
 		if err := api.RunClient(ctx, wsURL, tlsConfig, logger); err != nil {
 			logger.Error().Err(err).Msg("client disconnected with error")
@@ -134,7 +138,10 @@ func runClient(
 
 	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
 	if stopErr := cont.Stop(ctx, 10*time.Second); stopErr != nil {
-		logger.Error().Err(stopErr).Str("container_id", endpoint.ContainerID).Msg("failed to stop container")
+		logger.Error().
+			Err(stopErr).
+			Str("container_id", endpoint.ContainerID).
+			Msg("failed to stop container")
 		return stopErr
 	}
 

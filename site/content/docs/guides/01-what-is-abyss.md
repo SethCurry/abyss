@@ -16,64 +16,43 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
-## Story Time
+## Set your agent free
 
-Have you ever had your agent do the wrong thing?  It edited the wrong file, or logged in to the wrong
-server, or just thought today's date is 6 months ago and proceeded to wreak havoc, small or large.
+Your agent shouldn't need a babysitter. But the moment you start approving its every command, you
+become one. Abyss gives your agent the freedom to experiment — and fail — safely, so you can stay
+focused on the work that actually needs you.
 
-I decided I needed to approve my agent's commands.
+## Run agents without the risk
 
-And that sucks.
+Abyss is an _Agent Runtime Environment_: a dedicated, isolated space where your agent can think,
+build, and break things without touching your machine. It's like Docker for your workflow — except
+instead of wrapping an application, it wraps your agent.
 
-My agent used to be independent; I could plan out the next task while it was working on the current one.
-Now I can't think, because every second the LLM spends thinking results in 5 tool calls that I have to approve.
-Once again, I was the slowest part of my own devlopment loop.
+The idea is simple. Run your agent in a Docker container, hand it the resources it needs, and walk
+away. All the configuration fits in a single YAML file that's shorter than your standup update.
 
-I couldn't help but think this would be much cleaner if I could give the agent its own "rage room"
-of sorts, where I don't have to watch because I don't care if it trashes its own environment.
+## What makes it great
 
-## Enter the Abyss
+- **Real isolation.** Your agent works in a container, not on your host. Edits and commands stay
+  where they belong.
+- **Zero friction.** Abyss proxies your ACP connection over websocket, so neither your editor nor
+  your agent even notice the isolation is there.
+- **Seamless file access.** Bind-mount folders so your agent edits the exact files you see in your
+  editor — or copy files in fresh, so your local copy stays untouched.
+- **Ready-to-run environments.** Execute startup scripts to install tools, pull dependencies, and
+  clone repos before your agent even starts.
+- **Automatic cleanup.** Containers stop and remove themselves when you disconnect.
 
-Abyss is an _Agent Runtime Environment_, a term I coined to describe a
-system for executing agents in an isolated and controlled environment.
-It's similar to Docker's or Podman's container runtime (which we do use for
-isolation), but for running an agent rather than an arbitrary application.
+Your agent gets a safe playground. You get your focus back.
 
-The short version is that Abyss is a tool that makes it easy to run your agent in  Docker
-container while still giving it the resources it needs, all in a YAML file shorter than
-your standup update.
+## The road ahead
 
-## What does it do?
+The best part? We're just getting started. Here's a taste of what's coming:
 
-Abyss handles creating and managing Docker containers running your agents, alongside proxying your ACP connection
-over websocket.  The upshot is that your agent can run in an isolated container (or one day even on another computer)
-while neither your editor nor agent are aware.
+- Run agent containers on another machine — via Kubernetes or SSH tunneling
+- Inject RAG the way Docker handles volumes, letting you compose agents from reusable sources
+- ACP middleware inspired by reverse proxies: central logging, prompt/response filtering, and
+  smart routing to different agents
 
-Abyss also intercepts native parts of ACP that would
-touch the host machine's filesystem or execute commands
-on the host machine
- and runs them inside the container (you can disable this if you want).
-
-Abyss can also:
-
-- Stop and remove Docker containers when you disconnect from ACP
-- Add bind-mounts to your agent container, so your agent can edit the same files you see in your editor
-- Copy files from your PC into the container at runtime, so the agent gets a fresh copy of the files but the agent can't modify the version on your PC
-- Execute startup scripts before the agent starts to install tools, dependencies, clone git repos, or whatever else.
-
-### What will it do one day?
-
-The current feature set is nice and useful, but Abyss wouldn't be a real project without scope creep.
-This is a laundry list of features I would like to add.  Follow the [blogs](/blog/) if you want updates!
-
-- Allow the agent container to run on another computer, e.g. via Kubernetes or SSH tunneling
-- Support for injecting RAG in a manner similar to what Docker or k8s do for volumes
-  - This could allow for rapid agent development by siloing RAG into "volumes" and building an agent by combining several RAG sources
-- ACP middleware features akin to what Nginx does for reverse proxies
-  - Log requests centrally
-  - Implement a "firewall" of sorts that can filter inbound prompts or outbound responses
-  - Dynamically route requests to different agents based on code, a classifier, etc.
-
-This is not a promise these things will happen, they're just where I currently see room for improvements.
-They might get built, they might get delayed in favor of something else, or I may decide they're not a good idea
-or out of scope.
+Follow the [blogs](/blog/) for updates as these features land. Abyss isn't just a safer way to run
+agents today — it's the foundation for how they'll run tomorrow.

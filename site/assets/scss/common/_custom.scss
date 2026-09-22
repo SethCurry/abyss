@@ -57,3 +57,51 @@
 div.homepage-example span.line {
   line-height: 0.7em;
 }
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  height: 100%;
+  padding: 2rem 1.5rem;
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 1rem;
+  box-shadow: var(--sl-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: var(--sl-shadow-md);
+  border-color: color-mix(in srgb, var(--sl-color-gray-4), var(--sl-color-gray-5) 40%);
+}
+
+.feature-card img {
+  width: 100%;
+  max-width: 12rem;
+  height: auto;
+  border-radius: 0.75rem;
+  box-shadow: var(--sl-shadow-sm);
+}
+
+.feature-card h2,
+.feature-card p {
+  margin-bottom: 0;
+}
+
+.text-box {
+  margin: 0 auto 2rem;
+  max-width: 56rem;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--sl-color-gray-6), transparent 40%);
+  border: 1px solid color-mix(in srgb, var(--sl-color-gray-5), transparent 30%);
+  border-radius: 0.875rem;
+  box-shadow: var(--sl-shadow-sm);
+}
+
+.text-box p:last-child {
+  margin-bottom: 0;
+}
