@@ -13,6 +13,9 @@ import (
 // HostProxy is the entrypoint for the ACP client like Zed.
 // It stores the Websocket-proxied connection to the real agent as
 // well as the real connection to the ACP client.
+//
+// Its function is distinct from ProxiedACPAgent by implementing
+// abyss-specific features like ensuring working directories exist.
 type HostProxy struct {
 	logger zerolog.Logger
 
