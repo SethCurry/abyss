@@ -45,6 +45,7 @@ func NewHostProxy(underlying *ProxiedACPAgent, router *wsrouter.ACPRouter, logge
 	}
 }
 
+// UserMessage sends a user message to the proxied agent's session.
 func (w *HostProxy) UserMessage(ctx context.Context, sessionID string, message string) error {
 	return w.conn.SessionUpdate(ctx, acp.SessionNotification{
 		SessionId: acp.SessionId(sessionID),
@@ -291,6 +292,7 @@ func (w *HostProxy) SetAgentConnection(conn *acp.AgentSideConnection) {
 	w.router.SetClient(conn)
 }
 
+// Initialize handles the ACP initialize request by delegating to the underlying handler.
 func (w *HostProxy) Initialize(ctx context.Context, params acp.InitializeRequest) (acp.InitializeResponse, error) {
 	w.logger.Debug().
 		Str("method", "Initialize").
@@ -298,6 +300,8 @@ func (w *HostProxy) Initialize(ctx context.Context, params acp.InitializeRequest
 	return w.underlying.Initialize(ctx, params)
 }
 
+// NewSession handles the ACP new session request, ensuring the working directory exists
+// before delegating to the underlying handler.
 func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest) (acp.NewSessionResponse, error) {
 	if _, err := os.Stat(params.Cwd); err != nil {
 		err = os.MkdirAll(params.Cwd, 0755)
@@ -325,6 +329,7 @@ func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest
 	return newSession, nil
 }
 
+// Authenticate authenticates a session against the underlying ACP host.
 func (w *HostProxy) Authenticate(
 	ctx context.Context, params acp.AuthenticateRequest,
 ) (acp.AuthenticateResponse, error) {

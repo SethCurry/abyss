@@ -1,7 +1,10 @@
+// Package types defines validation error types used across the abyss project.
 package types
 
 import "fmt"
 
+// NewValidationError constructs a ValidationError describing the given field
+// and reason for the failure on the provided value.
 func NewValidationError(from any, field string, reason string) *ValidationError {
 	return &ValidationError{
 		Type:   fmt.Sprintf("%T", from),

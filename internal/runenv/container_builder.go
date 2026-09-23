@@ -87,6 +87,7 @@ func WithLabel(label, value string) ContainerPreBuildStep {
 	}
 }
 
+// WithExposeContainerPort exposes the given port on the built container.
 func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		asPort, ok := network.PortFrom(uint16(containerPort), network.TCP)
@@ -121,7 +122,7 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 
 		config.Endpoint = &ContainerEndpoint{
 			ContainerID: "",
-			IP:          "127.0.0.1",
+			IP:          loopbackIP,
 			Port:        hostPort.Num(),
 		}
 
@@ -129,7 +130,8 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 	}
 }
 
-// WithHostBind returns a pre-build step that binds a host path into the container.
+// WithHostBind returns a pre-build step that binds a host path into the
+// container.
 func WithHostBind(from string, to string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		cleanedFrom, err := cleanPath(from)
@@ -149,7 +151,8 @@ func WithHostBind(from string, to string) ContainerPreBuildStep {
 	}
 }
 
-// NewContainerBuilder creates a builder, applying any pre-build steps to the config.
+// NewContainerBuilder creates a builder, applying any pre-build steps to
+// the config.
 func NewContainerBuilder(
 	configPath string, config *ContainerConfig, steps ...ContainerPreBuildStep,
 ) (*ContainerBuilder, error) {
@@ -176,7 +179,7 @@ func NewContainerBuilder(
 	return &ContainerBuilder{ConfigPath: configPath, config: config}, nil
 }
 
-// ContainerBuilder accumulates build steps and starts a container from its config.
+// ContainerBuilder accumulates build steps and starts a container.
 type ContainerBuilder struct {
 	ConfigPath string
 	config     *ContainerConfig
@@ -244,7 +247,7 @@ func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Conta
 // container or things like that.
 type ContainerPreBuildStep func(*ContainerConfig) error
 
-// ContainerBuildStep is a step that runs after the Docker container has been started.
+// ContainerBuildStep runs after the Docker container has been started.
 // They have access to the container's filesystem, shell, etc, but can't change
 // the container's configuration like networking.
 type ContainerBuildStep func(context.Context, *Container) error
@@ -322,12 +325,13 @@ func setupScriptContent(s agentconfig.SetupScriptsConfig) ([]byte, error) {
 	}
 }
 
-// WithCopyFiles returns a build step that copies each file declared in the
-// agent config into the container. Files with Type "inline" use Source as the
-// file contents; files with Type "path" read the contents from the host path in
-// Source. Each file is written to its Target path inside the container, creating
-// parent directories as needed. When a "path" entry points to a directory, the
-// directory is copied recursively into the container at Target.
+// WithCopyFiles returns a build step that copies each file declared in
+// the agent config into the container. Files with Type "inline" use Source
+// as the file contents; files with Type "path" read the contents from the
+// host path in Source. Each file is written to its Target path inside the
+// container, creating parent directories as needed. When a "path" entry
+// points to a directory, the directory is copied recursively into the
+// container at Target.
 func WithCopyFiles(files []agentconfig.FileCopyConfig) ContainerBuildStep {
 	return func(ctx context.Context, container *Container) error {
 		for _, f := range files {

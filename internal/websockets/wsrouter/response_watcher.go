@@ -6,28 +6,29 @@ import (
 	"github.com/SethCurry/abyss/pkg/protobyss"
 )
 
+// NewResponseWatcher creates a new ResponseWatcher with an empty handler map.
 func NewResponseWatcher() *ResponseWatcher {
 	return &ResponseWatcher{
 		handlers: make(map[string]*Promise[*protobyss.ACPContainer]),
 	}
 }
 
-// ResponseWatcher is responsible for managing the lifetime of RPC-via-websocket requests.
-// protobyss.Container messages that have a non-empty ResponseFor field will get routed
-// here so that the response can be fed to the Promise.
+// ResponseWatcher manages the lifetime of RPC-via-websocket requests.
+// protobyss.Container messages with a non-empty ResponseFor field are routed
+// here so the response can be fed to the Promise.
 type ResponseWatcher struct {
 	handlers map[string]*Promise[*protobyss.ACPContainer]
 	mut      sync.Mutex
 }
 
-// Handle dispatches the message to the Promise that is waiting for it.  This is a no-op
-// if the ResponseFor field doesn't match with a waiting Promise.
+// Handle dispatches the message to the Promise that is waiting for it.
+// This is a no-op if the ResponseFor field doesn't match a waiting Promise.
 func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
-	if handler, ok := r.handlers[msg.ResponseFor]; ok {
+	if handler, ok := r.handlers[msg.GetResponseFor()]; ok {
 		handler.Resolve(msg)
-		delete(r.handlers, msg.ResponseFor)
+		delete(r.handlers, msg.GetResponseFor())
 	}
 }
 
@@ -43,19 +44,20 @@ func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.ACPCont
 	return prom
 }
 
-// Promise is a very basic re-implementation of NodeJS promises powered by a single-use channel.
-// It just avoids repeating the rigamarole of "wait for value, close channel, move on".
+// Promise is a basic re-implementation of NodeJS promises backed by a
+// single-use channel.  It avoids repeating the rigamarole of "wait for value,
+// close channel, move on".
 type Promise[T any] struct {
 	resolveChan chan T
 }
 
-// Resolves the promise with the provided value.
+// Resolve resolves the promise with the provided value.
 func (p *Promise[T]) Resolve(value T) {
 	p.resolveChan <- value
 	close(p.resolveChan)
 }
 
-// Blocks until the promise is resolved with a value.
+// Wait blocks until the promise is resolved with a value.
 func (p *Promise[T]) Wait() T {
 	return <-p.resolveChan
 }

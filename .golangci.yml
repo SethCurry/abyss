@@ -2,7 +2,17 @@ version: "2"
 linters:
     default: standard
     enable:
+        - goconst
         - lll
+        - gocritic
+        - godoclint
+        - prealloc
+        - protogetter
+        - reassign
+        - testifylint
+    settings:
+        godoclint:
+          default: all
 
 issues:
     # Apply the fixes detected by the linters and formatters (if it's supported by the linter).

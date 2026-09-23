@@ -49,7 +49,7 @@ type terminal struct {
 	signal   *string
 }
 
-// cappedBuffer is an io.Writer that retains at most limit bytes of the most
+// cappedBuffer is an [io.Writer] that retains at most limit bytes of the most
 // recent output, dropping older data from the beginning. A limit of 0 means
 // unlimited. Truncation is performed on UTF-8 character boundaries so the
 // retained bytes always decode to a valid string.

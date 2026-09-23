@@ -1,3 +1,4 @@
+// Package wsacp implements WebSocket proxies for the Agent Client Protocol (ACP).
 package wsacp
 
 import (
@@ -9,6 +10,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// ContainerProxy forwards ACP requests received over a websocket to the
+// agent, dispatching terminal and filesystem operations to in-process tools
+// when available.
 type ContainerProxy struct {
 	logger        zerolog.Logger
 	underlying    *ProxiedACPClient
@@ -20,6 +24,7 @@ type ContainerProxy struct {
 
 var _ acp.Client = (*ContainerProxy)(nil)
 
+// NewContainerProxy constructs a ContainerProxy from its dependencies.
 func NewContainerProxy(
 	underlying *ProxiedACPClient,
 	router *wsrouter.ACPRouter,
@@ -42,6 +47,7 @@ func (e *ContainerProxy) SetClientConnection(conn *acp.ClientSideConnection) {
 	e.router.SetAgent(conn)
 }
 
+// RequestPermission forwards permission requests to the underlying client.
 func (e *ContainerProxy) RequestPermission(
 	ctx context.Context, params acp.RequestPermissionRequest,
 ) (acp.RequestPermissionResponse, error) {
@@ -51,6 +57,7 @@ func (e *ContainerProxy) RequestPermission(
 	return e.underlying.RequestPermission(ctx, params)
 }
 
+// SessionUpdate forwards session update notifications to the underlying client.
 func (e *ContainerProxy) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
 	e.logger.Debug().
 		Str("method", "SessionUpdate").
@@ -58,6 +65,8 @@ func (e *ContainerProxy) SessionUpdate(ctx context.Context, params acp.SessionNo
 	return e.underlying.SessionUpdate(ctx, params)
 }
 
+// WriteTextFile writes a text file via the in-process file tools when
+// available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) WriteTextFile(
 	ctx context.Context,
 	params acp.WriteTextFileRequest,
@@ -77,6 +86,8 @@ func (e *ContainerProxy) WriteTextFile(
 	return e.underlying.WriteTextFile(ctx, params)
 }
 
+// ReadTextFile reads a text file via the in-process file tools when
+// available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) ReadTextFile(
 	ctx context.Context, params acp.ReadTextFileRequest,
 ) (acp.ReadTextFileResponse, error) {
@@ -95,6 +106,8 @@ func (e *ContainerProxy) ReadTextFile(
 	return e.underlying.ReadTextFile(ctx, params)
 }
 
+// CreateTerminal creates a terminal via the in-process terminal tools when
+// available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) CreateTerminal(
 	ctx context.Context, params acp.CreateTerminalRequest,
 ) (acp.CreateTerminalResponse, error) {
@@ -113,6 +126,8 @@ func (e *ContainerProxy) CreateTerminal(
 	return e.underlying.CreateTerminal(ctx, params)
 }
 
+// TerminalOutput fetches terminal output via the in-process terminal tools
+// when available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) TerminalOutput(
 	ctx context.Context, params acp.TerminalOutputRequest,
 ) (acp.TerminalOutputResponse, error) {
@@ -131,6 +146,8 @@ func (e *ContainerProxy) TerminalOutput(
 	return e.underlying.TerminalOutput(ctx, params)
 }
 
+// ReleaseTerminal releases a terminal via the in-process terminal tools when
+// available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) ReleaseTerminal(
 	ctx context.Context, params acp.ReleaseTerminalRequest,
 ) (acp.ReleaseTerminalResponse, error) {
@@ -149,6 +166,8 @@ func (e *ContainerProxy) ReleaseTerminal(
 	return e.underlying.ReleaseTerminal(ctx, params)
 }
 
+// WaitForTerminalExit waits for terminal exit via the in-process terminal
+// tools when available, falling back to the underlying client otherwise.
 func (e *ContainerProxy) WaitForTerminalExit(
 	ctx context.Context, params acp.WaitForTerminalExitRequest,
 ) (acp.WaitForTerminalExitResponse, error) {

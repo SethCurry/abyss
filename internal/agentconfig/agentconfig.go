@@ -1,3 +1,5 @@
+// Package agentconfig contains the configuration for abyss agents, including
+// loading and validating it from YAML files.
 package agentconfig
 
 import (

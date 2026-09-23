@@ -33,6 +33,8 @@ func getLogDir() (string, error) {
 	return logDir, nil
 }
 
+// CreateLogger returns a zerolog.Logger writing to a log file and stderr,
+// along with a cleanup function to close the underlying log file.
 func CreateLogger(level zerolog.Level) (zerolog.Logger, func()) {
 	logFile, err := OpenLogFile()
 	if err != nil {
@@ -54,7 +56,7 @@ func CreateLogger(level zerolog.Level) (zerolog.Logger, func()) {
 }
 
 // CleanLogDir removes old log entries to keep the directory clean.
-// keepEntries specifies the number of entries to keep, with 0 meaning all entries.
+// keepEntries specifies the number of entries to keep; 0 means all entries.
 func CleanLogDir(keepEntries int) error {
 	logDir, err := getLogDir()
 	if err != nil {
@@ -89,6 +91,7 @@ func CleanLogDir(keepEntries int) error {
 	return nil
 }
 
+// OpenLogFile opens the log file for writing.
 func OpenLogFile() (io.WriteCloser, error) {
 	logDir, err := getLogDir()
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package runenv manages the Docker env where agent runs execute.
 package runenv
 
 import (
@@ -22,6 +23,10 @@ import (
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/timber"
 )
+
+// loopbackIP is the address used to reach containers when the Docker
+// daemon is local (unix socket or named pipe).
+const loopbackIP = "127.0.0.1"
 
 // ContainerEndpoint describes how the host can reach a started container.
 type ContainerEndpoint struct {
@@ -69,8 +74,7 @@ func (d *DockerClient) Close() error {
 	return nil
 }
 
-// AbyssContainers runs a Docker container list, filtering the results to only containers
-// that have a value set for the `abyss` label.
+// AbyssContainers lists containers that have the `abyss` label set.
 func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary, error) {
 	resp, err := d.Client.ContainerList(ctx, client.ContainerListOptions{
 		Filters: client.Filters{
@@ -87,12 +91,14 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 	return resp.Items, nil
 }
 
-// GetContainer returns a *Container.  It does not validate that the provided container containerID
-// actually exists.
+// GetContainer returns a *Container. It does not validate that the provided
+// containerID actually exists.
 func (d *DockerClient) GetContainer(containerID string) *Container {
 	return NewContainer(d, containerID)
 }
 
+// StartContainer creates and starts a Docker container with the provided
+// configuration, labels, name, and port mappings.
 func (d *DockerClient) StartContainer(
 	ctx context.Context,
 	config *container.Config,
@@ -109,7 +115,7 @@ func (d *DockerClient) StartContainer(
 		Uint16("host_port", hostPort).
 		Msg("starting container")
 
-	//if err := d.pullImage(ctx, imageRef); err != nil {
+	// if err := d.pullImage(ctx, imageRef); err != nil {
 	//	return ContainerEndpoint{}, err
 	//}
 
@@ -192,12 +198,12 @@ func writeContentTar(w io.Writer, content []byte, name string, mode os.FileMode)
 	return nil
 }
 
-// buildTar writes a tar archive of src to w. Entries are named relative to src
-// and prefixed with the basename of src, so the basename of src becomes the
-// top-level entry in the archive (e.g. /tmp/foo/sub/a.txt becomes "foo/sub/a.txt").
-// This preserves the nested directory structure when the archive is extracted
-// into a destination directory via the Docker archive API, matching the
-// semantics of `docker cp`.
+// buildTar writes a tar archive of src to w. Entries are named relative to
+// src and prefixed with the basename of src, so the basename of src becomes
+// the top-level entry in the archive (e.g. /tmp/foo/sub/a.txt becomes
+// "foo/sub/a.txt"). This preserves the nested directory structure when the
+// archive is extracted into a destination directory via the Docker archive
+// API, matching the semantics of `docker cp`.
 func buildTar(w io.Writer, src string, info os.FileInfo) error {
 	tw := tar.NewWriter(w)
 
@@ -247,10 +253,10 @@ func buildTar(w io.Writer, src string, info os.FileInfo) error {
 	return closeErr()
 }
 
-// writeTarEntry writes a single entry to tw for the host path src, using name as
-// the entry's name inside the archive. Directories write only a header;
-// symlinks write a header with the link target; regular files copy their
-// contents.
+// writeTarEntry writes a single entry to tw for the host path src, using
+// name as the entry's name inside the archive. Directories write only a
+// header; symlinks write a header with the link target; regular files copy
+// their contents.
 func writeTarEntry(tw *tar.Writer, src, name string, fi os.FileInfo) error {
 	hdr, err := tar.FileInfoHeader(fi, "")
 	if err != nil {
@@ -301,7 +307,7 @@ func (d *DockerClient) hostIP() string {
 			Err(err).
 			Str("daemon_host", d.Client.DaemonHost()).
 			Msg("failed to parse docker daemon host, defaulting to loopback")
-		return "127.0.0.1"
+		return loopbackIP
 	}
 
 	switch u.Scheme {
@@ -311,7 +317,7 @@ func (d *DockerClient) hostIP() string {
 		}
 	}
 
-	return "127.0.0.1"
+	return loopbackIP
 }
 
 // PullImage pulls imageRef according to policy using the Docker API client.

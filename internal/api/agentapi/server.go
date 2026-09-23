@@ -161,8 +161,8 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 		for _, msg := range newMsgs {
 			acpConn.Handle(wsrouter.ProtoMessage{
-				TypeID:  int(msg.TypeId),
-				Content: msg.Content,
+				TypeID:  int(msg.GetTypeId()),
+				Content: msg.GetContent(),
 			})
 		}
 	})

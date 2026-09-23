@@ -20,6 +20,16 @@ params:
 This project uses [task](https://taskfile.dev/) as its task runner.
 You can find a list of the tasks [here](https://github.com/SethCurry/abyss/blob/main/Taskfile.yaml).
 
+Some of the more notable commands:
+
+| Command | Description |
+|---------|-------------|
+| `task site` | Starts the dev version of the site (http://localhost:1313 by default) |
+| `task build-docker` | Builds the Docker images |
+| `task build` | Basically runs `task binary:build` and `task build-docker` |
+| `task binary:lint` | Lints the Go code with [golangci-lint](https://golangci-lint.run/) |
+| `task binary:build` | Builds the Go binary |
+
 ## The Site
 
 You can run the dev version of the site by installing Task above and running

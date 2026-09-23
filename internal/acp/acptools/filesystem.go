@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// NewFilesystemTools returns a FilesystemTools instance that executes
+// filesystem operations locally.
 func NewFilesystemTools(logger zerolog.Logger) *FilesystemTools {
 	return &FilesystemTools{
 		logger: logger,

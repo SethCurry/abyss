@@ -25,6 +25,8 @@ func newID() (string, error) {
 	return gotUUID.String(), nil
 }
 
+// NewACPConn creates an ACPConn that demuxes incoming proto messages from conn
+// into handler.
 func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPConn {
 	return &ACPConn{
 		logger:    log.Logger.With().Str("from", "ACPConn").Logger(),
@@ -33,12 +35,15 @@ func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPCo
 	}
 }
 
+// ACPConn demuxes incoming proto messages into a handler and sends outgoing
+// proto messages over an IProtoRouter.
 type ACPConn struct {
 	logger    zerolog.Logger
 	protoConn IProtoRouter
 	handler   func(*protobyss.ACPContainer)
 }
 
+// Handle unmarshals an incoming proto message and dispatches it to the handler.
 func (c *ACPConn) Handle(msg ProtoMessage) {
 	protoMsg := &protobyss.ACPContainer{}
 	err := proto.Unmarshal(msg.Content, protoMsg)
@@ -50,6 +55,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 	c.handler(protoMsg)
 }
 
+// Send marshals and writes an outgoing proto message over the connection.
 func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	data, err := proto.Marshal(msg)
 	if err != nil {
@@ -66,6 +72,8 @@ func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	return nil
 }
 
+// MessageType describes a registered ACP message, pairing its numeric ID with the
+// concrete payload type and the handler that processes it.
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
@@ -73,6 +81,7 @@ type MessageType struct {
 	IsRPC   bool
 }
 
+// NewACPRouter creates a new ACPRouter with a logger and response watcher.
 func NewACPRouter() *ACPRouter {
 	return &ACPRouter{
 		logger:          log.Logger.With().Str("from", "ACPRouter").Logger(),
@@ -87,6 +96,7 @@ type Agent interface {
 	acp.AgentExperimental
 }
 
+// ACPRouter is a router for the ACP websockets protocol.
 type ACPRouter struct {
 	messageTypes    []MessageType
 	conn            *ACPConn
@@ -179,12 +189,12 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 }
 
 func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
-	if msg.ResponseFor != "" {
+	if msg.GetResponseFor() != "" {
 		r.responseWatcher.Handle(r, msg)
 		return
 	}
 
-	switch abyss.MessageTypeID(msg.TypeId) {
+	switch abyss.MessageTypeID(msg.GetTypeId()) {
 	// Client capability requests (agent -> client).
 	case abyss.RequestPermissionRequestType:
 		if r.client == nil {
@@ -408,36 +418,36 @@ func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 		handleRequest(r, msg, r.agent.UnstableForkSession)
 
 	default:
-		r.logger.Warn().Int32("type_id", msg.TypeId).Msg("unhandled message type")
+		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Msg("unhandled message type")
 	}
 }
 
 func handleRequest[T, R any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) (R, error)) {
 	var params T
-	if err := json.Unmarshal(msg.Content, &params); err != nil {
-		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
+	if err := json.Unmarshal(msg.GetContent(), &params); err != nil {
+		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to unmarshal message")
 		return
 	}
 
 	resp, err := fn(context.Background(), params)
 	if err != nil {
-		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to handle request")
+		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to handle request")
 		return
 	}
 
-	if err := r.Respond(msg.MessageId, resp); err != nil {
+	if err := r.Respond(msg.GetMessageId(), resp); err != nil {
 		r.logger.Warn().Err(err).Msg("failed to send response")
 	}
 }
 
 func handleNotification[T any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) error) {
 	var params T
-	if err := json.Unmarshal(msg.Content, &params); err != nil {
-		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to unmarshal message")
+	if err := json.Unmarshal(msg.GetContent(), &params); err != nil {
+		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to unmarshal message")
 		return
 	}
 
 	if err := fn(context.Background(), params); err != nil {
-		r.logger.Warn().Int32("type_id", msg.TypeId).Err(err).Msg("failed to handle notification")
+		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to handle notification")
 	}
 }

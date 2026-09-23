@@ -1,3 +1,5 @@
+// Package erres provides utilities for wrapping and
+// formatting human-readable errors.
 package erres
 
 import "strings"

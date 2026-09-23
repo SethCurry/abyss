@@ -11,8 +11,11 @@ import (
 // solely so UnmarshalYAML can validate the type field.
 type SetupScriptType string
 
+// The valid setup script types.
 const (
-	SetupScriptTypeFile   SetupScriptType = "file"
+	// SetupScriptTypeFile loads the script from a file path.
+	SetupScriptTypeFile SetupScriptType = "file"
+	// SetupScriptTypeInline treats the source as inline script content.
 	SetupScriptTypeInline SetupScriptType = "inline"
 )
 
@@ -35,6 +38,7 @@ func (t *SetupScriptType) UnmarshalYAML(value *yaml.Node) error {
 	}
 }
 
+// SetupScriptsConfig represents a setup script defined in agent configuration.
 type SetupScriptsConfig struct {
 	// Type is either "inline" or "file"
 	Type SetupScriptType `yaml:"type"`

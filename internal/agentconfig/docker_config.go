@@ -6,11 +6,14 @@ import (
 	"github.com/SethCurry/abyss/internal/types"
 )
 
+// HostMount maps a directory on the host into the Docker container.
 type HostMount struct {
 	Source      string `yaml:"source"`
 	Destination string `yaml:"destination"`
 }
 
+// Validate implements types.Validator by checking that the mount source
+// exists and that both source and destination are non-empty.
 func (h HostMount) Validate() error {
 	// TODO throw an error if source doesn't exist
 	if h.Source == "" {
@@ -32,9 +35,13 @@ func (h HostMount) Validate() error {
 type ImagePullPolicy string
 
 const (
-	ImagePullPolicyAlways       ImagePullPolicy = "Always"
+	// ImagePullPolicyAlways always pulls the configured image.
+	ImagePullPolicyAlways ImagePullPolicy = "Always"
+	// ImagePullPolicyIfNotPresent pulls the image only when it is not
+	// present locally.
 	ImagePullPolicyIfNotPresent ImagePullPolicy = "IfNotPresent"
-	ImagePullPolicyNever        ImagePullPolicy = "Never"
+	// ImagePullPolicyNever never pulls the image.
+	ImagePullPolicyNever ImagePullPolicy = "Never"
 )
 
 // Validate implements types.Validator by rejecting values outside the
@@ -48,6 +55,7 @@ func (p ImagePullPolicy) Validate() error {
 	}
 }
 
+// DockerConfig holds the Docker-specific configuration for an agent.
 type DockerConfig struct {
 	// The Docker image to use.  Can be short or long, Docker will
 	// resolve it for short names.

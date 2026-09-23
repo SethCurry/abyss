@@ -1,3 +1,4 @@
+// Package wsrouter routes websocket protocol messages to handlers.
 package wsrouter
 
 import (
@@ -28,14 +29,14 @@ func NewProtoRouter() *ProtoRouter {
 
 var _ IProtoRouter = &ProtoRouter{}
 
-// ProtoMessage encapsulates all of the information from a protobuf message transmitted
-// via websocket.
+// ProtoMessage encapsulates the information from a protobuf message
+// transmitted via websocket.
 type ProtoMessage struct {
 	TypeID  int
 	Content []byte
 }
 
-// ProtoRouter maps protobuf schema numbers to handles by their schema number.
+// ProtoRouter maps protobuf schema numbers to handlers by schema number.
 // It's semantically similar to HTTP routing by path.
 type ProtoRouter struct {
 	conn          *websocket.Conn
@@ -45,7 +46,7 @@ type ProtoRouter struct {
 	writeMut      sync.Mutex
 }
 
-// Serve runs a loop that reads messages and synchronously dispatches them to handlers.
+// Serve reads messages and synchronously dispatches them to handlers.
 // It is goroutine-safe, so run this in a goroutine if you want async.
 func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 	s.conn = ws
@@ -73,14 +74,15 @@ func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 	}
 }
 
-// Handle configures the provided function to handle protobuf schemas with the given number.
-// It does not check if there is an existing handler.  Existing handlers are overwritten.
+// Handle configures a function to handle protobuf schemas with the given
+// number. It does not check if there is an existing handler; existing
+// handlers are overwritten.
 func (s *ProtoRouter) Handle(mt int, handler func(ProtoMessage)) {
 	s.handlers[mt] = handler
 }
 
-// WriteMessage writes a message to the websocket.  This method is protected by a mutex,
-// and is thread-safe.
+// WriteMessage writes a message to the websocket. This method is
+// protected by a mutex and is thread-safe.
 func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 	s.writeMut.Lock()
 	defer s.writeMut.Unlock()
@@ -95,6 +97,7 @@ func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 	return s.conn.WriteMessage(mt, data)
 }
 
+// WriteHandler registers a write handler for the given message type.
 func (s *ProtoRouter) WriteHandler(mt int, handler func(ProtoMessage)) {
 	s.writeHandlers[mt] = handler
 }

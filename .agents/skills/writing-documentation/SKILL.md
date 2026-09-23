@@ -1,5 +1,5 @@
 ---
-name: writing_documentation
+name: writing-documentation
 description: This skill contains instructions on how to update abyss' documentation, the writing style to use, and how to build and interact with the hugo site.
 ---
 

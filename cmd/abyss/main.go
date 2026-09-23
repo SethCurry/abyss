@@ -1,3 +1,4 @@
+// Package main is the entry point for the abyss binary.
 package main
 
 import (
@@ -64,7 +65,9 @@ func main() {
 			}
 			log.Logger = globalLogger.Level(level)
 
-			_ = timber.CleanLogDir(10)
+			if err := timber.CleanLogDir(10); err != nil {
+				log.Logger.Warn().Err(err).Msg("failed to clean log directory")
+			}
 
 			log.Logger.Info().Str("version", constants.Version).Msg("starting abyss")
 			return ctx, nil

@@ -1,3 +1,4 @@
+// Package pacific provides a minimal HTTP API server built on chi.
 package pacific
 
 import (
@@ -30,10 +31,12 @@ func getFromContext[T any](ctx context.Context, key contextKey, defaultValue T) 
 	return defaultValue
 }
 
+// Logger returns the request-scoped logger from ctx, or the default logger.
 func Logger(ctx context.Context) zerolog.Logger {
 	return getFromContext(ctx, keyLogger, log.Logger)
 }
 
+// LoggerMiddleware attaches a request-scoped logger to the request context.
 func LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestLogger := log.With().Str("url", r.URL.Path).Logger()
@@ -42,6 +45,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// NewServer creates a server that derives per-request context via creator.
 func NewServer[T any](contextCreator func(w http.ResponseWriter, r *http.Request) T) *Server[T] {
 	router := chi.NewRouter()
 	return &Server[T]{
@@ -50,11 +54,13 @@ func NewServer[T any](contextCreator func(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// Server is an HTTP server that builds a request-scoped context per request.
 type Server[T any] struct {
 	router     *chi.Mux
 	getContext func(http.ResponseWriter, *http.Request) T
 }
 
+// AddRoute registers a handler for the given method and pattern.
 func (s *Server[T]) AddRoute(method string, pattern string, handler func(T)) {
 	s.router.MethodFunc(method, pattern, func(w http.ResponseWriter, r *http.Request) {
 		madeCtx := s.getContext(w, r)
@@ -62,6 +68,7 @@ func (s *Server[T]) AddRoute(method string, pattern string, handler func(T)) {
 	})
 }
 
+// Serve listens on listenAddr and serves HTTP requests.
 func (s *Server[T]) Serve(listenAddr string) error {
 	return http.ListenAndServe(listenAddr, s.router)
 }

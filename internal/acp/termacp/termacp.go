@@ -19,8 +19,8 @@ import (
 var _ acp.Client = (*TermACPClient)(nil)
 
 // NewTermACPClient creates a terminal-backed ACP client. Session updates and
-// permission prompts are rendered to os.Stdout, and permission selections are
-// read from os.Stdin. File and terminal operations are backed by the built-in
+// permission prompts are rendered to [os.Stdout], and permission selections are
+// read from [os.Stdin]. File and terminal operations are backed by the built-in
 // acptools implementations.
 func NewTermACPClient() *TermACPClient {
 	logger := zerolog.New(io.Discard)
