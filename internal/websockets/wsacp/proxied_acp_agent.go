@@ -27,12 +27,16 @@ func proxyRoundTrip[T, P any](router *wsrouter.ACPRouter, params T) (P, error) {
 	return ret, nil
 }
 
+// NewProxiedACPAgent returns an agent proxy that forwards ACP requests
+// over the given router.
 func NewProxiedACPAgent(router *wsrouter.ACPRouter) *ProxiedACPAgent {
 	return &ProxiedACPAgent{
 		router: router,
 	}
 }
 
+// ProxiedACPAgent is an acp.Agent implementation that forwards requests
+// over a websocket router.
 type ProxiedACPAgent struct {
 	router *wsrouter.ACPRouter
 }
@@ -186,34 +190,40 @@ func (w *ProxiedACPAgent) CloseSession(
 	return proxyRoundTrip[acp.CloseSessionRequest, acp.CloseSessionResponse](w.router, params)
 }
 
+// Initialize implements acp.Agent.
 func (w *ProxiedACPAgent) Initialize(
 	ctx context.Context, params acp.InitializeRequest,
 ) (acp.InitializeResponse, error) {
 	return proxyRoundTrip[acp.InitializeRequest, acp.InitializeResponse](w.router, params)
 }
 
+// NewSession implements acp.Agent.
 func (w *ProxiedACPAgent) NewSession(
 	ctx context.Context, params acp.NewSessionRequest,
 ) (acp.NewSessionResponse, error) {
 	return proxyRoundTrip[acp.NewSessionRequest, acp.NewSessionResponse](w.router, params)
 }
 
+// Authenticate implements acp.Agent.
 func (w *ProxiedACPAgent) Authenticate(
 	ctx context.Context, params acp.AuthenticateRequest,
 ) (acp.AuthenticateResponse, error) {
 	return proxyRoundTrip[acp.AuthenticateRequest, acp.AuthenticateResponse](w.router, params)
 }
 
+// LoadSession implements acp.Agent.
 func (w *ProxiedACPAgent) LoadSession(
 	ctx context.Context, params acp.LoadSessionRequest,
 ) (acp.LoadSessionResponse, error) {
 	return proxyRoundTrip[acp.LoadSessionRequest, acp.LoadSessionResponse](w.router, params)
 }
 
+// Cancel implements acp.Agent.
 func (w *ProxiedACPAgent) Cancel(ctx context.Context, params acp.CancelNotification) error {
 	return w.router.Send(params)
 }
 
+// Prompt implements acp.Agent.
 func (w *ProxiedACPAgent) Prompt(ctx context.Context, params acp.PromptRequest) (acp.PromptResponse, error) {
 	return proxyRoundTrip[acp.PromptRequest, acp.PromptResponse](w.router, params)
 }

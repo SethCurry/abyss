@@ -72,8 +72,8 @@ func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	return nil
 }
 
-// MessageType describes a registered ACP message, pairing its numeric ID with the
-// concrete payload type and the handler that processes it.
+// MessageType describes a registered ACP message, pairing its numeric ID
+// with the concrete payload type and the handler that processes it.
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
@@ -106,18 +106,22 @@ type ACPRouter struct {
 	agent           Agent
 }
 
+// SetConn sets the connection used to send outgoing messages.
 func (r *ACPRouter) SetConn(conn *ACPConn) {
 	r.conn = conn
 }
 
+// SetClient sets the client that handles agent-to-client requests.
 func (r *ACPRouter) SetClient(client acp.Client) {
 	r.client = client
 }
 
+// SetAgent sets the agent that handles client-to-agent requests.
 func (r *ACPRouter) SetAgent(agent Agent) {
 	r.agent = agent
 }
 
+// Handle registers a message type and its handler with the router.
 func (r *ACPRouter) Handle(
 	id int32,
 	messageType any,
@@ -131,10 +135,12 @@ func (r *ACPRouter) Handle(
 	})
 }
 
+// Send sends a message that is not a response to a prior request.
 func (r *ACPRouter) Send(message any) error {
 	return r.Respond("", message)
 }
 
+// Request sends an RPC message and returns a promise for its response.
 func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], error) {
 	msgID, err := newID()
 	if err != nil {
@@ -164,6 +170,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], err
 	return prom, nil
 }
 
+// Respond sends a message, optionally as a response to a prior request.
 func (r *ACPRouter) Respond(requestID string, message any) error {
 	msgID, err := newID()
 	if err != nil {
@@ -188,6 +195,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 	})
 }
 
+// ServeMessage dispatches an incoming message to the appropriate handler.
 func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 	if msg.GetResponseFor() != "" {
 		r.responseWatcher.Handle(r, msg)

@@ -84,6 +84,8 @@ func closeConn(conn *websocket.Conn, logger zerolog.Logger) {
 	}
 }
 
+// Oneshot dials the websocket server, creates a new session, and sends a
+// single prompt to the agent.
 func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
 	plugMgr, err := plugin.NewACPManager(ctx)
 	if err != nil {

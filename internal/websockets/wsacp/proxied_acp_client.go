@@ -7,56 +7,68 @@ import (
 	"github.com/coder/acp-go-sdk"
 )
 
+// NewProxiedACPClient returns a client proxy that forwards ACP requests
+// over the given router.
 func NewProxiedACPClient(router *wsrouter.ACPRouter) *ProxiedACPClient {
 	return &ProxiedACPClient{
 		router: router,
 	}
 }
 
+// ProxiedACPClient is an acp.Client implementation that forwards requests
+// over a websocket router.
 type ProxiedACPClient struct {
 	router *wsrouter.ACPRouter
 }
 
+// RequestPermission implements acp.Client.
 func (e *ProxiedACPClient) RequestPermission(
 	ctx context.Context, params acp.RequestPermissionRequest,
 ) (acp.RequestPermissionResponse, error) {
 	return proxyRoundTrip[acp.RequestPermissionRequest, acp.RequestPermissionResponse](e.router, params)
 }
 
+// SessionUpdate implements acp.Client.
 func (e *ProxiedACPClient) SessionUpdate(ctx context.Context, params acp.SessionNotification) error {
 	return e.router.Send(params)
 }
 
+// WriteTextFile implements acp.Client.
 func (e *ProxiedACPClient) WriteTextFile(
 	ctx context.Context, params acp.WriteTextFileRequest,
 ) (acp.WriteTextFileResponse, error) {
 	return proxyRoundTrip[acp.WriteTextFileRequest, acp.WriteTextFileResponse](e.router, params)
 }
 
+// ReadTextFile implements acp.Client.
 func (e *ProxiedACPClient) ReadTextFile(
 	ctx context.Context, params acp.ReadTextFileRequest,
 ) (acp.ReadTextFileResponse, error) {
 	return proxyRoundTrip[acp.ReadTextFileRequest, acp.ReadTextFileResponse](e.router, params)
 }
 
+// CreateTerminal implements acp.Client.
 func (e *ProxiedACPClient) CreateTerminal(
 	ctx context.Context, params acp.CreateTerminalRequest,
 ) (acp.CreateTerminalResponse, error) {
 	return proxyRoundTrip[acp.CreateTerminalRequest, acp.CreateTerminalResponse](e.router, params)
 }
 
+// TerminalOutput implements acp.Client.
 func (e *ProxiedACPClient) TerminalOutput(
 	ctx context.Context, params acp.TerminalOutputRequest,
 ) (acp.TerminalOutputResponse, error) {
 	return proxyRoundTrip[acp.TerminalOutputRequest, acp.TerminalOutputResponse](e.router, params)
 }
 
+// ReleaseTerminal implements acp.Client.
 func (e *ProxiedACPClient) ReleaseTerminal(
 	ctx context.Context, params acp.ReleaseTerminalRequest,
 ) (acp.ReleaseTerminalResponse, error) {
 	return proxyRoundTrip[acp.ReleaseTerminalRequest, acp.ReleaseTerminalResponse](e.router, params)
 }
 
+// WaitForTerminalExit implements acp.Client.
 func (e *ProxiedACPClient) WaitForTerminalExit(
 	ctx context.Context, params acp.WaitForTerminalExitRequest,
 ) (acp.WaitForTerminalExitResponse, error) {

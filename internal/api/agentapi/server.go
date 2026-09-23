@@ -1,3 +1,4 @@
+// Package agentapi implements the HTTP server for the agent-facing API.
 package agentapi
 
 import (
@@ -23,6 +24,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// RequestContext bundles the per-request state passed to route handlers.
 type RequestContext struct {
 	Logger   zerolog.Logger
 	Request  *http.Request
@@ -37,6 +39,8 @@ func contextCreator(w http.ResponseWriter, r *http.Request) *RequestContext {
 	}
 }
 
+// NewServer creates an agent-facing Server using the provided agent launch
+// command and ACP tool implementations.
 func NewServer(agentCommand []string,
 	terminalTools *acptools.TerminalTools,
 	fileTools *acptools.FilesystemTools,
@@ -54,6 +58,8 @@ func NewServer(agentCommand []string,
 	}
 }
 
+// Server hosts the agent-facing API, bridging websocket connections to
+// spawned agent processes.
 type Server struct {
 	httpServer    *pacific.Server[*RequestContext]
 	upgrader      *websocket.Upgrader
