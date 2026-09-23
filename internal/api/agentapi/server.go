@@ -1,3 +1,5 @@
+// Package agentapi provides the HTTP server for
+// the ACP agent inside the container.
 package agentapi
 
 import (
@@ -23,6 +25,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// RequestContext holds the context for a request.
 type RequestContext struct {
 	Logger   zerolog.Logger
 	Request  *http.Request
@@ -37,6 +40,7 @@ func contextCreator(w http.ResponseWriter, r *http.Request) *RequestContext {
 	}
 }
 
+// NewServer creates a new HTTP server for the ACP agent.
 func NewServer(agentCommand []string,
 	terminalTools *acptools.TerminalTools,
 	fileTools *acptools.FilesystemTools,
@@ -56,6 +60,8 @@ func NewServer(agentCommand []string,
 	}
 }
 
+// Server implements REST API endpoints and the websocket
+// server that ACP communications are routed through.
 type Server struct {
 	httpServer    *pacific.Server[*RequestContext]
 	upgrader      *websocket.Upgrader

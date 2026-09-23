@@ -292,7 +292,8 @@ func (w *HostProxy) SetAgentConnection(conn *acp.AgentSideConnection) {
 	w.router.SetClient(conn)
 }
 
-// Initialize handles the ACP initialize request by delegating to the underlying handler.
+// Initialize handles the ACP initialize request by delegating
+// to the underlying handler.
 func (w *HostProxy) Initialize(ctx context.Context, params acp.InitializeRequest) (acp.InitializeResponse, error) {
 	w.logger.Debug().
 		Str("method", "Initialize").
@@ -300,8 +301,8 @@ func (w *HostProxy) Initialize(ctx context.Context, params acp.InitializeRequest
 	return w.underlying.Initialize(ctx, params)
 }
 
-// NewSession handles the ACP new session request, ensuring the working directory exists
-// before delegating to the underlying handler.
+// NewSession handles the ACP new session request, ensuring
+// the working directory exists before delegating to the underlying handler.
 func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest) (acp.NewSessionResponse, error) {
 	if _, err := os.Stat(params.Cwd); err != nil {
 		err = os.MkdirAll(params.Cwd, 0755)
@@ -330,6 +331,7 @@ func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest
 }
 
 // Authenticate authenticates a session against the underlying ACP host.
+// Authenticate implements acp.Agent.
 func (w *HostProxy) Authenticate(
 	ctx context.Context, params acp.AuthenticateRequest,
 ) (acp.AuthenticateResponse, error) {
@@ -339,6 +341,7 @@ func (w *HostProxy) Authenticate(
 	return w.underlying.Authenticate(ctx, params)
 }
 
+// LoadSession implements acp.Agent.
 func (w *HostProxy) LoadSession(ctx context.Context, params acp.LoadSessionRequest) (acp.LoadSessionResponse, error) {
 	w.logger.Debug().
 		Str("method", "LoadSession").
@@ -347,6 +350,7 @@ func (w *HostProxy) LoadSession(ctx context.Context, params acp.LoadSessionReque
 	return w.underlying.LoadSession(ctx, params)
 }
 
+// Cancel implements acp.Agent.
 func (w *HostProxy) Cancel(ctx context.Context, params acp.CancelNotification) error {
 	w.logger.Debug().
 		Str("method", "Cancel").
@@ -355,6 +359,7 @@ func (w *HostProxy) Cancel(ctx context.Context, params acp.CancelNotification) e
 	return w.underlying.Cancel(ctx, params)
 }
 
+// Prompt implements acp.Agent.
 func (w *HostProxy) Prompt(ctx context.Context, params acp.PromptRequest) (acp.PromptResponse, error) {
 	w.logger.Debug().
 		Str("method", "Prompt").

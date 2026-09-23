@@ -72,8 +72,9 @@ func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 	return nil
 }
 
-// MessageType describes a registered ACP message, pairing its numeric ID with the
-// concrete payload type and the handler that processes it.
+// MessageType describes a registered ACP message,
+// pairing its numeric ID with the concrete payload type
+// and the handler that processes it.
 type MessageType struct {
 	ID      int32
 	Type    reflect.Type
@@ -106,14 +107,17 @@ type ACPRouter struct {
 	agent           Agent
 }
 
+// SetConn sets the ACP connection for the router.
 func (r *ACPRouter) SetConn(conn *ACPConn) {
 	r.conn = conn
 }
 
+// SetClient sets the ACP client for the router.
 func (r *ACPRouter) SetClient(client acp.Client) {
 	r.client = client
 }
 
+// SetAgent sets the ACP agent for the router.
 func (r *ACPRouter) SetAgent(agent Agent) {
 	r.agent = agent
 }

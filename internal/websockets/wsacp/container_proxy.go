@@ -1,4 +1,5 @@
-// Package wsacp implements WebSocket proxies for the Agent Client Protocol (ACP).
+// Package wsacp implements WebSocket proxies for
+// Agent Client Protocol (ACP).
 package wsacp
 
 import (
