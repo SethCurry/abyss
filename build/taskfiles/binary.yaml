@@ -6,6 +6,9 @@ tasks:
   test:
     cmds:
       - go test ./...
+  coverage:
+    cmds:
+      - ./scripts/coverage.sh
   build:
     deps:
       - proto

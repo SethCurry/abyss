@@ -16,6 +16,7 @@ import (
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/constants"
 	"github.com/SethCurry/abyss/internal/erres"
+	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/runenv"
 	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/rs/zerolog"
@@ -198,7 +199,12 @@ func main() {
 						localFilesystem = acptools.NewFilesystemTools(log.Logger)
 					}
 
-					httpSrv := agentapi.NewServer(agentCmd, localTerminal, localFilesystem)
+					plugins, err := plugin.NewACPManager(ctx)
+					if err != nil {
+						return err
+					}
+
+					httpSrv := agentapi.NewServer(agentCmd, localTerminal, localFilesystem, plugins)
 
 					tlsCert := cmd.String("tls-cert")
 					tlsKey := cmd.String("tls-key")
