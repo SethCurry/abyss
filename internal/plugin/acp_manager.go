@@ -16,8 +16,9 @@ func NewACPManager(ctx context.Context) (*ACPManager, error) {
 		return nil, err
 	}
 	return &ACPManager{
-		loader: loader,
-		logger: timber.ComponentLogger("plugin.ACPManager"),
+		loader:  loader,
+		logger:  timber.ComponentLogger("plugin.ACPManager"),
+		plugins: make([]protobyss.ACPPlugin, 0),
 	}, nil
 }
 

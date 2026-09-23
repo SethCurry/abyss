@@ -10,7 +10,8 @@
   "scripts": {},
   "pi": {
     "extensions": [
-      "./golangci_lint.ts"
+      "./golangci_lint.ts",
+      "./go_coverage.ts"
     ]
   },
   "dependencies": {
