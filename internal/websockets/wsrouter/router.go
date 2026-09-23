@@ -118,6 +118,8 @@ func (r *ACPRouter) SetAgent(agent Agent) {
 	r.agent = agent
 }
 
+// Handle registers a function to be a handler for a single
+// type of ACP message.
 func (r *ACPRouter) Handle(
 	id int32,
 	messageType any,
@@ -131,10 +133,14 @@ func (r *ACPRouter) Handle(
 	})
 }
 
+// Send sends a single ACP message, but does not set
+// the ResponseFor field.
 func (r *ACPRouter) Send(message any) error {
 	return r.Respond("", message)
 }
 
+// Request starts an ACP RPC interaction and returns
+// a promise that resolves to the response for that request.
 func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], error) {
 	msgID, err := newID()
 	if err != nil {
@@ -164,6 +170,8 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], err
 	return prom, nil
 }
 
+// Respond generates an RPC response, including setting the
+// ResponseFor field
 func (r *ACPRouter) Respond(requestID string, message any) error {
 	msgID, err := newID()
 	if err != nil {
@@ -188,6 +196,7 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 	})
 }
 
+// ServeMessage dispatches an incoming ACP message to the appropriate handler.
 func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 	if msg.GetResponseFor() != "" {
 		r.responseWatcher.Handle(r, msg)
