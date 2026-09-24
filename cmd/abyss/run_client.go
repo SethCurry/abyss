@@ -8,8 +8,8 @@ import (
 
 	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/api/pacific"
-	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/runenv"
+	"github.com/SethCurry/abyss/internal/types"
 	api "github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/moby/moby/api/types/container"
 	"github.com/rs/zerolog"
@@ -24,7 +24,7 @@ func runClient(
 ) error {
 	docker, err := runenv.NewDockerClient()
 	if err != nil {
-		return erres.NewHumanError(err,
+		return types.NewHumanError(err,
 			"Failed to connect to Docker.",
 			"Have you made sure Docker is running and that you have permission to connect?")
 	}
@@ -43,7 +43,7 @@ func runClient(
 	err = runenv.PullImage(ctx, docker.Client, image, cfg.Docker.ImagePullPolicy)
 	if err != nil {
 		logger.Error().Err(err).Str("image", image).Msg("failed to pull Docker image")
-		return erres.NewHumanError(
+		return types.NewHumanError(
 			fmt.Errorf("failed to pull Docker image: %w", err),
 			fmt.Sprintf("Failed to pull Docker image %q.  Ensure that the image exists and that you have permission to pull it.",
 				image))
@@ -59,41 +59,8 @@ func runClient(
 		}
 	}
 
-	config := &runenv.ContainerConfig{
-		Config: &container.Config{
-			Entrypoint: []string{"/bin/bash"},
-			Cmd:        []string{"-c", agentconfig.BuildAgentProxyArgs(cfg)},
-		},
-		ContainerPort: agentconfig.DefaultServerPort,
-	}
-
-	builder, err := runenv.NewContainerBuilder(
-		configPath,
-		config,
-		runenv.WithImage(image),
-		runenv.WithHostMounts(&cfg.Docker),
-		runenv.WithExposeContainerPort(8080),
-	)
+	cont, endpoint, err := startAgentContainer(ctx, docker, configPath, cfg, image, certs, logger)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to build container config")
-		return erres.NewHumanError(err,
-			"Failed to build container config.",
-			"This is likely an issue with abyss itself or the Docker image you are using.",
-			"Please report a bug if you have time.")
-	}
-
-	builder.AddSteps(
-		runenv.WithCopyFiles(cfg.CopyFiles),
-		runenv.WithSetupScripts(cfg.SetupScripts),
-	)
-
-	if certs != nil {
-		builder.AddStep(installTLSCerts(certs))
-	}
-
-	cont, endpoint, err := builder.Build(ctx, docker)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to start container")
 		return err
 	}
 
@@ -106,6 +73,7 @@ func runClient(
 	// Sleep for as long as the agent does between checking for the file
 	// Prevents a race-condition where the start file was created but the
 	// container-side proxy hasn't seen it yet.
+	// TODO replace this with a dial retry loop
 	time.Sleep(agentconfig.WaitForStartFileSleepDuration)
 
 	scheme := "ws"
@@ -146,4 +114,56 @@ func runClient(
 	}
 
 	return nil
+}
+
+// startAgentContainer builds and starts the agent container, so runClient can
+// focus on wiring up the client connection rather than container assembly.
+func startAgentContainer(
+	ctx context.Context,
+	docker *runenv.DockerClient,
+	configPath string,
+	cfg *agentconfig.AgentConfig,
+	image string,
+	certs *pacific.Certificates,
+	logger zerolog.Logger,
+) (*runenv.Container, runenv.ContainerEndpoint, error) {
+	config := &runenv.ContainerConfig{
+		Config: &container.Config{
+			Entrypoint: []string{"/bin/bash"},
+			Cmd:        []string{"-c", agentconfig.BuildAgentProxyArgs(cfg)},
+		},
+		ContainerPort: agentconfig.DefaultServerPort,
+	}
+
+	builder, err := runenv.NewContainerBuilder(
+		configPath,
+		config,
+		runenv.WithImage(image),
+		runenv.WithHostMounts(&cfg.Docker),
+		runenv.WithExposeContainerPort(8080),
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to build container config")
+		return nil, runenv.ContainerEndpoint{}, types.NewHumanError(err,
+			"Failed to build container config.",
+			"This is likely an issue with abyss itself or the Docker image you are using.",
+			"Please report a bug if you have time.")
+	}
+
+	builder.AddSteps(
+		runenv.WithCopyFiles(cfg.CopyFiles),
+		runenv.WithSetupScripts(cfg.SetupScripts),
+	)
+
+	if certs != nil {
+		builder.AddStep(installTLSCerts(certs))
+	}
+
+	cont, endpoint, err := builder.Build(ctx, docker)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to start container")
+		return nil, runenv.ContainerEndpoint{}, err
+	}
+
+	return cont, endpoint, nil
 }

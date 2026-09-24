@@ -1,6 +1,4 @@
-// Package erres provides utilities for wrapping and
-// formatting human-readable errors.
-package erres
+package types
 
 import "strings"
 

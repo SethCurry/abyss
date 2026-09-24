@@ -84,6 +84,7 @@ func closeConn(conn *websocket.Conn, logger zerolog.Logger) {
 	}
 }
 
+// Oneshot runs a single prompt via a disposable agent container.
 func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
 	plugMgr, err := plugin.NewACPManager(ctx)
 	if err != nil {

@@ -15,10 +15,10 @@ import (
 	"github.com/SethCurry/abyss/internal/api/agentapi"
 	"github.com/SethCurry/abyss/internal/api/pacific"
 	"github.com/SethCurry/abyss/internal/constants"
-	"github.com/SethCurry/abyss/internal/erres"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/runenv"
 	"github.com/SethCurry/abyss/internal/timber"
+	"github.com/SethCurry/abyss/internal/types"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"
@@ -221,7 +221,7 @@ func main() {
 							tlsKey,
 							tlsCA)
 						if err != nil {
-							return erres.NewHumanError(fmt.Errorf("failed to load TLS config: %w", err), "Failed to load TLS config.  Ensure that the files exist and that you have permissions to read them.")
+							return types.NewHumanError(fmt.Errorf("failed to load TLS config: %w", err), "Failed to load TLS config.  Ensure that the files exist and that you have permissions to read them.")
 						}
 						return httpSrv.ServeTLS(cmd.String("addr"), tlsConfig)
 					}
@@ -293,7 +293,7 @@ func main() {
 
 	err = cmd.Run(context.Background(), os.Args)
 	if err != nil {
-		if humanErr, ok := errors.AsType[erres.HumanError](err); ok {
+		if humanErr, ok := errors.AsType[types.HumanError](err); ok {
 			log.Logger.Error().Err(err).Str("human_error", humanErr.HumanError()).Msg("command failed")
 			fmt.Fprintf(os.Stderr, "%s\n", humanErr.HumanError())
 		} else {
