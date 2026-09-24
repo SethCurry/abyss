@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/SethCurry/abyss/internal/timber"
+	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/knqyf263/go-plugin/types/known/emptypb"
 	"github.com/rs/zerolog"
@@ -102,6 +103,14 @@ func (a *ACPManager) HandleMessage(
 			}
 
 			for _, newMsg := range gotMsgs.GetContainers() {
+				msgType, err := abyss.GetMessageTypeByID(newMsg.TypeId)
+				if err != nil {
+					return allMessages, err
+				}
+
+				if msgType.IsResponse() && newMsg.GetResponseFor() == "" {
+					newMsg.ResponseFor = req.MessageId
+				}
 				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}
 			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)

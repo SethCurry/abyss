@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/SethCurry/abyss/pkg/protobyss"
@@ -57,6 +58,13 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 
 // Send marshals and writes an outgoing proto message over the connection.
 func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
+	if msg.MessageId == "" {
+		newID, err := NewID()
+		if err != nil {
+			return err
+		}
+		msg.MessageId = newID
+	}
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		c.logger.Error().Err(err).Msg("failed to marshal proto message")
@@ -202,6 +210,10 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 
 // ServeMessage dispatches an incoming ACP message to the appropriate handler.
 func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
+	if r.client == nil {
+		r.logger.Warn().Msg("no client configured")
+		time.Sleep(time.Millisecond * 500)
+	}
 	if msg.GetResponseFor() != "" {
 		r.responseWatcher.Handle(r, msg)
 		return

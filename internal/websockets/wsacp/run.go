@@ -39,7 +39,7 @@ func dialAndServe(
 		return nil, nil, nil, fmt.Errorf("failed to dial Docker websocket: %w", err)
 	}
 
-	socket := wsrouter.NewProtoRouter()
+	socket := wsrouter.NewProtoRouter(true)
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	router.SetConn(acpConn)
@@ -56,7 +56,7 @@ func dialAndServe(
 
 		newMsgs, err := plugins.HandleMessage(context.Background(), &acpMsg)
 		if err != nil {
-			acpConn.Handle(msg)
+			go acpConn.Handle(msg)
 			logger.Error().Err(err).Msg("failed to handle message")
 			return
 		}
@@ -66,7 +66,7 @@ func dialAndServe(
 			if err != nil {
 				logger.Error().Err(err).Msg("failed to marshal message")
 			}
-			acpConn.Handle(wsrouter.ProtoMessage{
+			go acpConn.Handle(wsrouter.ProtoMessage{
 				TypeID:  1,
 				Content: marshalled,
 			})

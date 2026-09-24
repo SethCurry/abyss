@@ -5,9 +5,12 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/SethCurry/abyss/pkg/abyss"
+	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 // IProtoRouter is the interface for a protobuf router.  Used to allow
@@ -18,11 +21,12 @@ type IProtoRouter interface {
 }
 
 // NewProtoRouter creates a new *ProtoRouter.
-func NewProtoRouter() *ProtoRouter {
+func NewProtoRouter(isOnHost bool) *ProtoRouter {
 	sock := &ProtoRouter{
 		logger:        log.Logger.With().Str("from", "ProtoRouter").Logger(),
 		handlers:      make(map[int]func(ProtoMessage)),
 		writeHandlers: make(map[int]func(ProtoMessage) []ProtoMessage),
+		isOnHost:      isOnHost,
 	}
 
 	return sock
@@ -47,6 +51,7 @@ type ProtoRouter struct {
 	handlers      map[int]func(ProtoMessage)
 	writeHandlers map[int]func(ProtoMessage) []ProtoMessage
 	writeMut      sync.Mutex
+	isOnHost      bool
 }
 
 // Serve reads messages and synchronously dispatches them to handlers.
@@ -100,8 +105,38 @@ func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 		})
 
 		for _, v := range newMsgs {
-			if err := s.conn.WriteMessage(v.TypeID, v.Content); err != nil {
-				s.logger.Error().Err(err).Msg("failed to write proto message")
+			var underlyingMessage protobyss.ACPContainer
+
+			// TODO this is only actually valid for message type = 1
+			err := proto.Unmarshal(v.Content, &underlyingMessage)
+			if err != nil {
+				return err
+			}
+
+			msgType, err := abyss.GetMessageTypeByID(underlyingMessage.TypeId)
+			if err != nil {
+				return err
+			}
+
+			sendViaWebsocket := false
+			if (s.isOnHost && msgType.Direction() == abyss.ToAgent) ||
+				(!s.isOnHost && msgType.Direction() == abyss.ToACPClient) {
+				sendViaWebsocket = true
+			}
+
+			if sendViaWebsocket {
+				if err := s.conn.WriteMessage(v.TypeID, v.Content); err != nil {
+					s.logger.Error().Err(err).Msg("failed to write proto message")
+				}
+			} else {
+				readSendTo, ok := s.handlers[v.TypeID]
+				if ok {
+					go readSendTo(v)
+				} else {
+					s.logger.Debug().
+						Int("message_type_id", mt).
+						Msg("no receiving channel for message type")
+				}
 			}
 		}
 		return nil

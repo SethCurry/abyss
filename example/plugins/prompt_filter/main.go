@@ -31,6 +31,15 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 
 	for _, v := range p.bannedRegexes {
 		if v.Match(contents) {
+			resp := acp.PromptResponse{
+				StopReason: acp.StopReasonEndTurn,
+			}
+
+			respCont, err := abyss.ACPContainer(resp)
+			if err != nil {
+				break
+			}
+
 			msg := acp.SessionNotification{
 				SessionId: req.SessionId,
 				Update: acp.SessionUpdate{
@@ -39,8 +48,12 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 					},
 				},
 			}
+			msgCont, err := abyss.ACPContainer(msg)
+			if err != nil {
+				break
+			}
 
-			return abyss.ACPContainers(msg)
+			return []*protobyss.ACPContainer{msgCont, respCont}, nil
 		}
 	}
 

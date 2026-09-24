@@ -19,6 +19,7 @@ import (
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
+	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
@@ -157,7 +158,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 		}
 	}()
 
-	socket := wsrouter.NewProtoRouter()
+	socket := wsrouter.NewProtoRouter(false)
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
@@ -202,8 +203,17 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 			return []wsrouter.ProtoMessage{msg}
 		}
 
-		msgs, err := fp.MapE(func(msg *protobyss.ACPContainer) (wsrouter.ProtoMessage, error) {
-			marshalled, err := proto.Marshal(msg)
+		msgs, err := fp.MapE(func(mapMsg *protobyss.ACPContainer) (wsrouter.ProtoMessage, error) {
+			msgType, err := abyss.GetMessageTypeByID(mapMsg.GetTypeId())
+			if err != nil {
+				return wsrouter.ProtoMessage{}, err
+			}
+
+			if msgType.IsResponse() && mapMsg.ResponseFor == "" {
+				mapMsg.ResponseFor = acpMsg.MessageId
+			}
+
+			marshalled, err := proto.Marshal(mapMsg)
 			if err != nil {
 				return wsrouter.ProtoMessage{}, err
 			}
