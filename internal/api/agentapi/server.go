@@ -161,26 +161,42 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
-		newMsgs, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
-			TypeId:  int32(msg.TypeID),
-			Content: msg.Content,
-		})
+		req.Logger.Info().Msg("reading message")
+
+		var acpMsg protobyss.ACPContainer
+
+		err := proto.Unmarshal(msg.Content, &acpMsg)
 		if err != nil {
+			req.Logger.Error().Err(err).Msg("invalid proto")
+		}
+
+		newMsgs, err := s.plugins.HandleMessage(context.Background(), &acpMsg)
+		if err != nil {
+			acpConn.Handle(msg)
 			req.Logger.Error().Err(err).Msg("failed to handle message")
 			return
 		}
-		for _, msg := range newMsgs {
+
+		for _, v := range newMsgs {
+			marshalled, err := proto.Marshal(v)
+			if err != nil {
+				req.Logger.Error().Err(err).Msg("failed to marshal message")
+			}
 			acpConn.Handle(wsrouter.ProtoMessage{
-				TypeID:  int(msg.GetTypeId()),
-				Content: msg.GetContent(),
+				TypeID:  1,
+				Content: marshalled,
 			})
 		}
 	})
 	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) []wsrouter.ProtoMessage {
-		newMsgs, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
-			TypeId:  int32(msg.TypeID),
-			Content: msg.Content,
-		})
+		var acpMsg protobyss.ACPContainer
+
+		err := proto.Unmarshal(msg.Content, &acpMsg)
+		if err != nil {
+			req.Logger.Error().Err(err).Msg("invalid proto")
+		}
+
+		newMsgs, err := s.plugins.HandleMessage(context.Background(), &acpMsg)
 		if err != nil {
 			req.Logger.Error().Err(err).Msg("failed to handle message")
 			return []wsrouter.ProtoMessage{msg}
