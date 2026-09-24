@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package protobyss;
 
+import "google/protobuf/empty.proto";
+
 option go_package = "./protobyss";
 
 message ACPContainer {
@@ -15,7 +17,24 @@ message ACPContainerList {
   repeated ACPContainer containers = 1;
 }
 
-// go:plugin type=plugin version=1
+// go:plugin type=plugin
 service ACPPlugin {
   rpc HandleMessage(ACPContainer) returns (ACPContainerList);
+}
+
+message LogMessage {
+    string message = 1;
+    map<string, string> fields = 2;
+}
+
+// go:plugin type=host
+service Logging {
+  // Debug log
+  rpc Debug(LogMessage) returns (google.protobuf.Empty) {}
+  // Info log
+  rpc Info(LogMessage) returns (google.protobuf.Empty) {}
+  // Warn log
+  rpc Warn(LogMessage) returns (google.protobuf.Empty) {}
+  // Error log
+  rpc Error(LogMessage) returns (google.protobuf.Empty) {}
 }

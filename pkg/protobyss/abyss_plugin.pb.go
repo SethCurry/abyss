@@ -10,7 +10,9 @@ package protobyss
 
 import (
 	context "context"
+	emptypb "github.com/knqyf263/go-plugin/types/known/emptypb"
 	wasm "github.com/knqyf263/go-plugin/wasm"
+	_ "unsafe"
 )
 
 const ACPPluginPluginAPIVersion = 1
@@ -48,4 +50,102 @@ func _acp_plugin_handle_message(ptr, size uint32) uint64 {
 	}
 	ptr, size = wasm.ByteToPtr(b)
 	return (uint64(ptr) << uint64(32)) | uint64(size)
+}
+
+type logging struct{}
+
+func NewLogging() Logging {
+	return logging{}
+}
+
+//go:wasmimport env debug
+func _debug(ptr uint32, size uint32) uint64
+
+func (h logging) Debug(ctx context.Context, request *LogMessage) (*emptypb.Empty, error) {
+	buf, err := request.MarshalVT()
+	if err != nil {
+		return nil, err
+	}
+	ptr, size := wasm.ByteToPtr(buf)
+	ptrSize := _debug(ptr, size)
+	wasm.Free(ptr)
+
+	ptr = uint32(ptrSize >> 32)
+	size = uint32(ptrSize)
+	buf = wasm.PtrToByte(ptr, size)
+
+	response := new(emptypb.Empty)
+	if err = response.UnmarshalVT(buf); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+//go:wasmimport env info
+func _info(ptr uint32, size uint32) uint64
+
+func (h logging) Info(ctx context.Context, request *LogMessage) (*emptypb.Empty, error) {
+	buf, err := request.MarshalVT()
+	if err != nil {
+		return nil, err
+	}
+	ptr, size := wasm.ByteToPtr(buf)
+	ptrSize := _info(ptr, size)
+	wasm.Free(ptr)
+
+	ptr = uint32(ptrSize >> 32)
+	size = uint32(ptrSize)
+	buf = wasm.PtrToByte(ptr, size)
+
+	response := new(emptypb.Empty)
+	if err = response.UnmarshalVT(buf); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+//go:wasmimport env warn
+func _warn(ptr uint32, size uint32) uint64
+
+func (h logging) Warn(ctx context.Context, request *LogMessage) (*emptypb.Empty, error) {
+	buf, err := request.MarshalVT()
+	if err != nil {
+		return nil, err
+	}
+	ptr, size := wasm.ByteToPtr(buf)
+	ptrSize := _warn(ptr, size)
+	wasm.Free(ptr)
+
+	ptr = uint32(ptrSize >> 32)
+	size = uint32(ptrSize)
+	buf = wasm.PtrToByte(ptr, size)
+
+	response := new(emptypb.Empty)
+	if err = response.UnmarshalVT(buf); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+//go:wasmimport env error
+func _error(ptr uint32, size uint32) uint64
+
+func (h logging) Error(ctx context.Context, request *LogMessage) (*emptypb.Empty, error) {
+	buf, err := request.MarshalVT()
+	if err != nil {
+		return nil, err
+	}
+	ptr, size := wasm.ByteToPtr(buf)
+	ptrSize := _error(ptr, size)
+	wasm.Free(ptr)
+
+	ptr = uint32(ptrSize >> 32)
+	size = uint32(ptrSize)
+	buf = wasm.PtrToByte(ptr, size)
+
+	response := new(emptypb.Empty)
+	if err = response.UnmarshalVT(buf); err != nil {
+		return nil, err
+	}
+	return response, nil
 }

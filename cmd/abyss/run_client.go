@@ -105,7 +105,7 @@ func runClient(
 	}
 
 	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
-	if stopErr := cont.Stop(ctx, 10*time.Second); stopErr != nil {
+	if stopErr := cont.Stop(ctx, 10*time.Second, false); stopErr != nil {
 		logger.Error().
 			Err(stopErr).
 			Str("container_id", endpoint.ContainerID).

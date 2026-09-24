@@ -12,11 +12,165 @@ import (
 	context "context"
 	errors "errors"
 	fmt "fmt"
+	wasm "github.com/knqyf263/go-plugin/wasm"
 	wazero "github.com/tetratelabs/wazero"
 	api "github.com/tetratelabs/wazero/api"
 	sys "github.com/tetratelabs/wazero/sys"
 	os "os"
 )
+
+const (
+	i32 = api.ValueTypeI32
+	i64 = api.ValueTypeI64
+)
+
+type _logging struct {
+	Logging
+}
+
+// Instantiate a Go-defined module named "env" that exports host functions.
+func (h _logging) Instantiate(ctx context.Context, r wazero.Runtime) error {
+	envBuilder := r.NewHostModuleBuilder("env")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._Debug), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("debug")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._Info), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("info")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._Warn), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("warn")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._Error), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("error")
+
+	_, err := envBuilder.Instantiate(ctx)
+	return err
+}
+
+// Debug log
+
+func (h _logging) _Debug(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(LogMessage)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.Debug(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
+
+// Info log
+
+func (h _logging) _Info(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(LogMessage)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.Info(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
+
+// Warn log
+
+func (h _logging) _Warn(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(LogMessage)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.Warn(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
+
+// Error log
+
+func (h _logging) _Error(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(LogMessage)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.Error(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
 
 const ACPPluginPluginAPIVersion = 1
 
@@ -46,7 +200,7 @@ type aCPPlugin interface {
 	ACPPlugin
 }
 
-func (p *ACPPluginPlugin) Load(ctx context.Context, pluginPath string) (aCPPlugin, error) {
+func (p *ACPPluginPlugin) Load(ctx context.Context, pluginPath string, hostFunctions Logging) (aCPPlugin, error) {
 	b, err := os.ReadFile(pluginPath)
 	if err != nil {
 		return nil, err
@@ -55,6 +209,12 @@ func (p *ACPPluginPlugin) Load(ctx context.Context, pluginPath string) (aCPPlugi
 	// Create a new runtime so that multiple modules will not conflict
 	r, err := p.newRuntime(ctx)
 	if err != nil {
+		return nil, err
+	}
+
+	h := _logging{hostFunctions}
+
+	if err := h.Instantiate(ctx, r); err != nil {
 		return nil, err
 	}
 

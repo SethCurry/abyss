@@ -8,6 +8,7 @@ package protobyss
 
 import (
 	context "context"
+	emptypb "github.com/knqyf263/go-plugin/types/known/emptypb"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
@@ -18,7 +19,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// go:plugin type=plugin version=1
+// go:plugin type=plugin
 type ACPPlugin interface {
 	HandleMessage(context.Context, *ACPContainer) (*ACPContainerList, error)
+}
+
+// go:plugin type=host
+type Logging interface {
+	// Debug log
+	Debug(context.Context, *LogMessage) (*emptypb.Empty, error)
+	// Info log
+	Info(context.Context, *LogMessage) (*emptypb.Empty, error)
+	// Warn log
+	Warn(context.Context, *LogMessage) (*emptypb.Empty, error)
+	// Error log
+	Error(context.Context, *LogMessage) (*emptypb.Empty, error)
 }

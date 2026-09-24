@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
 // acp structs, then dispatching ACP messages to the appropriate handler
 // if configured.
 type ACPPluginRouter struct {
+	logging protobyss.Logging
 	// Client capability requests (agent -> client).
 	OnRequestPermissionRequest    func(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
 	OnRequestPermissionResponse   func(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)
@@ -96,6 +98,8 @@ func (r *ACPPluginRouter) HandleMessage(
 	ctx context.Context,
 	msg *protobyss.ACPContainer,
 ) (*protobyss.ACPContainerList, error) {
+	logger := timber.ComponentLogger("ACPPluginRouter.HandleMessage")
+	logger.Info().Msg("dispatching message to plugin")
 	switch MessageTypeID(msg.GetTypeId()) {
 	// Client capability requests (agent -> client).
 	case RequestPermissionRequestType:
@@ -241,7 +245,11 @@ func handleRequest[T any](
 	msg *protobyss.ACPContainer,
 	fn func(T) ([]*protobyss.ACPContainer, error),
 ) (*protobyss.ACPContainerList, error) {
+	logger := timber.ComponentLogger("plugin.handleRequest")
+
+	logger.Info().Int32("message_type", msg.GetTypeId()).Msg("dispatching for plugin")
 	if fn == nil {
+		logger.Debug().Msg("no handler found")
 		return &protobyss.ACPContainerList{Containers: []*protobyss.ACPContainer{msg}}, nil
 	}
 	var params T
@@ -251,6 +259,7 @@ func handleRequest[T any](
 
 	resp, err := fn(params)
 	if err != nil {
+		logger.Error().Err(err).Msg("failed to call request handler")
 		return nil, err
 	}
 

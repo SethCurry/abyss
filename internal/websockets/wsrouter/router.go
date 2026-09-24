@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// newID generates a new UUID to use for identifying a particular message.
-func newID() (string, error) {
+// NewID generates a new UUID to use for identifying a particular message.
+func NewID() (string, error) {
 	gotUUID, err := uuid.NewV7()
 	if err != nil {
 		return "", err
@@ -146,7 +146,7 @@ func (r *ACPRouter) Send(message any) error {
 // Request starts an ACP RPC interaction and returns
 // a promise that resolves to the response for that request.
 func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], error) {
-	msgID, err := newID()
+	msgID, err := NewID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate message UUID: %w", err)
 	}
@@ -177,7 +177,7 @@ func (r *ACPRouter) Request(message any) (*Promise[*protobyss.ACPContainer], err
 // Respond generates an RPC response, including setting the
 // ResponseFor field
 func (r *ACPRouter) Respond(requestID string, message any) error {
-	msgID, err := newID()
+	msgID, err := NewID()
 	if err != nil {
 		return fmt.Errorf("failed to generate message UUID: %w", err)
 	}

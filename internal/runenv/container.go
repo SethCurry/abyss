@@ -42,7 +42,7 @@ func (c *Container) ID() string {
 // It first sends a SIGTERM, waiting up to timeout for the container to exit,
 // then falls back to SIGKILL if it is still running. The container is removed
 // afterwards regardless of whether it exited on its own.
-func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
+func (c *Container) Stop(ctx context.Context, timeout time.Duration, remove bool) error {
 	c.logger.Info().Msg("stopping container")
 
 	if _, err := c.client.Client.ContainerStop(
@@ -57,19 +57,19 @@ func (c *Container) Stop(ctx context.Context, timeout time.Duration) error {
 			Msg("container stop failed, attempting remove")
 	}
 
-	c.logger.Info().Msg("removing container")
-	if _, err := c.client.Client.ContainerRemove(
-		ctx,
-		c.containerID,
-		client.ContainerRemoveOptions{Force: true},
-	); err != nil {
-		c.logger.Error().
-			Err(err).
-			Msg("failed to remove container")
-		return fmt.Errorf("remove container: %w", err)
+	if remove {
+		c.logger.Info().Msg("removing container")
+		if _, err := c.client.Client.ContainerRemove(
+			ctx,
+			c.containerID,
+			client.ContainerRemoveOptions{Force: true},
+		); err != nil {
+			c.logger.Error().
+				Err(err).
+				Msg("failed to remove container")
+			return fmt.Errorf("remove container: %w", err)
+		}
 	}
-
-	c.logger.Debug().Msg("container stopped and removed")
 	return nil
 }
 

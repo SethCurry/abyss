@@ -6,8 +6,45 @@ import (
 
 	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/protobyss"
+	"github.com/knqyf263/go-plugin/types/known/emptypb"
 	"github.com/rs/zerolog"
 )
+
+func logMessage(event *zerolog.Event, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
+	for k, v := range msg.GetFields() {
+		event.Str(k, v)
+	}
+
+	event.Msg(msg.GetMessage())
+
+	return nil, nil
+}
+
+func NewLogging(logger zerolog.Logger, plugPath string) *Logging {
+	return &Logging{
+		logger: logger.With().Str("plugin_path", plugPath).Logger(),
+	}
+}
+
+type Logging struct {
+	logger zerolog.Logger
+}
+
+func (l *Logging) Debug(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
+	return logMessage(l.logger.Debug(), msg)
+}
+
+func (l *Logging) Info(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
+	return logMessage(l.logger.Info(), msg)
+}
+
+func (l *Logging) Warn(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
+	return logMessage(l.logger.Warn(), msg)
+}
+
+func (l *Logging) Error(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
+	return logMessage(l.logger.Error(), msg)
+}
 
 // NewACPManager creates and initializes a new ACPManager instance.
 func NewACPManager(ctx context.Context) (*ACPManager, error) {
@@ -18,7 +55,7 @@ func NewACPManager(ctx context.Context) (*ACPManager, error) {
 	return &ACPManager{
 		loader:  loader,
 		logger:  timber.ComponentLogger("plugin.ACPManager"),
-		plugins: make([]protobyss.ACPPlugin, 0),
+		plugins: []protobyss.ACPPlugin{},
 	}, nil
 }
 
@@ -32,7 +69,7 @@ type ACPManager struct {
 // Load loads an ACP plugin from the given path.
 func (a *ACPManager) Load(ctx context.Context, path string) error {
 	a.logger.Info().Str("path", path).Msg("loading ACP plugin")
-	plugin, err := a.loader.Load(ctx, path)
+	plugin, err := a.loader.Load(ctx, path, NewLogging(a.logger, path))
 	if err != nil {
 		return err
 	}
@@ -45,14 +82,20 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 func (a *ACPManager) HandleMessage(
 	ctx context.Context, req *protobyss.ACPContainer,
 ) ([]*protobyss.ACPContainer, error) {
-	allMessages := make([]*protobyss.ACPContainer, 1)
-	allMessages[0] = req
-	for _, v := range a.plugins {
+	a.logger.Info().Msg("plugin handling message")
+	allMessages := []*protobyss.ACPContainer{req}
+	for i, v := range a.plugins {
+		a.logger.Info().Int("plugin_index", i).Msg("executing plugin")
 		var newMsgs []*protobyss.ACPContainer
 		for _, msg := range allMessages {
 			gotMsgs, err := v.HandleMessage(ctx, msg)
 			if err != nil {
-				return nil, err
+				a.logger.Error().Err(err).Msg("plugin failed")
+				return allMessages, err
+			}
+
+			for _, newMsg := range gotMsgs.GetContainers() {
+				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}
 			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)
 		}

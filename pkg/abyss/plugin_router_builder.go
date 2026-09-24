@@ -1,7 +1,6 @@
 package abyss
 
 import (
-	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 )
@@ -625,9 +624,6 @@ func NewACPPluginRouter(v any) *ACPPluginRouter {
 		r.OnUnstableDeleteSessionResponse = h.OnUnstableDeleteSessionResponse
 		methods = append(methods, "OnUnstableDeleteSessionResponse")
 	}
-
-	logger := timber.ComponentLogger("acp.plugin_router")
-	logger.Info().Strs("methods", methods).Msg("enabled methods for plugin")
 
 	return r
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/proto"
 )
 
 // dialAndServe dials the websocket server at wsURL and wires up the socket,
@@ -42,10 +43,16 @@ func dialAndServe(
 	router.SetConn(acpConn)
 	// socket.Handle(1, acpConn.Handle)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
-		newMsgs, err := plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
-			TypeId:  int32(msg.TypeID),
-			Content: msg.Content,
-		})
+		logger.Info().Msg("reading message")
+
+		var acpMsg protobyss.ACPContainer
+
+		err := proto.Unmarshal(msg.Content, &acpMsg)
+		if err != nil {
+			logger.Error().Err(err).Msg("invalid proto")
+		}
+
+		newMsgs, err := plugins.HandleMessage(context.Background(), &acpMsg)
 		if err != nil {
 			acpConn.Handle(msg)
 			logger.Error().Err(err).Msg("failed to handle message")
@@ -53,18 +60,28 @@ func dialAndServe(
 		}
 
 		for _, v := range newMsgs {
+			marshalled, err := proto.Marshal(v)
+			if err != nil {
+				logger.Error().Err(err).Msg("failed to marshal message")
+			}
 			acpConn.Handle(wsrouter.ProtoMessage{
-				TypeID:  int(v.GetTypeId()),
-				Content: v.GetContent(),
+				TypeID:  1,
+				Content: marshalled,
 			})
 		}
 	})
 
 	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
-		_, _ = plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
-			TypeId:  int32(msg.TypeID),
-			Content: msg.Content,
-		})
+		logger.Info().Msg("writing message")
+		logger.Info().Msg("reading message")
+
+		var acpMsg protobyss.ACPContainer
+
+		err := proto.Unmarshal(msg.Content, &acpMsg)
+		if err != nil {
+			logger.Error().Err(err).Msg("invalid proto")
+		}
+		_, _ = plugins.HandleMessage(context.Background(), &acpMsg)
 	})
 
 	proxiedAgent := NewProxiedACPAgent(router)
@@ -137,6 +154,15 @@ func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger 
 	if err != nil {
 		return err
 	}
+
+	/*
+	 * TODO make this configurable
+	 * err = plugMgr.Load(ctx, "example/plugins/prompt_filter/plugin.wasm")
+	 * if err != nil {
+	 *	return err
+	 * }
+	 */
+
 	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
 	if err != nil {
 		return err
