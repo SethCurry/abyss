@@ -18,7 +18,6 @@ var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
 // acp structs, then dispatching ACP messages to the appropriate handler
 // if configured.
 type ACPPluginRouter struct {
-	logging protobyss.Logging
 	// Client capability requests (agent -> client).
 	OnRequestPermissionRequest    func(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
 	OnRequestPermissionResponse   func(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)

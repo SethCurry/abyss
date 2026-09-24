@@ -95,7 +95,7 @@ func runClient(
 
 	// TODO clean this up, there's no need to have an if here
 	if prompt == "" {
-		if err := api.RunClient(ctx, wsURL, tlsConfig, logger); err != nil {
+		if err := api.RunClient(ctx, cfg, wsURL, tlsConfig, logger); err != nil {
 			logger.Error().Err(err).Msg("client disconnected with error")
 		}
 	} else {

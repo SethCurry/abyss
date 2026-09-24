@@ -20,28 +20,35 @@ func logMessage(event *zerolog.Event, msg *protobyss.LogMessage) (*emptypb.Empty
 	return nil, nil
 }
 
+// NewLogging creates a new protobyss.Logging.
 func NewLogging(logger zerolog.Logger, plugPath string) *Logging {
 	return &Logging{
 		logger: logger.With().Str("plugin_path", plugPath).Logger(),
 	}
 }
 
+// Logging implements WASM-host side logging so that plugin messages are
+// visible in the logs.
 type Logging struct {
 	logger zerolog.Logger
 }
 
+// Debug logs a message at DEBUG level.
 func (l *Logging) Debug(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
 	return logMessage(l.logger.Debug(), msg)
 }
 
+// Info logs a message at INFO level.
 func (l *Logging) Info(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
 	return logMessage(l.logger.Info(), msg)
 }
 
+// Warn logs a message WARN level.
 func (l *Logging) Warn(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
 	return logMessage(l.logger.Warn(), msg)
 }
 
+// Error logs a message at ERROR level.
 func (l *Logging) Error(ctx context.Context, msg *protobyss.LogMessage) (*emptypb.Empty, error) {
 	return logMessage(l.logger.Error(), msg)
 }

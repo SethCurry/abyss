@@ -15,3 +15,7 @@ docker:
   # The command to run inside the container
   agent_command:
     - pi-acp
+
+plugins:
+  client:
+    - path: ./example/plugins/prompt_filter/plugin.wasm

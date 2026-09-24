@@ -20,6 +20,17 @@ import (
  *  - These are just shims to apt-get/apk/etc
  */
 
+// PluginConfigOptions contains the config for a single
+// plugin.
+type PluginConfigOptions struct {
+	Path string `yaml:"path"`
+}
+
+// PluginConfig stores configuration for all plugins.
+type PluginConfig struct {
+	Client []PluginConfigOptions `yaml:"client"`
+}
+
 // WebsocketConfig stores websocket-related configuration options like
 // whether TLS is enabled or not.
 type WebsocketConfig struct {
@@ -36,6 +47,7 @@ type AgentConfig struct {
 	CopyFiles    []FileCopyConfig     `yaml:"copy_files"`
 	ACP          ACPConfig            `yaml:"acp"`
 	Websocket    WebsocketConfig      `yaml:"websocket"`
+	Plugins      PluginConfig         `yaml:"plugins"`
 }
 
 // Validate implements types.Validator by validating each nested config.

@@ -278,7 +278,7 @@ func main() {
 									Strs("container_names", v.Names).
 									Msg("stopping container")
 								cont := docker.GetContainer(v.ID)
-								err = cont.Stop(ctx, time.Second*5, false)
+								err = cont.Stop(ctx, time.Second*5, true)
 								if err != nil {
 									return fmt.Errorf("failed to stop container %q: %w", v.ID, err)
 								}

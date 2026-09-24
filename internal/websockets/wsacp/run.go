@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/agentconfig"
 	"github.com/SethCurry/abyss/internal/fp"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
@@ -169,19 +170,23 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 // RunClient dials the websocket server at wsURL and bridges it to a client
 // (typically an editor) over stdio. A non-nil tlsConfig enables TLS for the
 // connection.
-func RunClient(ctx context.Context, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
+func RunClient(
+	ctx context.Context,
+	agentConfig *agentconfig.AgentConfig,
+	wsURL string,
+	tlsConfig *tls.Config,
+	logger zerolog.Logger) error {
 	plugMgr, err := plugin.NewACPManager(ctx)
 	if err != nil {
 		return err
 	}
 
-	/*
-	 * TODO make this configurable
-	 * err = plugMgr.Load(ctx, "example/plugins/prompt_filter/plugin.wasm")
-	 * if err != nil {
-	 *	return err
-	 * }
-	 */
+	for _, v := range agentConfig.Plugins.Client {
+		err = plugMgr.Load(ctx, v.Path)
+		if err != nil {
+			return fmt.Errorf("failed to load plugin %q: %w", v.Path, err)
+		}
+	}
 
 	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
 	if err != nil {
