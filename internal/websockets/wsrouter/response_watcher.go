@@ -39,6 +39,8 @@ func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.ACPCont
 	prom := &Promise[*protobyss.ACPContainer]{
 		resolveChan: make(chan *protobyss.ACPContainer),
 	}
+
+	// TODO this will leak for requests that never get answered
 	r.handlers[requestID] = prom
 
 	return prom

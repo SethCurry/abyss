@@ -39,6 +39,8 @@ type ProtoMessage struct {
 
 // ProtoRouter maps protobuf schema numbers to handlers by schema number.
 // It's semantically similar to HTTP routing by path.
+// It also contains read handlers that are called for incoming messages,
+// and write handlers that are called for outgoing messages.
 type ProtoRouter struct {
 	conn          *websocket.Conn
 	logger        zerolog.Logger
@@ -70,7 +72,9 @@ func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 				Content: content,
 			})
 		} else {
-			s.logger.Debug().Int("message_type_id", mt).Msg("no receiving channel for message type")
+			s.logger.Debug().
+				Int("message_type_id", mt).
+				Msg("no receiving channel for message type")
 		}
 	}
 }

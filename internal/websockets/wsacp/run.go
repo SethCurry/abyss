@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/SethCurry/abyss/internal/acp/termacp"
+	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/SethCurry/abyss/pkg/protobyss"
@@ -96,7 +96,7 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 	}
 	defer closeConn(conn, logger)
 
-	termACPClient := termacp.NewTermACPClient()
+	termACPClient := acptools.NewTermACPClient()
 	proxiedAgent.router.SetClient(termACPClient)
 
 	cwd, err := os.Getwd()

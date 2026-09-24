@@ -1,4 +1,4 @@
-// Package pacific provides a minimal HTTP API server built on chi.
+// Package pacific provides HTTP server code shared between both proxies.
 package pacific
 
 import (

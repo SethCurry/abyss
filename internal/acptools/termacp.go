@@ -1,5 +1,4 @@
-// Package termacp implements a simple terminal ACP viewer.
-package termacp
+package acptools
 
 import (
 	"bufio"
@@ -10,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SethCurry/abyss/internal/acp/acptools"
 	"github.com/coder/acp-go-sdk"
 	"github.com/rs/zerolog"
 )
@@ -28,8 +26,8 @@ func NewTermACPClient() *TermACPClient {
 		logger: logger,
 		out:    os.Stdout,
 		in:     bufio.NewReader(os.Stdin),
-		fs:     acptools.NewFilesystemTools(logger),
-		term:   acptools.NewTerminalTools(logger),
+		fs:     NewFilesystemTools(logger),
+		term:   NewTerminalTools(logger),
 	}
 }
 
@@ -40,8 +38,8 @@ type TermACPClient struct {
 	logger zerolog.Logger
 	out    io.Writer
 	in     *bufio.Reader
-	fs     *acptools.FilesystemTools
-	term   *acptools.TerminalTools
+	fs     *FilesystemTools
+	term   *TerminalTools
 }
 
 // RequestPermission prompts the user on the terminal to choose one of the
