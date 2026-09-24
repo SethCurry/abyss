@@ -15,6 +15,7 @@ import (
 
 	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/api/pacific"
+	"github.com/SethCurry/abyss/internal/fp"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsacp"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
@@ -23,6 +24,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 )
 
 // RequestContext holds the context for a request.
@@ -174,15 +176,32 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 			})
 		}
 	})
-	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
-		_, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
+	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) []wsrouter.ProtoMessage {
+		newMsgs, err := s.plugins.HandleMessage(context.Background(), &protobyss.ACPContainer{
 			TypeId:  int32(msg.TypeID),
 			Content: msg.Content,
 		})
 		if err != nil {
 			req.Logger.Error().Err(err).Msg("failed to handle message")
-			return
+			return []wsrouter.ProtoMessage{msg}
 		}
+
+		msgs, err := fp.MapE(func(msg *protobyss.ACPContainer) (wsrouter.ProtoMessage, error) {
+			marshalled, err := proto.Marshal(msg)
+			if err != nil {
+				return wsrouter.ProtoMessage{}, err
+			}
+
+			return wsrouter.ProtoMessage{
+				TypeID:  1,
+				Content: marshalled,
+			}, nil
+		}, newMsgs)
+		if err != nil {
+			return []wsrouter.ProtoMessage{msg}
+		}
+
+		return msgs
 	})
 	router.SetConn(acpConn)
 	underlying := wsacp.NewProxiedACPClient(router)

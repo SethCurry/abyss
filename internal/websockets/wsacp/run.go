@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/SethCurry/abyss/internal/acptools"
+	"github.com/SethCurry/abyss/internal/fp"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/SethCurry/abyss/pkg/protobyss"
@@ -71,17 +72,36 @@ func dialAndServe(
 		}
 	})
 
-	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) {
-		logger.Info().Msg("writing message")
-		logger.Info().Msg("reading message")
-
+	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) []wsrouter.ProtoMessage {
 		var acpMsg protobyss.ACPContainer
 
 		err := proto.Unmarshal(msg.Content, &acpMsg)
 		if err != nil {
 			logger.Error().Err(err).Msg("invalid proto")
 		}
-		_, _ = plugins.HandleMessage(context.Background(), &acpMsg)
+
+		newMsgs, err := plugins.HandleMessage(context.Background(), &acpMsg)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to handle message")
+			return []wsrouter.ProtoMessage{msg}
+		}
+
+		msgs, err := fp.MapE(func(msg *protobyss.ACPContainer) (wsrouter.ProtoMessage, error) {
+			marshalled, err := proto.Marshal(msg)
+			if err != nil {
+				return wsrouter.ProtoMessage{}, err
+			}
+
+			return wsrouter.ProtoMessage{
+				TypeID:  1,
+				Content: marshalled,
+			}, nil
+		}, newMsgs)
+		if err != nil {
+			return []wsrouter.ProtoMessage{msg}
+		}
+
+		return msgs
 	})
 
 	proxiedAgent := NewProxiedACPAgent(router)

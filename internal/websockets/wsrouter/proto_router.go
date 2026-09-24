@@ -22,7 +22,7 @@ func NewProtoRouter() *ProtoRouter {
 	sock := &ProtoRouter{
 		logger:        log.Logger.With().Str("from", "ProtoRouter").Logger(),
 		handlers:      make(map[int]func(ProtoMessage)),
-		writeHandlers: make(map[int]func(ProtoMessage)),
+		writeHandlers: make(map[int]func(ProtoMessage) []ProtoMessage),
 	}
 
 	return sock
@@ -45,7 +45,7 @@ type ProtoRouter struct {
 	conn          *websocket.Conn
 	logger        zerolog.Logger
 	handlers      map[int]func(ProtoMessage)
-	writeHandlers map[int]func(ProtoMessage)
+	writeHandlers map[int]func(ProtoMessage) []ProtoMessage
 	writeMut      sync.Mutex
 }
 
@@ -94,15 +94,22 @@ func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 
 	sendTo, ok := s.writeHandlers[mt]
 	if ok {
-		sendTo(ProtoMessage{
+		newMsgs := sendTo(ProtoMessage{
 			TypeID:  mt,
 			Content: data,
 		})
+
+		for _, v := range newMsgs {
+			if err := s.conn.WriteMessage(v.TypeID, v.Content); err != nil {
+				s.logger.Error().Err(err).Msg("failed to write proto message")
+			}
+		}
+		return nil
 	}
 	return s.conn.WriteMessage(mt, data)
 }
 
 // WriteHandler registers a write handler for the given message type.
-func (s *ProtoRouter) WriteHandler(mt int, handler func(ProtoMessage)) {
+func (s *ProtoRouter) WriteHandler(mt int, handler func(ProtoMessage) []ProtoMessage) {
 	s.writeHandlers[mt] = handler
 }
