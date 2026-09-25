@@ -103,13 +103,13 @@ func (a *ACPManager) HandleMessage(
 			}
 
 			for _, newMsg := range gotMsgs.GetContainers() {
-				msgType, err := abyss.GetMessageTypeByID(newMsg.TypeId)
+				msgType, err := abyss.GetMessageTypeByID(newMsg.GetTypeId())
 				if err != nil {
 					return allMessages, err
 				}
 
 				if msgType.IsResponse() && newMsg.GetResponseFor() == "" {
-					newMsg.ResponseFor = req.MessageId
+					newMsg.ResponseFor = req.GetMessageId()
 				}
 				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}

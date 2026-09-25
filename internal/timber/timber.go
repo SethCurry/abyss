@@ -48,7 +48,7 @@ func CreateLogger(level zerolog.Level) (zerolog.Logger, func()) {
 		}
 	}
 
-	logOut := zerolog.ConsoleWriter{Out: io.MultiWriter(logFile, os.Stderr)}
+	logOut := zerolog.ConsoleWriter{Out: io.MultiWriter(logFile, os.Stderr), NoColor: true}
 	globalLogger := zerolog.New(logOut).Level(zerolog.DebugLevel).With().Timestamp().Logger()
 	log.Logger = globalLogger
 

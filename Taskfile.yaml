@@ -19,6 +19,7 @@ tasks:
       - ./scripts/build-diagrams.sh
   build-docker:
     cmds:
+      - ./abyss docker gc
       - ./scripts/build-push-docker.sh
   todo:
     cmds:

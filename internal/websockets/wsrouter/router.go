@@ -58,7 +58,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 
 // Send marshals and writes an outgoing proto message over the connection.
 func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
-	if msg.MessageId == "" {
+	if msg.GetMessageId() == "" {
 		newID, err := NewID()
 		if err != nil {
 			return err

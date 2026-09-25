@@ -59,26 +59,29 @@ type ProtoRouter struct {
 func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 	s.conn = ws
 	for {
-
 		mt, content, err := s.conn.ReadMessage()
+		logger := s.logger.With().Int("message_type_id", mt).Logger()
+
 		if err != nil {
 			// Any read error leaves the connection unusable; reading again panics
 			// with "repeated read on failed websocket connection".
 			if !errors.Is(err, websocket.ErrCloseSent) {
-				s.logger.Error().Err(err).Msg("failed to read raw websocket message")
+				logger.Error().Err(err).Msg("failed to read raw websocket message")
+			} else {
+				logger.Warn().Msg("websocket connection closed")
 			}
 			return
 		}
 
 		sendTo, ok := s.handlers[mt]
 		if ok {
+			logger.Debug().Msg("ProtoRouter received message, dispatching to message type handler")
 			sendTo(ProtoMessage{
 				TypeID:  mt,
 				Content: content,
 			})
 		} else {
 			s.logger.Debug().
-				Int("message_type_id", mt).
 				Msg("no receiving channel for message type")
 		}
 	}
@@ -88,6 +91,9 @@ func (s *ProtoRouter) Serve(ws *websocket.Conn) {
 // number. It does not check if there is an existing handler; existing
 // handlers are overwritten.
 func (s *ProtoRouter) Handle(mt int, handler func(ProtoMessage)) {
+	s.logger.Debug().
+		Int("message_type_id", mt).
+		Msg("registering read handler for message type")
 	s.handlers[mt] = handler
 }
 
@@ -113,7 +119,7 @@ func (s *ProtoRouter) WriteMessage(mt int, data []byte) error {
 				return err
 			}
 
-			msgType, err := abyss.GetMessageTypeByID(underlyingMessage.TypeId)
+			msgType, err := abyss.GetMessageTypeByID(underlyingMessage.GetTypeId())
 			if err != nil {
 				return err
 			}

@@ -209,8 +209,8 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 				return wsrouter.ProtoMessage{}, err
 			}
 
-			if msgType.IsResponse() && mapMsg.ResponseFor == "" {
-				mapMsg.ResponseFor = acpMsg.MessageId
+			if msgType.IsResponse() && mapMsg.GetResponseFor() == "" {
+				mapMsg.ResponseFor = acpMsg.GetMessageId()
 			}
 
 			marshalled, err := proto.Marshal(mapMsg)
