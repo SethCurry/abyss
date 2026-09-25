@@ -12,6 +12,7 @@ import (
 	"github.com/SethCurry/abyss/internal/fp"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
+	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
@@ -41,7 +42,7 @@ func dialAndServe(
 
 	socket := wsrouter.NewProtoRouter(true)
 	router := wsrouter.NewACPRouter()
-	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	acpConn := wsrouter.NewACPConn(socket, plugins, abyss.LocationHost, router.ServeMessage)
 	router.SetConn(acpConn)
 	// socket.Handle(1, acpConn.Handle)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {

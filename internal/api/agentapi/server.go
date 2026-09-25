@@ -160,7 +160,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 
 	socket := wsrouter.NewProtoRouter(false)
 	router := wsrouter.NewACPRouter()
-	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	acpConn := wsrouter.NewACPConn(socket, s.plugins, abyss.LocationContainer, router.ServeMessage)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
 		req.Logger.Info().Msg("reading message")
 
