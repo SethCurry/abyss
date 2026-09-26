@@ -328,8 +328,8 @@ quickly, so try to include:
   it.
 - **The exact command you ran** and the output it printed. If `abyss oneshot` reproduces it, prefer
   that over an editor session — it's much easier for me to run.
-- **The relevant log file** from `~/.local/var/abyss/log`. The whole file is fine; abyss names them
-  by timestamp so I can match them up to your command.
+- **The relevant log file** from `~/.local/var/abyss/log`.  Only if you are comfortable or edit them;
+  debug logs contain the full text of ACP messages.
 
 I've tried to go overboard with logging, so the issue should hopefully be clear to you, or at least
 to me if not. I'll take a look and either help you fix it or push a fix to abyss itself.
