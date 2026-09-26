@@ -118,12 +118,20 @@ func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Co
 // RunClient dials the websocket server at wsURL and bridges it to a client
 // (typically an editor) over stdio. A non-nil tlsConfig enables TLS for the
 // connection.
+//
+// If prompt is non-empty, a single prompt is sent to the agent instead of
+// bridging stdio.
 func RunClient(
 	ctx context.Context,
 	agentConfig *agentconfig.AgentConfig,
+	prompt string,
 	wsURL string,
 	tlsConfig *tls.Config,
 	logger zerolog.Logger) error {
+	if prompt != "" {
+		return Oneshot(ctx, prompt, wsURL, tlsConfig, logger)
+	}
+
 	plugMgr, err := plugin.NewACPManager(ctx)
 	if err != nil {
 		return err

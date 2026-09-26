@@ -93,15 +93,8 @@ func runClient(
 		Str("container_id", endpoint.ContainerID).
 		Msg("connecting to agent container")
 
-	// TODO clean this up, there's no need to have an if here
-	if prompt == "" {
-		if err := api.RunClient(ctx, cfg, wsURL, tlsConfig, logger); err != nil {
-			logger.Error().Err(err).Msg("client disconnected with error")
-		}
-	} else {
-		if err := api.Oneshot(ctx, prompt, wsURL, tlsConfig, logger); err != nil {
-			logger.Error().Err(err).Msg("oneshot failed")
-		}
+	if err := api.RunClient(ctx, cfg, prompt, wsURL, tlsConfig, logger); err != nil {
+		logger.Error().Err(err).Msg("client disconnected with error")
 	}
 
 	logger.Info().Str("container_id", endpoint.ContainerID).Msg("stopping agent container")
