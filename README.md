@@ -50,6 +50,8 @@ so you don't need to memorize a weird path scheme.
   an ACP endpoint, so any ACP client — Zed included — can drive the agent.
 - **Reproducible environments.** Run setup scripts before the agent starts to
   install dependencies or seed state, and every session begins from a known place.
+- **WASM-based Plugins.** Use existing plugins or write your own, plugins have
+  full access to the stream of ACP messages. See [the examples](./example/plugins).
 
 ## Sleep easier. Ship faster.
 
