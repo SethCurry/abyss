@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"time"
 
+	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
@@ -28,11 +28,17 @@ func NewID() (string, error) {
 
 // NewACPConn creates an ACPConn that demuxes incoming proto messages from conn
 // into handler.
-func NewACPConn(conn IProtoRouter, handler func(*protobyss.ACPContainer)) *ACPConn {
+func NewACPConn(
+	conn IProtoRouter,
+	pluginMgr *plugin.ACPManager,
+	location abyss.ProxyLocation,
+	handler func(*protobyss.ACPContainer)) *ACPConn {
 	return &ACPConn{
 		logger:    log.Logger.With().Str("from", "ACPConn").Logger(),
 		protoConn: conn,
 		handler:   handler,
+		location:  location,
+		plugins:   pluginMgr,
 	}
 }
 
@@ -42,6 +48,8 @@ type ACPConn struct {
 	logger    zerolog.Logger
 	protoConn IProtoRouter
 	handler   func(*protobyss.ACPContainer)
+	plugins   *plugin.ACPManager
+	location  abyss.ProxyLocation
 }
 
 // Handle unmarshals an incoming proto message and dispatches it to the handler.
@@ -53,28 +61,135 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 		return
 	}
 
-	c.handler(protoMsg)
+	c.logger.Debug().
+		Int32("acp_message_type", protoMsg.GetTypeId()).
+		Str("message_id", protoMsg.GetMessageId()).
+		Str("response_for", protoMsg.GetResponseFor()).
+		Msg("ACPConn handling message")
+
+	newMsgs, err := c.plugins.HandleMessage(context.Background(), protoMsg)
+	if err != nil {
+		c.logger.Error().Err(err).Msg("failed to execute plugins in ACPRouter")
+	}
+
+	msgsLen := len(newMsgs)
+
+	for _, v := range newMsgs {
+		msgType, err := abyss.GetMessageTypeByID(v.GetTypeId())
+		if err != nil {
+			c.logger.Error().
+				Err(err).
+				Int32("acp_message_type_id", v.GetTypeId()).
+				Msg("failed to get message type in ACPConn.Handle")
+		}
+
+		if msgType.IsResponse() && v.GetResponseFor() == "" {
+			v.ResponseFor = protoMsg.GetMessageId()
+		}
+
+		isRemote := false
+
+		if (c.location == abyss.LocationHost && msgType.Direction() == abyss.ToAgent) ||
+			(c.location == abyss.LocationContainer && msgType.Direction() == abyss.ToACPClient) {
+			isRemote = true
+		}
+		if v.GetMessageId() == "" {
+			if msgsLen == 1 {
+				v.MessageId = protoMsg.GetMessageId()
+			} else {
+				newID, err := NewID()
+				if err != nil {
+					c.logger.Error().Err(err).Msg("failed to create new UUID")
+				}
+				v.MessageId = newID
+			}
+		}
+
+		marshalled, err := proto.Marshal(v)
+		if err != nil {
+			c.logger.Error().
+				Err(err).
+				Msg("failed to marshal proto message")
+		}
+
+		if isRemote {
+			err = c.protoConn.WriteMessage(1, marshalled)
+			if err != nil {
+				c.logger.Error().
+					Err(err).
+					Msg("failed to send message")
+			}
+		} else {
+			c.handler(v)
+		}
+	}
 }
 
 // Send marshals and writes an outgoing proto message over the connection.
 func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
-	if msg.MessageId == "" {
-		newID, err := NewID()
-		if err != nil {
-			return err
-		}
-		msg.MessageId = newID
-	}
-	data, err := proto.Marshal(msg)
+	c.logger.Error().
+		Str("message_id", msg.GetMessageId()).
+		Str("response_for", msg.GetResponseFor()).
+		Int32("acp_type_id", msg.GetTypeId()).
+		Msg("ACPConn sending message pre-plugins")
+
+	newMsgs, err := c.plugins.HandleMessage(context.Background(), msg)
 	if err != nil {
-		c.logger.Error().Err(err).Msg("failed to marshal proto message")
-		return err
+		c.logger.Error().Err(err).Msg("failed to execute plugins in ACPRouter")
 	}
 
-	err = c.protoConn.WriteMessage(1, data)
-	if err != nil {
-		c.logger.Error().Err(err).Msg("failed to send proto message")
-		return err
+	msgsLen := len(newMsgs)
+
+	for _, v := range newMsgs {
+		msgType, err := abyss.GetMessageTypeByID(v.GetTypeId())
+		if err != nil {
+			c.logger.Error().
+				Err(err).
+				Str("message_id", v.GetMessageId()).
+				Int32("acp_message_type_id", v.GetTypeId()).
+				Msg("failed to get message type in ACPConn.Handle")
+		}
+
+		isRemote := false
+
+		if (c.location == abyss.LocationHost && msgType.Direction() == abyss.ToAgent) ||
+			(c.location == abyss.LocationContainer && msgType.Direction() == abyss.ToACPClient) {
+			isRemote = true
+		}
+
+		if v.GetMessageId() == "" {
+			if msgsLen == 1 {
+				v.MessageId = msg.GetMessageId()
+			} else {
+				newID, err := NewID()
+				if err != nil {
+					return err
+				}
+				v.MessageId = newID
+			}
+		}
+
+		c.logger.Debug().
+			Str("message_id", v.GetMessageId()).
+			Int32("acp_type_id", v.GetTypeId()).
+			Str("response_for", v.GetResponseFor()).
+			Msg("ACPConn sending message after plugins")
+
+		if isRemote {
+			marshalled, err := proto.Marshal(v)
+			if err != nil {
+				c.logger.Error().
+					Err(err).
+					Msg("failed to marshal proto message in ACPConn")
+			}
+
+			err = c.protoConn.WriteMessage(1, marshalled)
+			if err != nil {
+				c.logger.Error().Err(err).Msg("")
+			}
+		} else {
+			c.handler(v)
+		}
 	}
 
 	return nil
@@ -212,236 +327,90 @@ func (r *ACPRouter) Respond(requestID string, message any) error {
 func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 	if r.client == nil {
 		r.logger.Warn().Msg("no client configured")
-		time.Sleep(time.Millisecond * 500)
 	}
+
 	if msg.GetResponseFor() != "" {
 		r.responseWatcher.Handle(r, msg)
-		return
 	}
 
 	switch abyss.MessageTypeID(msg.GetTypeId()) {
 	// Client capability requests (agent -> client).
 	case abyss.RequestPermissionRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.RequestPermission)
 	case abyss.WriteTextFileRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.WriteTextFile)
 	case abyss.ReadTextFileRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.ReadTextFile)
 	case abyss.CreateTerminalRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.CreateTerminal)
 	case abyss.TerminalOutputRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.TerminalOutput)
 	case abyss.ReleaseTerminalRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.ReleaseTerminal)
 	case abyss.WaitForTerminalExitRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.WaitForTerminalExit)
 	case abyss.KillTerminalRequestType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleRequest(r, msg, r.client.KillTerminal)
 	case abyss.SessionNotificationType:
-		if r.client == nil {
-			r.logger.Warn().Msg("no client configured")
-			return
-		}
 		handleNotification(r, msg, r.client.SessionUpdate)
 
 	// Agent requests (client -> agent).
 	case abyss.AuthenticateRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.Authenticate)
 	case abyss.InitializeRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.Initialize)
 	case abyss.LogoutRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.Logout)
 	case abyss.CancelNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.Cancel)
 	case abyss.CloseSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.CloseSession)
 	case abyss.ListSessionsRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.ListSessions)
 	case abyss.NewSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.NewSession)
 	case abyss.PromptRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.Prompt)
 	case abyss.ResumeSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.ResumeSession)
 	case abyss.SetSessionConfigOptionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.SetSessionConfigOption)
 	case abyss.SetSessionModeRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.SetSessionMode)
 	case abyss.LoadSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.LoadSession)
 
 	// Experimental agent requests (client -> agent).
 	case abyss.UnstableDidChangeDocumentNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableDidChangeDocument)
 	case abyss.UnstableDidCloseDocumentNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableDidCloseDocument)
 	case abyss.UnstableDidFocusDocumentNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableDidFocusDocument)
 	case abyss.UnstableDidOpenDocumentNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableDidOpenDocument)
 	case abyss.UnstableDidSaveDocumentNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableDidSaveDocument)
 	case abyss.UnstableAcceptNesNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableAcceptNes)
 	case abyss.UnstableCloseNesRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableCloseNes)
 	case abyss.UnstableRejectNesNotificationType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleNotification(r, msg, r.agent.UnstableRejectNes)
 	case abyss.UnstableStartNesRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableStartNes)
 	case abyss.UnstableSuggestNesRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableSuggestNes)
 	case abyss.UnstableDisableProviderRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableDisableProvider)
 	case abyss.UnstableListProvidersRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableListProviders)
 	case abyss.UnstableSetProviderRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableSetProvider)
 	case abyss.UnstableDeleteSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableDeleteSession)
 	case abyss.UnstableForkSessionRequestType:
-		if r.agent == nil {
-			r.logger.Warn().Msg("no agent configured")
-			return
-		}
 		handleRequest(r, msg, r.agent.UnstableForkSession)
-
 	default:
 		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Msg("unhandled message type")
 	}

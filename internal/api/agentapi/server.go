@@ -160,7 +160,7 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 
 	socket := wsrouter.NewProtoRouter(false)
 	router := wsrouter.NewACPRouter()
-	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	acpConn := wsrouter.NewACPConn(socket, s.plugins, abyss.LocationContainer, router.ServeMessage)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
 		req.Logger.Info().Msg("reading message")
 
@@ -209,8 +209,8 @@ func (s *Server) handleWebsocket(req *RequestContext) {
 				return wsrouter.ProtoMessage{}, err
 			}
 
-			if msgType.IsResponse() && mapMsg.ResponseFor == "" {
-				mapMsg.ResponseFor = acpMsg.MessageId
+			if msgType.IsResponse() && mapMsg.GetResponseFor() == "" {
+				mapMsg.ResponseFor = acpMsg.GetMessageId()
 			}
 
 			marshalled, err := proto.Marshal(mapMsg)

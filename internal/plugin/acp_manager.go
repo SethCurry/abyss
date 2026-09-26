@@ -103,19 +103,31 @@ func (a *ACPManager) HandleMessage(
 			}
 
 			for _, newMsg := range gotMsgs.GetContainers() {
-				msgType, err := abyss.GetMessageTypeByID(newMsg.TypeId)
+				msgType, err := abyss.GetMessageTypeByID(newMsg.GetTypeId())
 				if err != nil {
 					return allMessages, err
 				}
 
 				if msgType.IsResponse() && newMsg.GetResponseFor() == "" {
-					newMsg.ResponseFor = req.MessageId
+					switch {
+					case msg.GetResponseFor() != "":
+						newMsg.ResponseFor = msg.GetResponseFor()
+					case req.GetResponseFor() != "":
+						newMsg.ResponseFor = req.GetResponseFor()
+					default:
+						newMsg.ResponseFor = req.GetMessageId()
+					}
 				}
 				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}
 			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)
 		}
 		allMessages = newMsgs
+	}
+
+	allMessagesLen := len(allMessages)
+	if allMessagesLen == 1 {
+		allMessages[0].MessageId = req.GetMessageId()
 	}
 	return allMessages, nil
 }

@@ -9,14 +9,12 @@ import (
 
 	"github.com/SethCurry/abyss/internal/acptools"
 	"github.com/SethCurry/abyss/internal/agentconfig"
-	"github.com/SethCurry/abyss/internal/fp"
 	"github.com/SethCurry/abyss/internal/plugin"
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
-	"github.com/SethCurry/abyss/pkg/protobyss"
+	"github.com/SethCurry/abyss/pkg/abyss"
 	"github.com/coder/acp-go-sdk"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/proto"
 )
 
 // dialAndServe dials the websocket server at wsURL and wires up the socket,
@@ -41,68 +39,18 @@ func dialAndServe(
 
 	socket := wsrouter.NewProtoRouter(true)
 	router := wsrouter.NewACPRouter()
-	acpConn := wsrouter.NewACPConn(socket, router.ServeMessage)
+	acpConn := wsrouter.NewACPConn(socket, plugins, abyss.LocationHost, router.ServeMessage)
 	router.SetConn(acpConn)
 	// socket.Handle(1, acpConn.Handle)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
-		logger.Info().Msg("reading message")
-
-		var acpMsg protobyss.ACPContainer
-
-		err := proto.Unmarshal(msg.Content, &acpMsg)
-		if err != nil {
-			logger.Error().Err(err).Msg("invalid proto")
-		}
-
-		newMsgs, err := plugins.HandleMessage(context.Background(), &acpMsg)
-		if err != nil {
-			go acpConn.Handle(msg)
-			logger.Error().Err(err).Msg("failed to handle message")
-			return
-		}
-
-		for _, v := range newMsgs {
-			marshalled, err := proto.Marshal(v)
-			if err != nil {
-				logger.Error().Err(err).Msg("failed to marshal message")
-			}
-			go acpConn.Handle(wsrouter.ProtoMessage{
-				TypeID:  1,
-				Content: marshalled,
-			})
-		}
+		acpConn.Handle(wsrouter.ProtoMessage{
+			TypeID:  1,
+			Content: msg.Content,
+		})
 	})
 
 	socket.WriteHandler(1, func(msg wsrouter.ProtoMessage) []wsrouter.ProtoMessage {
-		var acpMsg protobyss.ACPContainer
-
-		err := proto.Unmarshal(msg.Content, &acpMsg)
-		if err != nil {
-			logger.Error().Err(err).Msg("invalid proto")
-		}
-
-		newMsgs, err := plugins.HandleMessage(context.Background(), &acpMsg)
-		if err != nil {
-			logger.Error().Err(err).Msg("failed to handle message")
-			return []wsrouter.ProtoMessage{msg}
-		}
-
-		msgs, err := fp.MapE(func(msg *protobyss.ACPContainer) (wsrouter.ProtoMessage, error) {
-			marshalled, err := proto.Marshal(msg)
-			if err != nil {
-				return wsrouter.ProtoMessage{}, err
-			}
-
-			return wsrouter.ProtoMessage{
-				TypeID:  1,
-				Content: marshalled,
-			}, nil
-		}, newMsgs)
-		if err != nil {
-			return []wsrouter.ProtoMessage{msg}
-		}
-
-		return msgs
+		return []wsrouter.ProtoMessage{msg}
 	})
 
 	proxiedAgent := NewProxiedACPAgent(router)
