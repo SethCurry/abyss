@@ -61,30 +61,37 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 		return
 	}
 
-	c.logger.Debug().
-		Int32("acp_message_type", protoMsg.GetTypeId()).
-		Str("message_id", protoMsg.GetMessageId()).
-		Str("response_for", protoMsg.GetResponseFor()).
+	logger := c.logger.With().
+		Int32("orig_acp_message_type_id", protoMsg.GetTypeId()).
+		Str("orig_message_id", protoMsg.GetMessageId()).
+		Str("orig_response_for", protoMsg.GetResponseFor()).
+		Logger()
+
+	logger.Debug().
 		Msg("ACPConn handling message")
 
 	newMsgs, err := c.plugins.HandleMessage(context.Background(), protoMsg)
 	if err != nil {
-		c.logger.Error().Err(err).Msg("failed to execute plugins in ACPRouter")
+		logger.Error().Err(err).Msg("failed to execute plugins in ACPRouter")
 	}
 
 	msgsLen := len(newMsgs)
 
 	for _, v := range newMsgs {
+		msgLogger := logger.With().
+			Int32("plugin_acp_message_type_id", v.GetTypeId()).
+			Str("plugin_message_id", v.GetMessageId()).
+			Str("plugin_response_for", v.GetResponseFor()).
+			Logger()
 		msgType, err := abyss.GetMessageTypeByID(v.GetTypeId())
 		if err != nil {
-			c.logger.Error().
+			msgLogger.Error().
 				Err(err).
-				Int32("acp_message_type_id", v.GetTypeId()).
 				Msg("failed to get message type in ACPConn.Handle")
 		}
 
 		if msgType.IsResponse() && v.GetResponseFor() == "" {
-			v.ResponseFor = protoMsg.GetMessageId()
+			v.ResponseFor = protoMsg.GetResponseFor()
 		}
 
 		isRemote := false
@@ -188,7 +195,7 @@ func (c *ACPConn) Send(msg *protobyss.ACPContainer) error {
 				c.logger.Error().Err(err).Msg("")
 			}
 		} else {
-			c.handler(v)
+			go c.handler(v)
 		}
 	}
 

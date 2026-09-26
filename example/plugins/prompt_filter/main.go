@@ -32,7 +32,7 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 	for _, v := range p.bannedRegexes {
 		if v.Match(contents) {
 			resp := acp.PromptResponse{
-				StopReason: acp.StopReasonEndTurn,
+				StopReason: acp.StopReasonRefusal,
 			}
 
 			respCont, err := abyss.ACPContainer(resp)
@@ -44,7 +44,8 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 				SessionId: req.SessionId,
 				Update: acp.SessionUpdate{
 					AgentMessageChunk: &acp.SessionUpdateAgentMessageChunk{
-						Content: acp.TextBlock("Nuh uh, not under my roof!"),
+						Content: acp.TextBlock("\n\n\nNuh uh, not under my roof!\n" +
+							"You have violated a security filter.  The agent will ignore your message."),
 					},
 				},
 			}
@@ -53,7 +54,7 @@ func (p *PromptFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPC
 				break
 			}
 
-			return []*protobyss.ACPContainer{msgCont, respCont}, nil
+			return []*protobyss.ACPContainer{respCont, msgCont}, nil
 		}
 	}
 

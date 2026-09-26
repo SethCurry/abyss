@@ -131,7 +131,8 @@ func WithExposeContainerPort(containerPort int) ContainerPreBuildStep {
 }
 
 // WithHostBind returns a pre-build step that binds a host path into the
-// container.
+// container.  Returns errors when it is unable to get a clean,
+// absolute path to either of the provided paths.
 func WithHostBind(from string, to string) ContainerPreBuildStep {
 	return func(config *ContainerConfig) error {
 		cleanedFrom, err := cleanPath(from)
@@ -180,6 +181,8 @@ func NewContainerBuilder(
 }
 
 // ContainerBuilder accumulates build steps and starts a container.
+// TODO this should be two separate "config-builder" and
+// "container-builder" parts.
 type ContainerBuilder struct {
 	ConfigPath string
 	config     *ContainerConfig

@@ -134,7 +134,9 @@ func (a *ACPManager) HandleMessage(
 
 	allMessagesLen := len(allMessages)
 	if allMessagesLen == 1 {
-		allMessages[0].MessageId = req.GetMessageId()
+		if req.GetTypeId() == allMessages[0].GetTypeId() {
+			allMessages[0].MessageId = req.GetMessageId()
+		}
 	}
 	return allMessages, nil
 }
