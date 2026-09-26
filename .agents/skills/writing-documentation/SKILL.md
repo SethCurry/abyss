@@ -41,3 +41,8 @@ in `site/content/docs/reference` or `site/content/docs/guides`.
 These pages should be written as if they were written by a marketing agency.  Show highlights of the product,
 but do not write long explanations of how to set them up.  Your goal is to get users interested in using
 or contributing to `abyss`.
+
+## Finding More Information
+
+There's a lot of information already in `site/content/docs`.  If you have to look something up and think users might have
+the same question, please add it to a relevant page in `site/content/docs`.
