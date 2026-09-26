@@ -109,13 +109,24 @@ func (a *ACPManager) HandleMessage(
 				}
 
 				if msgType.IsResponse() && newMsg.GetResponseFor() == "" {
-					newMsg.ResponseFor = req.GetMessageId()
+					if msg.ResponseFor != "" {
+						newMsg.ResponseFor = msg.ResponseFor
+					} else if req.ResponseFor != "" {
+						newMsg.ResponseFor = req.ResponseFor
+					} else {
+						newMsg.ResponseFor = req.GetMessageId()
+					}
 				}
 				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}
 			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)
 		}
 		allMessages = newMsgs
+	}
+
+	allMessagesLen := len(allMessages)
+	if allMessagesLen == 1 {
+		allMessages[0].MessageId = req.MessageId
 	}
 	return allMessages, nil
 }
