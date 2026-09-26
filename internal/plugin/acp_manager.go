@@ -90,23 +90,31 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 func (a *ACPManager) HandleMessage(
 	ctx context.Context, req *protobyss.ACPContainer,
 ) ([]*protobyss.ACPContainer, error) {
-	a.logger.Info().Msg("plugin handling message")
 	allMessages := []*protobyss.ACPContainer{req}
 	for i, v := range a.plugins {
-		a.logger.Info().Int("plugin_index", i).Msg("executing plugin")
+		logger := a.logger.With().Int("plugin_index", i).Logger()
+		logger.Debug().Msg("executing plugin")
 		var newMsgs []*protobyss.ACPContainer
 		for _, msg := range allMessages {
 			gotMsgs, err := v.HandleMessage(ctx, msg)
 			if err != nil {
-				a.logger.Error().Err(err).Msg("plugin failed")
+				logger.Error().Err(err).Msg("plugin failed")
 				return allMessages, err
 			}
 
-			for _, newMsg := range gotMsgs.GetContainers() {
+			for newMsgIndex, newMsg := range gotMsgs.GetContainers() {
 				msgType, err := abyss.GetMessageTypeByID(newMsg.GetTypeId())
 				if err != nil {
 					return allMessages, err
 				}
+
+				msgLogger := logger.With().
+					Int("returned_message_index", newMsgIndex).
+					Str("msg_id", newMsg.GetMessageId()).
+					Logger()
+				msgLogger.Debug().
+					Str("content", string(newMsg.GetContent())).
+					Msg("got plugin results")
 
 				if msgType.IsResponse() && newMsg.GetResponseFor() == "" {
 					switch {
@@ -118,7 +126,6 @@ func (a *ACPManager) HandleMessage(
 						newMsg.ResponseFor = req.GetMessageId()
 					}
 				}
-				a.logger.Info().Str("content", string(newMsg.GetContent())).Msg("got plugin results")
 			}
 			newMsgs = append(newMsgs, gotMsgs.GetContainers()...)
 		}
