@@ -82,7 +82,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 		if err != nil {
 			logger.Error().
 				Err(err).
-				Int32("plugin_acp_message_type_id").
+				Int32("plugin_acp_message_type_id", v.GetTypeId()).
 				Msg("failed to get message type in ACPConn.Handle")
 		}
 		msgLogger := logger.With().
@@ -427,25 +427,36 @@ func (r *ACPRouter) ServeMessage(msg *protobyss.ACPContainer) {
 func handleRequest[T, R any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) (R, error)) {
 	var params T
 	if err := json.Unmarshal(msg.GetContent(), &params); err != nil {
-		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to unmarshal message")
+		r.logger.Warn().
+			Int32("type_id", msg.GetTypeId()).
+			Err(err).
+			Msg("failed to unmarshal message")
 		return
 	}
 
 	resp, err := fn(context.Background(), params)
 	if err != nil {
-		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to handle request")
+		r.logger.Warn().
+			Int32("type_id", msg.GetTypeId()).
+			Err(err).
+			Msg("failed to handle request")
 		return
 	}
 
 	if err := r.Respond(msg.GetMessageId(), resp); err != nil {
-		r.logger.Warn().Err(err).Msg("failed to send response")
+		r.logger.Warn().
+			Err(err).
+			Msg("failed to send response")
 	}
 }
 
 func handleNotification[T any](r *ACPRouter, msg *protobyss.ACPContainer, fn func(context.Context, T) error) {
 	var params T
 	if err := json.Unmarshal(msg.GetContent(), &params); err != nil {
-		r.logger.Warn().Int32("type_id", msg.GetTypeId()).Err(err).Msg("failed to unmarshal message")
+		r.logger.Warn().
+			Int32("type_id", msg.GetTypeId()).
+			Err(err).
+			Msg("failed to unmarshal message")
 		return
 	}
 
