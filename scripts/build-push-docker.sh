@@ -34,21 +34,22 @@ for i in ./build/docker/*; do
     continue
   fi
 
-  latest_url="abyss-$image_name:latest"
-  dev_url="ghcr.io/sethcurry/abyss-$image_name:dev"
-
-  if [ "$do_push" -eq 1 ]; then
-    repo_url="ghcr.io/sethcurry/abyss-$image_name:$tag_name"
-    latest_url="ghcr.io/sethcurry/abyss-$image_name:latest"
-  else
-    repo_url="abyss-$image_name:dev"
+  if [ "$image_name" == "base-js" ]; then
     latest_url="abyss-$image_name:latest"
+    dev_url="abyss-$image_name:dev"
+    repo_url="abyss-$image_name:release"
+  else
+    if [ "$do_push" -eq 1 ]; then
+      repo_url="ghcr.io/sethcurry/abyss-$image_name:$tag_name"
+      latest_url="ghcr.io/sethcurry/abyss-$image_name:latest"
+    else
+      repo_url="ghcr.io/sethcurry/abyss-$image_name:dev"
+      latest_url="ghcr.io/sethcurry/abyss-$image_name:latest"
+      dev_url="ghcr.io/sethcurry/abyss-$image_name:dev"
+    fi
   fi
 
   echo "Building $repo_url"
-  docker image rm "$dev_url"
-  docker image rm "$repo_url"
-  docker image rm "$latest_url"
   docker buildx build --pull=false -t "$dev_url" -t "$repo_url" -t "$latest_url" -f ./build/docker/$image_name/Dockerfile .
 
   if [ "$do_push" -eq 1 ]; then

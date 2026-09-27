@@ -20,7 +20,7 @@ tasks:
   build-docker:
     cmds:
       - ./abyss docker gc
-      - ./scripts/build-push-docker.sh
+      - ./scripts/build-push-docker.sh -i pi
   todo:
     cmds:
       - rg 'TODO'
