@@ -78,17 +78,18 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 	msgsLen := len(newMsgs)
 
 	for _, v := range newMsgs {
-		msgLogger := logger.With().
-			Int32("plugin_acp_message_type_id", v.GetTypeId()).
-			Str("plugin_message_id", v.GetMessageId()).
-			Str("plugin_response_for", v.GetResponseFor()).
-			Logger()
 		msgType, err := abyss.GetMessageTypeByID(v.GetTypeId())
 		if err != nil {
-			msgLogger.Error().
+			logger.Error().
 				Err(err).
+				Int32("plugin_acp_message_type_id").
 				Msg("failed to get message type in ACPConn.Handle")
 		}
+		msgLogger := logger.With().
+			Str("plugin_message_id", v.GetMessageId()).
+			Str("plugin_message_type", msgType.Name()).
+			Str("plugin_response_for", v.GetResponseFor()).
+			Logger()
 
 		if msgType.IsResponse() && v.GetResponseFor() == "" {
 			v.ResponseFor = protoMsg.GetResponseFor()
@@ -106,7 +107,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 			} else {
 				newID, err := NewID()
 				if err != nil {
-					c.logger.Error().Err(err).Msg("failed to create new UUID")
+					msgLogger.Error().Err(err).Msg("failed to create new UUID")
 				}
 				v.MessageId = newID
 			}
@@ -114,7 +115,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 
 		marshalled, err := proto.Marshal(v)
 		if err != nil {
-			c.logger.Error().
+			msgLogger.Error().
 				Err(err).
 				Msg("failed to marshal proto message")
 		}
@@ -122,7 +123,7 @@ func (c *ACPConn) Handle(msg ProtoMessage) {
 		if isRemote {
 			err = c.protoConn.WriteMessage(1, marshalled)
 			if err != nil {
-				c.logger.Error().
+				msgLogger.Error().
 					Err(err).
 					Msg("failed to send message")
 			}

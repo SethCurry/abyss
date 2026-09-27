@@ -234,8 +234,14 @@ const (
 	ToAgent MessageDirection = "to_agent"
 )
 
-func newMessageTypeT[T any](msgTypeID MessageTypeID, direction MessageDirection, isResponse bool) *MessageTypeT[T] {
+func newMessageTypeT[T any](
+	name string,
+	msgTypeID MessageTypeID,
+	direction MessageDirection,
+	isResponse bool,
+) *MessageTypeT[T] {
 	return &MessageTypeT[T]{
+		name:       name,
 		typeID:     msgTypeID,
 		direction:  direction,
 		isResponse: isResponse,
@@ -246,10 +252,14 @@ func newMessageTypeT[T any](msgTypeID MessageTypeID, direction MessageDirection,
 // and direction. It is primarily used to unmarshal ACP messages by
 // their MessageTypeID.
 type MessageTypeT[T any] struct {
+	name       string
 	typeID     MessageTypeID
 	direction  MessageDirection
 	isResponse bool
 }
+
+// Name returns the name of this message type.
+func (m *MessageTypeT[T]) Name() string { return m.name }
 
 // Unmarshal unmarshals the content into the message's concrete type.
 func (m *MessageTypeT[T]) Unmarshal(content []byte) (T, error) {
@@ -284,6 +294,7 @@ func (m *MessageTypeT[T]) Direction() MessageDirection { return m.direction }
 // TypedMessage is the common interface for generic Message[T] values so
 // they can be stored together in a single heterogeneous registry.
 type TypedMessage interface {
+	Name() string
 	TypeID() MessageTypeID
 	Type() reflect.Type
 	UnmarshalAny(content []byte) (any, error)
@@ -397,6 +408,7 @@ var (
 	// RequestPermissionRequestMsg is the message type for requesting permission
 	// to perform an action.
 	RequestPermissionRequestMsg = newMessageTypeT[acp.RequestPermissionRequest](
+		"RequestPermissionRequest",
 		RequestPermissionRequestType,
 		ToACPClient,
 		false,
@@ -405,360 +417,425 @@ var (
 	// RequestPermissionResponseMsg is the message type for the response to a
 	// request permission request.
 	RequestPermissionResponseMsg = newMessageTypeT[acp.RequestPermissionResponse](
+		"RequestPermissionResponse",
 		RequestPermissionResponseType, ToAgent, true,
 	)
 
 	// WriteTextFileRequestMsg is the message type for requesting to write a text
 	// file.
 	WriteTextFileRequestMsg = newMessageTypeT[acp.WriteTextFileRequest](
+		"WriteTextFileRequest",
 		WriteTextFileRequestType, ToACPClient, false,
 	)
 
 	// WriteTextFileResponseMsg is the message type for the response to a write
 	// text file request.
 	WriteTextFileResponseMsg = newMessageTypeT[acp.WriteTextFileResponse](
+		"WriteTextFileResponse",
 		WriteTextFileResponseType, ToAgent, true,
 	)
 
 	// ReadTextFileRequestMsg is the message type for requesting to read a text
 	// file.
 	ReadTextFileRequestMsg = newMessageTypeT[acp.ReadTextFileRequest](
+		"ReadTextFileRequest",
 		ReadTextFileRequestType, ToACPClient, false,
 	)
 
 	// ReadTextFileResponseMsg is the message type for the response to a read
 	// text file request.
 	ReadTextFileResponseMsg = newMessageTypeT[acp.ReadTextFileResponse](
+		"ReadTextFileResponse",
 		ReadTextFileResponseType, ToAgent, true,
 	)
 
 	// CreateTerminalRequestMsg is the message type for requesting to create a
 	// terminal.
 	CreateTerminalRequestMsg = newMessageTypeT[acp.CreateTerminalRequest](
+		"CreateTerminalRequest",
 		CreateTerminalRequestType, ToACPClient, false,
 	)
 
 	// CreateTerminalResponseMsg is the message type for the response to a
 	// create-terminal request.
 	CreateTerminalResponseMsg = newMessageTypeT[acp.CreateTerminalResponse](
+		"CreateTerminalResponse",
 		CreateTerminalResponseType, ToAgent, true,
 	)
 
 	// TerminalOutputRequestMsg is the message type for requesting terminal
 	// output.
 	TerminalOutputRequestMsg = newMessageTypeT[acp.TerminalOutputRequest](
+		"TerminalOutputRequest",
 		TerminalOutputRequestType, ToACPClient, false,
 	)
 
 	// TerminalOutputResponseMsg is the message type for the response to a
 	// terminal-output request.
 	TerminalOutputResponseMsg = newMessageTypeT[acp.TerminalOutputResponse](
+		"TerminalOutputResponse",
 		TerminalOutputResponseType, ToAgent, true,
 	)
 
 	// ReleaseTerminalRequestMsg is the message type for requesting to release a
 	// terminal.
 	ReleaseTerminalRequestMsg = newMessageTypeT[acp.ReleaseTerminalRequest](
+		"ReleaseTerminalRequest",
 		ReleaseTerminalRequestType, ToACPClient, false,
 	)
 
 	// ReleaseTerminalResponseMsg is the message type for the response to a
 	// release-terminal request.
 	ReleaseTerminalResponseMsg = newMessageTypeT[acp.ReleaseTerminalResponse](
+		"ReleaseTerminalResponse",
 		ReleaseTerminalResponseType, ToAgent, true,
 	)
 
 	// WaitForTerminalExitRequestMsg is the message type for requesting to wait
 	// for a terminal to exit.
 	WaitForTerminalExitRequestMsg = newMessageTypeT[acp.WaitForTerminalExitRequest](
+		"WaitForTerminalExitRequest",
 		WaitForTerminalExitRequestType, ToACPClient, false,
 	)
 
 	// WaitForTerminalExitResponseMsg is the message type for the response to a
 	// wait-for-terminal-exit request.
 	WaitForTerminalExitResponseMsg = newMessageTypeT[acp.WaitForTerminalExitResponse](
+		"WaitForTerminalExitResponse",
 		WaitForTerminalExitResponseType, ToAgent, true,
 	)
 
 	// KillTerminalRequestMsg is the message type for requesting to kill a
 	// terminal.
 	KillTerminalRequestMsg = newMessageTypeT[acp.KillTerminalRequest](
+		"KillTerminalRequest",
 		KillTerminalRequestType, ToACPClient, false,
 	)
 
 	// KillTerminalResponseMsg is the message type for the response to a
 	// kill-terminal request.
 	KillTerminalResponseMsg = newMessageTypeT[acp.KillTerminalResponse](
+		"KillTerminalResponse",
 		KillTerminalResponseType, ToAgent, true,
 	)
 
 	// SessionNotificationMsg is the message type for a session notification.
 	SessionNotificationMsg = newMessageTypeT[acp.SessionNotification](
+		"SessionNotification",
 		SessionNotificationType, ToACPClient, false,
 	)
 
 	// SetSessionModeRequestMsg is the message type for requesting to set the
 	// session mode.
 	SetSessionModeRequestMsg = newMessageTypeT[acp.SetSessionModeRequest](
+		"SetSessionModeRequest",
 		SetSessionModeRequestType, ToAgent, false,
 	)
 
 	// SetSessionModeResponseMsg is the message type for the response to a
 	// set-session-mode request.
 	SetSessionModeResponseMsg = newMessageTypeT[acp.SetSessionModeResponse](
+		"SetSessionModeResponse",
 		SetSessionModeResponseType, ToACPClient, true,
 	)
 
 	// UnstableForkSessionRequestMsg is the message type for requesting to fork
 	// a session.
 	UnstableForkSessionRequestMsg = newMessageTypeT[acp.UnstableForkSessionRequest](
+		"UnstableForkSessionRequest",
 		UnstableForkSessionRequestType, ToAgent, false,
 	)
 
 	// UnstableForkSessionResponseMsg is the message type for the response to a
 	// fork-session request.
 	UnstableForkSessionResponseMsg = newMessageTypeT[acp.UnstableForkSessionResponse](
+		"UnstableForkSessionResponse",
 		UnstableForkSessionResponseType, ToACPClient, true,
 	)
 
 	// ListSessionsRequestMsg is the message type for requesting to list
 	// sessions.
-	ListSessionsRequestMsg = newMessageTypeT[acp.ListSessionsRequest](ListSessionsRequestType, ToAgent, false)
+	ListSessionsRequestMsg = newMessageTypeT[acp.ListSessionsRequest](
+		"ListSessionsRequest",
+		ListSessionsRequestType,
+		ToAgent,
+		false,
+	)
 
 	// ListSessionsResponseMsg is the message type for the response to a
 	// list-sessions request.
 	ListSessionsResponseMsg = newMessageTypeT[acp.ListSessionsResponse](
+		"ListSessionsResponse",
 		ListSessionsResponseType, ToACPClient, true,
 	)
 
 	// ResumeSessionRequestMsg is the message type for requesting to resume a
 	// session.
 	ResumeSessionRequestMsg = newMessageTypeT[acp.ResumeSessionRequest](
+		"ResumeSessionRequest",
 		ResumeSessionRequestType, ToAgent, false,
 	)
 
 	// ResumeSessionResponseMsg is the message type for the response to a
 	// resume-session request.
 	ResumeSessionResponseMsg = newMessageTypeT[acp.ResumeSessionResponse](
+		"ResumeSessionResponse",
 		ResumeSessionResponseType, ToACPClient, true,
 	)
 
 	// SetSessionConfigOptionRequestMsg is the message type for requesting to
 	// set a session config option.
 	SetSessionConfigOptionRequestMsg = newMessageTypeT[acp.SetSessionConfigOptionRequest](
+		"SetSessionConfigOptionRequest",
 		SetSessionConfigOptionRequestType, ToAgent, false,
 	)
 
 	// SetSessionConfigOptionResponseMsg is the message type for the response
 	// to a set-session-config-option request.
 	SetSessionConfigOptionResponseMsg = newMessageTypeT[acp.SetSessionConfigOptionResponse](
+		"SetSessionConfigOptionResponse",
 		SetSessionConfigOptionResponseType, ToACPClient, true,
 	)
 
 	// LogoutRequestMsg is the message type for requesting to log out.
 	LogoutRequestMsg = newMessageTypeT[acp.LogoutRequest](
+		"LogoutRequest",
 		LogoutRequestType, ToAgent, false,
 	)
 
 	// LogoutResponseMsg is the message type for the response to a logout
 	// request.
-	LogoutResponseMsg = newMessageTypeT[acp.LogoutResponse](LogoutResponseType, ToACPClient, true)
+	LogoutResponseMsg = newMessageTypeT[acp.LogoutResponse]("LogoutResponse", LogoutResponseType, ToACPClient, true)
 
 	// UnstableCloseNesRequestMsg is the message type for requesting to close
 	// an NES.
 	UnstableCloseNesRequestMsg = newMessageTypeT[acp.UnstableCloseNesRequest](
+		"UnstableCloseNesRequest",
 		UnstableCloseNesRequestType, ToAgent, false,
 	)
 
 	// UnstableCloseNesResponseMsg is the message type for the response to a
 	// close-NES request.
 	UnstableCloseNesResponseMsg = newMessageTypeT[acp.UnstableCloseNesResponse](
+		"UnstableCloseNesResponse",
 		UnstableCloseNesResponseType, ToACPClient, true,
 	)
 
 	// UnstableStartNesRequestMsg is the message type for requesting to start
 	// an NES.
 	UnstableStartNesRequestMsg = newMessageTypeT[acp.UnstableStartNesRequest](
+		"UnstableStartNesRequest",
 		UnstableStartNesRequestType, ToAgent, false,
 	)
 
 	// UnstableStartNesResponseMsg is the message type for the response to a
 	// start-NES request.
 	UnstableStartNesResponseMsg = newMessageTypeT[acp.UnstableStartNesResponse](
+		"UnstableStartNesResponse",
 		UnstableStartNesResponseType, ToACPClient, true,
 	)
 
 	// UnstableSuggestNesRequestMsg is the message type for requesting NES
 	// suggestions.
 	UnstableSuggestNesRequestMsg = newMessageTypeT[acp.UnstableSuggestNesRequest](
+		"UnstableSuggestNesRequest",
 		UnstableSuggestNesRequestType, ToAgent, false,
 	)
 
 	// UnstableSuggestNesResponseMsg is the message type for the response to an
 	// NES-suggest request.
 	UnstableSuggestNesResponseMsg = newMessageTypeT[acp.UnstableSuggestNesResponse](
+		"UnstableSuggestNesResponse",
 		UnstableSuggestNesResponseType, ToACPClient, true,
 	)
 
 	// UnstableAcceptNesNotificationMsg is the message type for an accept-NES
 	// notification.
 	UnstableAcceptNesNotificationMsg = newMessageTypeT[acp.UnstableAcceptNesNotification](
+		"UnstableAcceptNesNotification",
 		UnstableAcceptNesNotificationType, ToAgent, false,
 	)
 
 	// UnstableRejectNesNotificationMsg is the message type for a reject-NES
 	// notification.
 	UnstableRejectNesNotificationMsg = newMessageTypeT[acp.UnstableRejectNesNotification](
+		"UnstableRejectNesNotification",
 		UnstableRejectNesNotificationType, ToAgent, false,
 	)
 
 	// UnstableDidChangeDocumentNotifMsg is the message type for a
 	// did-change-document notification.
 	UnstableDidChangeDocumentNotifMsg = newMessageTypeT[acp.UnstableDidChangeDocumentNotification](
+		"UnstableDidChangeDocumentNotif",
 		UnstableDidChangeDocumentNotificationType, ToAgent, false,
 	)
 
 	// UnstableDidCloseDocumentNotifMsg is the message type for a
 	// did-close-document notification.
 	UnstableDidCloseDocumentNotifMsg = newMessageTypeT[acp.UnstableDidCloseDocumentNotification](
+		"UnstableDidCloseDocumentNotif",
 		UnstableDidCloseDocumentNotificationType, ToAgent, false,
 	)
 
 	// UnstableDidFocusDocumentNotifMsg is the message type for a
 	// did-focus-document notification.
 	UnstableDidFocusDocumentNotifMsg = newMessageTypeT[acp.UnstableDidFocusDocumentNotification](
+		"UnstableDidFocusDocumentNotif",
 		UnstableDidFocusDocumentNotificationType, ToAgent, false,
 	)
 
 	// UnstableDidOpenDocumentNotifMsg is the message type for a
 	// did-open-document notification.
 	UnstableDidOpenDocumentNotifMsg = newMessageTypeT[acp.UnstableDidOpenDocumentNotification](
+		"UnstableDidOpenDocumentNotif",
 		UnstableDidOpenDocumentNotificationType, ToAgent, false,
 	)
 
 	// UnstableDidSaveDocumentNotifMsg is the message type for a
 	// did-save-document notification.
 	UnstableDidSaveDocumentNotifMsg = newMessageTypeT[acp.UnstableDidSaveDocumentNotification](
+		"UnstableDidSaveDocumentNotif",
 		UnstableDidSaveDocumentNotificationType, ToAgent, false,
 	)
 
 	// UnstableDisableProviderRequestMsg is the message type for requesting to
 	// disable a provider.
 	UnstableDisableProviderRequestMsg = newMessageTypeT[acp.UnstableDisableProviderRequest](
+		"UnstableDisableProviderRequest",
 		UnstableDisableProviderRequestType, ToAgent, false,
 	)
 
 	// UnstableDisableProviderResponseMsg is the message type for the response
 	// to a disable-provider request.
 	UnstableDisableProviderResponseMsg = newMessageTypeT[acp.UnstableDisableProviderResponse](
+		"UnstableDisableProviderResponse",
 		UnstableDisableProviderResponseType, ToACPClient, true,
 	)
 
 	// UnstableListProvidersRequestMsg is the message type for requesting to
 	// list providers.
 	UnstableListProvidersRequestMsg = newMessageTypeT[acp.UnstableListProvidersRequest](
+		"UnstableListProvidersRequest",
 		UnstableListProvidersRequestType, ToAgent, false,
 	)
 
 	// UnstableListProvidersResponseMsg is the message type for the response to
 	// a list-providers request.
 	UnstableListProvidersResponseMsg = newMessageTypeT[acp.UnstableListProvidersResponse](
+		"UnstableListProvidersResponse",
 		UnstableListProvidersResponseType, ToACPClient, true,
 	)
 
 	// UnstableSetProviderRequestMsg is the message type for requesting to set
 	// a provider.
 	UnstableSetProviderRequestMsg = newMessageTypeT[acp.UnstableSetProviderRequest](
+		"UnstableSetProviderRequest",
 		UnstableSetProviderRequestType, ToAgent, false,
 	)
 
 	// UnstableSetProviderResponseMsg is the message type for the response to a
 	// set-provider request.
 	UnstableSetProviderResponseMsg = newMessageTypeT[acp.UnstableSetProviderResponse](
+		"UnstableSetProviderResponse",
 		UnstableSetProviderResponseType, ToACPClient, true,
 	)
 
 	// UnstableDeleteSessionRequestMsg is the message type for requesting to
 	// delete a session.
 	UnstableDeleteSessionRequestMsg = newMessageTypeT[acp.UnstableDeleteSessionRequest](
+		"UnstableDeleteSessionRequest",
 		UnstableDeleteSessionRequestType, ToAgent, false,
 	)
 
 	// UnstableDeleteSessionResponseMsg is the message type for the response to
 	// a delete-session request.
 	UnstableDeleteSessionResponseMsg = newMessageTypeT[acp.UnstableDeleteSessionResponse](
+		"UnstableDeleteSessionResponse",
 		UnstableDeleteSessionResponseType, ToACPClient, true,
 	)
 
 	// CloseSessionRequestMsg is the message type for requesting to close a
 	// session.
 	CloseSessionRequestMsg = newMessageTypeT[acp.CloseSessionRequest](
+		"CloseSessionRequest",
 		CloseSessionRequestType, ToAgent, false,
 	)
 
 	// CloseSessionResponseMsg is the message type for the response to a
 	// close-session request.
 	CloseSessionResponseMsg = newMessageTypeT[acp.CloseSessionResponse](
+		"CloseSessionResponse",
 		CloseSessionResponseType, ToACPClient, true,
 	)
 
 	// InitializeRequestMsg is the message type for an initialize request.
 	InitializeRequestMsg = newMessageTypeT[acp.InitializeRequest](
+		"InitializeRequest",
 		InitializeRequestType, ToAgent, false,
 	)
 
 	// InitializeResponseMsg is the message type for the response to an
 	// initialize request.
 	InitializeResponseMsg = newMessageTypeT[acp.InitializeResponse](
+		"InitializeResponse",
 		InitializeResponseType, ToACPClient, true,
 	)
 
 	// NewSessionRequestMsg is the message type for requesting a new session.
 	NewSessionRequestMsg = newMessageTypeT[acp.NewSessionRequest](
+		"NewSessionRequest",
 		NewSessionRequestType, ToAgent, false,
 	)
 
 	// NewSessionResponseMsg is the message type for the response to a
 	// new-session request.
 	NewSessionResponseMsg = newMessageTypeT[acp.NewSessionResponse](
+		"NewSessionResponse",
 		NewSessionResponseType, ToACPClient, true,
 	)
 
 	// AuthenticateRequestMsg is the message type for an authenticate request.
 	AuthenticateRequestMsg = newMessageTypeT[acp.AuthenticateRequest](
+		"AuthenticateRequest",
 		AuthenticateRequestType, ToAgent, false,
 	)
 
 	// AuthenticateResponseMsg is the message type for the response to an
 	// authenticate request.
 	AuthenticateResponseMsg = newMessageTypeT[acp.AuthenticateResponse](
+		"AuthenticateResponse",
 		AuthenticateResponseType, ToACPClient, true,
 	)
 
 	// LoadSessionRequestMsg is the message type for requesting to load a
 	// session.
 	LoadSessionRequestMsg = newMessageTypeT[acp.LoadSessionRequest](
+		"LoadSessionRequest",
 		LoadSessionRequestType, ToAgent, false,
 	)
 
 	// LoadSessionResponseMsg is the message type for the response to a
 	// load-session request.
 	LoadSessionResponseMsg = newMessageTypeT[acp.LoadSessionResponse](
+		"LoadSessionResponse",
 		LoadSessionResponseType, ToACPClient, true,
 	)
 
 	// PromptRequestMsg is the message type for a prompt request.
 	PromptRequestMsg = newMessageTypeT[acp.PromptRequest](
+		"PromptRequest",
 		PromptRequestType, ToAgent, false,
 	)
 
 	// PromptResponseMsg is the message type for the response to a prompt.
 	PromptResponseMsg = newMessageTypeT[acp.PromptResponse](
+		"PromptResponse",
 		PromptResponseType, ToACPClient, true,
 	)
 
 	// CancelNotificationMsg is the message type for a cancel notification.
 	CancelNotificationMsg = newMessageTypeT[acp.CancelNotification](
+		"CancelNotification",
 		CancelNotificationType, ToAgent, false,
 	)
 )

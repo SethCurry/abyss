@@ -16,6 +16,14 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
+
+{{< admonition type="warning" title="Warning: Experimental" >}}
+Plugins are an experimental feature and are liable to change.
+I will try to keep the public APIs stable, but it is possible they will change
+in the future.
+{{< /admonition >}}
+
+
 Plugins are little add-on programs that sit between your editor and your agent and get to look at
 — and even change — every message that passes between the two. Want to block prompts that contain a
 secret word? Log everything your agent says to a file? Rewrite a file path before the agent ever

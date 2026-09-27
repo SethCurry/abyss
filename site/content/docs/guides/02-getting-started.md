@@ -185,11 +185,9 @@ lives in the container's `/root/.hermes` folder. That's also where Hermes looks 
 when it runs. Your computer has its own `~/.hermes` folder too: that's where Hermes keeps your API
 keys (in `~/.hermes/.env`) and your preferences (in `~/.hermes/config.yaml`).
 
-Here's the catch. With Pi, we shared the entire `~/.pi` folder with the container. If we did the
-same with `~/.hermes`, your folder would cover up the pre-installed copy of Hermes that the image
-needs in order to run — and if your computer isn't the same kind of machine as the container (a
-Mac, for instance), the agent won't start at all. So instead of sharing the whole folder, we copy
-in just the two files Hermes needs:
+We set this up to bind-mount your `~/.hermes` folder into the container, so that any changes you
+make to your settings are reflected in the container, and your sessions are
+available outside the container as well.
 
 ```yaml
 docker:
@@ -203,21 +201,8 @@ docker:
   host_mounts:
     # Share the current directory, just like with Pi.
     - source: "./"
-
-# Copy your Hermes credentials and settings into the container.
-# Both files live in ~/.hermes on your computer.
-copy_files:
-  - type: "path"
-    source: "~/.hermes/.env"
-    target: "/root/.hermes/.env"
-  - type: "path"
-    source: "~/.hermes/config.yaml"
-    target: "/root/.hermes/config.yaml"
+    - source: ~/.hermes
 ```
-
-Because we're *copying* files in rather than sharing a live folder, anything Hermes saves while
-it's inside the sandbox — new sessions and memories, for example — stays inside the sandbox and
-disappears when it shuts down, instead of showing up in `~/.hermes` on your computer.
 
 ### Using Codex
 
@@ -373,7 +358,7 @@ lists every option abyss supports.
 - [Configuration](../reference/configuration.md) — the full reference for every config option.
 - [Troubleshooting](04-troubleshooting.md) — what to do when something doesn't work.
 
-{{< admonition type="note" title="A Note About pi-acp" >}}
+{{< admonition type="warning" title="A Note About pi-acp" >}}
 If you're coming from using Pi in a terminal, `pi-acp` (the mode abyss uses) has a few limitations
 compared to the full terminal experience. Those are limitations of `pi-acp` itself rather than
 something abyss can work around — worth keeping in mind if a feature you relied on seems missing.
