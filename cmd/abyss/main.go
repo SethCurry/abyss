@@ -46,10 +46,27 @@ func main() {
 
 	//nolint:lll
 	cmd := &cli.Command{
-		Name:        "abyss",
-		Usage:       "A tool for managing and connecting to agents running in containers.",
-		Description: "abyss creates Docker containers for you, copies files, creates bind mounts, executes setup scripts, and proxies your ACP connection with mutual TLS authentication.",
-		Version:     constants.Version,
+		Name:  "abyss",
+		Usage: "Run your AI agent in its own private sandbox.",
+		Description: `Abyss gives your AI agent a tidy home of its own: a Docker container, which
+is a sealed-off workspace where the agent can think, build, and experiment
+without touching anything else on your computer.
+
+A small YAML file drives everything: it says which agent to run and which
+folders on your computer the agent is allowed to see. Point your editor at
+abyss, and it quietly does the behind-the-scenes work for you: creating the
+container, sharing in those folders, running any setup steps, and carrying
+the conversation between your editor and the agent over an encrypted
+connection.
+
+The commands you'll use most:
+
+  client    connect your editor to an agent
+  oneshot   ask an agent one question and print the answer
+  docker    see and tidy up the containers abyss has created
+
+New here? The guides at https://abyss.scurry.io/ walk you through everything.`,
+		Version: constants.Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "log-level",
@@ -75,10 +92,21 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:        "client",
-				Aliases:     []string{"c"},
-				Usage:       "Starts the host-side proxy that your editor connects to.",
-				Description: "Creates a Docker container, starts the container-side proxy inside of it, and proxies your ACP connection into the container.",
+				Name:    "client",
+				Aliases: []string{"c"},
+				Usage:   "Connect your editor to an agent running inside a container.",
+				Description: `This is the command your editor runs for you, so once things are set up you
+won't need to type it yourself — your editor starts it whenever you chat with
+your agent.
+
+When it starts, abyss creates a brand-new container for the agent, sets it
+up exactly the way your configuration file describes, and then bridges your
+editor's connection to the agent living inside. When the chat ends, the
+container is shut down again.
+
+For example, to start the agent described by my-agent.yaml:
+
+  abyss client -f my-agent.yaml`,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
@@ -104,7 +132,17 @@ func main() {
 			{
 				Name:    "oneshot",
 				Aliases: []string{"p"},
-				Usage:   "Executes a single agent turn, batch-style.",
+				Usage:   "Ask an agent one question and print the answer.",
+				Description: `A quick way to try out a configuration: oneshot spins up an agent's container
+just like client does, sends it a single prompt, prints the answer (and the
+logs) right in your terminal, and then packs the container away again.
+
+For example:
+
+  abyss oneshot -f my-agent.yaml "What is the capital of France?"
+
+Because it shows you everything that's going on, oneshot is also the first
+tool to reach for when a configuration isn't behaving.`,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "config",
@@ -133,7 +171,15 @@ func main() {
 			{
 				Name:    "server",
 				Aliases: []string{"s"},
-				Usage:   "Starts the agent-side proxy.  You should never need to manually invoke this.",
+				Usage:   "Run abyss's agent-side half inside the container (abyss starts this for you).",
+				Description: `This is the piece of abyss that lives inside the agent's container. It waits
+for abyss to give it the go-ahead, then brings your agent to life and
+carries the conversation between the agent and your editor.
+
+You should never need to run this command yourself: whenever abyss creates a
+container, it starts the server inside automatically. If you've spotted it,
+it's probably because you were peeking at the programs running inside the
+container, and everything is working exactly as it should.`,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "addr",
@@ -232,13 +278,18 @@ func main() {
 			{
 				Name:    "docker",
 				Aliases: []string{"d"},
-				Usage:   "Clean up old Docker containers, see running abyss containers, etc.",
+				Usage:   "See and tidy up the containers abyss has created.",
+				Description: `Every time an agent session starts, abyss creates a Docker container for
+the agent to live in. These commands help you peek at the ones that are
+running and send any stragglers home when you're done.`,
 				Commands: []*cli.Command{
 					{
-						Name:        "ps",
-						Aliases:     []string{"p"},
-						Usage:       "List Abyss containers that are currently running.",
-						Description: "Finds all running containers with the `abyss` label.",
+						Name:    "ps",
+						Aliases: []string{"p"},
+						Usage:   "List the containers abyss is currently running.",
+						Description: `Shows every abyss container that is still up and running, along with each
+one's ID and name. It's handy for a peek behind the scenes, or for finding a
+container's ID — Docker's own commands (like docker logs) will ask for it.`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							docker, err := runenv.NewDockerClient()
 							if err != nil {
@@ -258,9 +309,13 @@ func main() {
 						},
 					},
 					{
-						Name:        "gc",
-						Usage:       "Stop all abyss containers.",
-						Description: "Stops all containers with the `abyss` label.",
+						Name:  "gc",
+						Usage: "Stop every container that abyss is running.",
+						Description: `Tells Docker to stop and remove all containers
+Abyss has created (including those currently running).
+
+Only containers that abyss itself created are stopped; everything else on
+your computer is left completely alone.`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							docker, err := runenv.NewDockerClient()
 							if err != nil {

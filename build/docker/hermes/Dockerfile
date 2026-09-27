@@ -2,7 +2,8 @@
 
 FROM ghcr.io/sethcurry/abyss-base:dev
 
-RUN apt-get update && apt-get install -y ca-certificates python3 curl git libatomic1 uv
+RUN apt-get update && apt-get install -y ca-certificates python3 curl git libatomic1
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 RUN cd ~/.hermes/hermes-agent && uv pip install -e '.[acp]'
