@@ -32,11 +32,17 @@ func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer)
 	defer r.mut.Unlock()
 
 	r.logger.Debug().
-		Str("message_id", msg.MessageId).
+		Str("message_id", msg.GetMessageId()).
 		Msg("handling message")
+
+	// This will just drop messages that have no listening responder
 	if handler, ok := r.handlers[msg.GetResponseFor()]; ok {
 		handler.Resolve(msg)
 		delete(r.handlers, msg.GetResponseFor())
+	} else {
+		r.logger.Error().
+			Str("message_id", msg.GetMessageId()).
+			Msg("no handler registered for message")
 	}
 }
 
@@ -44,6 +50,10 @@ func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer)
 func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.ACPContainer] {
 	r.mut.Lock()
 	defer r.mut.Unlock()
+
+	r.logger.Debug().
+		Str("request_id", requestID).
+		Msg("registering handler for response")
 	prom := &Promise[*protobyss.ACPContainer]{
 		resolveChan: make(chan *protobyss.ACPContainer),
 	}
