@@ -8,17 +8,16 @@ Check out [the docs](https://abyss.scurry.io) for in-depth information.
 
 ## Stop handing your whole machine to an LLM you don't fully control.
 
-Let's be honest: an LLM agent is an unvetted process running commands on *your*
-computer. One hallucinated `rm -rf`, one over-eager "fix" that rewrites your
-configs, one wandering `grep` that stumbles onto your production credentials —
-and your machine, your source tree, and your secrets are on the line. Agents
-are powerful. Trusting them with unrestricted access to your desktop is a gamble.
+`abyss` is a system for running your agents inside a Docker container,
+without your editor or your agent being aware that they're not in the same place.
 
-`abyss` is an _Agent Runtime Environment_ — a platform that runs your LLM agents
-inside isolated containers, the same way Docker runs your compute. Every command
-your agent runs, every file it touches, every terminal it spawns stays locked
-inside a sandbox. The agent never touches your working copy, never sees the keys
-on your desktop, and never gets the chance to `rm -rf` your home directory.
+It creates a Docker container running your agent and proxies your editor's
+connection into that container while creating easy, reusable facilities
+for copying files, bind-mounting directories, running setup scripts and more!
+
+Abyss also supports WASM-based plugins that are given full control over messages
+flowing back and forth.  You can reject messages containing secrets, implement
+tools at the ACP layer so they work with any agent and more.
 
 ## Your agent, sandboxed in seconds.
 
