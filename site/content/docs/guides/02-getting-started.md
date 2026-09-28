@@ -3,7 +3,7 @@ title: "Getting Started"
 description: "Install abyss, write your first agent configuration, and connect it to your editor."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
-lastmod: 2026-09-22T16:04:48+02:00
+lastmod: 2026-09-27T19:51:49+00:00
 draft: false
 weight: 2
 toc: true
@@ -15,6 +15,7 @@ params:
     canonical: "" # custom canonical URL (optional)
     robots: "" # custom robot tags (optional)
 ---
+
 
 This guide walks you through everything you need to go from "just heard about abyss" to "running
 your agent inside a sandbox." By the end, you'll have abyss installed, a working configuration file,
@@ -61,13 +62,24 @@ settings screen looks different.
 Abyss doesn't include an agent of its own; it provides a safe place for *your* agent to run. So you
 need an agent to put inside it, plus whatever API keys that agent needs to talk to your LLM.
 
-The examples in this guide use [Pi](https://pi.dev/) (`pi-acp`), because it's the agent that abyss
-ships a ready-made image for. If you already use Pi, you're set. If you use a different agent, the
-setup is the same idea — you'll just point at your own image and command. (We cover that in
-[Custom Docker Images](03-custom-docker-images.md).)
+The good news: abyss ships ready-made images for four popular agents, so you most likely won't
+have to build anything yourself:
 
-If you use Pi, make sure it's already configured and can talk to your LLM on its own. In practice
-that means your `~/.pi` directory (where Pi keeps your API keys and settings) exists and works.
+- **[Pi](https://pi.dev/)** — the agent this guide uses for its detailed walkthrough.
+- **[Hermes](https://hermes-agent.nousresearch.com/)** — Nous Research's agent.
+- **[Codex](https://github.com/openai/codex)** — OpenAI's coding agent.
+- **[Claude Agent](https://claude.com/product/claude-code)** — Anthropic's coding agent.
+
+This guide explains the Pi configuration in detail, because every agent's file is built from the
+same three pieces — once you've seen one, the others look very familiar. If you use one of the
+other three, you'll find a section with your exact configuration in
+[Create Your Configuration](#create-your-configuration) below. And if you use a different agent
+entirely, the setup is the same idea — you'll just point at your own image and command. (We cover
+that in [Custom Docker Images](03-custom-docker-images.md).)
+
+Whatever agent you pick, make sure it's already set up and can talk to your LLM on its own before
+you put it in a sandbox. In practice that means the folder where it keeps your API keys and
+settings — for Pi, that's your `~/.pi` directory — exists and works.
 
 ## Install Abyss
 
@@ -112,7 +124,14 @@ Abyss is driven by one small YAML file. That file describes three things:
 2. **What command** starts your agent.
 3. **Which folders** on your computer the agent should be able to see.
 
-Here's a complete, working configuration:
+Every agent's file is built from those same three pieces — only the values change. Below there's
+a section for each of the ready-made images: Pi, Hermes, Codex, and Claude Agent. Start with the
+Pi section even if you use a different agent, since it explains how everything fits together. Then
+copy your own agent's configuration and meet us at [Where to Put the File](#where-to-put-the-file).
+
+### Using Pi
+
+Here's a complete, working configuration for Pi:
 
 ```yaml
 docker:
@@ -156,6 +175,94 @@ Let's unpack the important bits.
   - The second mount shares your `~/.pi` folder, which holds your API keys. We give it an explicit
     `destination` because the container's `root` user keeps its settings in `/root/.pi`, not in
     your own home directory.
+
+### Using Hermes
+
+[Hermes](https://hermes-agent.nousresearch.com/) follows the same recipe as Pi — its own image,
+own command — with one important difference, so give this section a careful read.
+
+The `abyss-hermes` image comes with a complete copy of Hermes already installed, and that copy
+lives in the container's `/root/.hermes` folder. That's also where Hermes looks for your settings
+when it runs. Your computer has its own `~/.hermes` folder too: that's where Hermes keeps your API
+keys (in `~/.hermes/.env`) and your preferences (in `~/.hermes/config.yaml`).
+
+We set this up to bind-mount your `~/.hermes` folder into the container, so that any changes you
+make to your settings are reflected in the container, and your sessions are
+available outside the container as well.
+
+```yaml
+docker:
+  # A pre-built image with abyss and Hermes already installed.
+  image: "ghcr.io/sethcurry/abyss-hermes:latest"
+
+  # Hermes ships with its own ACP mode.
+  agent_command:
+    - hermes-acp
+
+  host_mounts:
+    # Share the current directory, just like with Pi.
+    - source: "./"
+    - source: ~/.hermes
+```
+
+### Using Codex
+
+If OpenAI's [Codex](https://github.com/openai/codex) is your agent, good news: its configuration
+is nearly identical to Pi's. The image comes with Codex and its
+[ACP adapter](https://github.com/agentclientprotocol/codex-acp) already installed, so the only
+thing you need to bring along is your login:
+
+```yaml
+docker:
+  # A pre-built image with abyss, Codex, and codex-acp already installed.
+  image: "ghcr.io/sethcurry/abyss-codex:latest"
+
+  # codex-acp is a small adapter that lets Codex speak ACP.
+  agent_command:
+    - codex-acp
+
+  host_mounts:
+    # Share the current directory, just like with Pi.
+    - source: "./"
+
+    # Share your Codex login and settings. Codex keeps these in
+    # ~/.codex on your computer, and the container's root user looks
+    # for them in /root/.codex.
+    - source: "~/.codex"
+      destination: "/root/.codex"
+```
+
+For this to work, you'll need to have signed in to Codex on your computer at least once, so that
+your `~/.codex` folder exists and contains your login.
+
+### Using Claude Agent
+
+Anthropic's [Claude Agent](https://claude.com/product/claude-code) follows the exact same recipe as
+Codex, with its own image, adapter, and settings folder:
+
+```yaml
+docker:
+  # A pre-built image with abyss, Claude Agent, and claude-agent-acp
+  # already installed.
+  image: "ghcr.io/sethcurry/abyss-claude-agent:latest"
+
+  # claude-agent-acp is a small adapter that lets Claude Agent speak ACP.
+  agent_command:
+    - claude-agent-acp
+
+  host_mounts:
+    # Share the current directory, just like with Pi.
+    - source: "./"
+
+    # Share your Claude login and settings. Claude keeps these in
+    # ~/.claude on your computer, and the container's root user looks
+    # for them in /root/.claude.
+    - source: "~/.claude"
+      destination: "/root/.claude"
+```
+
+Just like with Codex, this assumes you've already signed in to Claude on your computer, so your
+`~/.claude` folder exists and holds your credentials.
 
 ### Where to Put the File
 
@@ -252,7 +359,7 @@ lists every option abyss supports.
 - [Configuration](../reference/configuration.md) — the full reference for every config option.
 - [Troubleshooting](04-troubleshooting.md) — what to do when something doesn't work.
 
-{{< admonition type="note" title="A Note About pi-acp" >}}
+{{< admonition type="warning" title="A Note About pi-acp" >}}
 If you're coming from using Pi in a terminal, `pi-acp` (the mode abyss uses) has a few limitations
 compared to the full terminal experience. Those are limitations of `pi-acp` itself rather than
 something abyss can work around — worth keeping in mind if a feature you relied on seems missing.

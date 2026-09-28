@@ -255,6 +255,38 @@ type ContainerPreBuildStep func(*ContainerConfig) error
 // the container's configuration like networking.
 type ContainerBuildStep func(context.Context, *Container) error
 
+// NewParallelStep returns a new ParallelStep with the given inner steps.
+func NewParallelStep(inner ...ContainerBuildStep) ContainerBuildStep {
+	newStep := &ParallelStep{inner: inner}
+	return newStep.Run
+}
+
+// ParallelStep runs multiple ContainerBuildSteps in parallel to improve
+// startup performance.
+type ParallelStep struct {
+	inner []ContainerBuildStep
+}
+
+// Run implements ContainerBuildStep by running all of the inner steps
+// in parallel and returning after they are all complete.
+func (p *ParallelStep) Run(ctx context.Context, container *Container) error {
+	resultChan := make(chan error, len(p.inner))
+	for _, step := range p.inner {
+		go func(innerStep ContainerBuildStep) {
+			resultChan <- innerStep(ctx, container)
+		}(step)
+	}
+	defer close(resultChan)
+
+	for i := 0; i < len(p.inner); i++ {
+		if err := <-resultChan; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // WithSetupScripts returns a build step that copies each setup script into the
 // container and executes it with bash. Scripts with Type "inline" use Source as
 // the script contents; scripts with Type "file" read the contents from the host

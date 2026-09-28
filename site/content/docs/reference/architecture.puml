@@ -2,36 +2,79 @@
 
 title Abyss Architecture
 
-cloud Docker {
-  node Container {
-    [Underlying Agent]
-    [abyss Agent Proxy]
+node "Host" as Host {
+  component [ACP Client\n(e.g. Zed)] as Client
+  component [abyss Client Proxy] as ClientProxy
+  component [Container Builder] as Builder
+  component [Host Proxy\n(ACP agent side)] as HostProxy
+  component [Client Plugins\n(WASM)] as ClientPlugins
+}
+
+cloud "Docker Engine" as Docker {
+  node "Agent Container" as Container {
+    component [abyss Agent Proxy\n(HTTP + /ws server)] as AgentProxy
+    component [Container Proxy\n(ACP client side)] as ContProxy
+    component [ACP Tools\n(filesystem, terminal)] as ACPTools
+    component [Server Plugins\n(WASM)] as ServerPlugins
+    component [Underlying Agent] as Agent
   }
 }
 
-[ACP Client] --> [abyss Client Proxy] : stdio
-[abyss Client Proxy] --> [abyss Agent Proxy] : Protobuf via Websocket
-[abyss Client Proxy] --> [Docker] : Docker API
-[abyss Agent Proxy] --> [Underlying Agent] : stdio
+Client --> ClientProxy : stdio (ACP JSON-RPC)
+ClientProxy --> Builder : config
+Builder --> Docker : Docker API\n(create, copy files,\nsetup scripts, install TLS)
+ClientProxy --> HostProxy
+ClientProxy --> ClientPlugins : load
+HostProxy --> AgentProxy : wss (protobuf ACP,\nmutual TLS)
+AgentProxy --> ContProxy
+ContProxy --> ACPTools : intercept\nfs/terminal requests
+ContProxy --> Agent : stdio (ACP JSON-RPC)
+AgentProxy --> ServerPlugins : load
+AgentProxy --> Agent : spawn (agent_command)
 
-note right of "abyss Client Proxy"
-  Handles creating the container,
-  copying files, executing setup scripts,
-  and proxying the client side of the
-  ACP connection.
+note right of ClientProxy
+  Runs on the host as the binary
+  your ACP client invokes.
+  Generates an ephemeral CA and
+  certificate set for mutual TLS,
+  then builds and starts the
+  container and proxies the
+  client side of the ACP
+  connection over a websocket.
 endnote
 
-note right of "abyss Agent Proxy"
-  Proxies the agent side of the ACP
-  connection, and provides an integration
-  point for centrally managed tools
-  in organizations.
+note right of AgentProxy
+  Runs inside the container as
+  `abyss server`. Waits for a
+  start file, then serves an
+  HTTPS websocket endpoint and
+  spawns the underlying agent,
+  bridging its stdio to the
+  websocket.
 endnote
 
-note right of "Underlying Agent"
-  Bring your own agent, abyss doesn't
-  care what you use and doesn't even
-  bundle an agent.
+note right of ACPTools
+  By default ACP read/write file
+  and terminal requests are
+  intercepted and executed
+  inside the container so the
+  agent can never reach the
+  host. The `tools_on_host`
+  config forwards them to the
+  client instead.
+endnote
+
+note right of Agent
+  Bring your own agent. abyss
+  doesn't care what you run and
+  doesn't bundle one.
+endnote
+
+note bottom of ClientPlugins
+  WASM plugins see every ACP
+  message on the host side and
+  can transform, filter, or
+  augment it.
 endnote
 
 @enduml

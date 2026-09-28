@@ -50,6 +50,8 @@ so you don't need to memorize a weird path scheme.
   an ACP endpoint, so any ACP client — Zed included — can drive the agent.
 - **Reproducible environments.** Run setup scripts before the agent starts to
   install dependencies or seed state, and every session begins from a known place.
+- **WASM-based Plugins.** Use existing plugins or write your own, plugins have
+  full access to the stream of ACP messages. See [the examples](./example/plugins).
 
 ## Sleep easier. Ship faster.
 
@@ -76,3 +78,38 @@ and Docker images are under Packages on the right of the project home.
 - Copying files into the container (so agent edits don't impact your copy)
 - Intercepting ACP read/write file and terminal APIs so they run inside the container
 - Ephemeral mutual-TLS authentication; certificates are used for a single connection and then destroyed.
+
+## AI Policy
+
+In the interest of full transparency, AI is used in the development of this application (shocking, I know).
+
+At present, I do not feel that AI agents are capable of maintaining a large, clean codebase on their own.
+
+Given that, AI is used in these two roles:
+
+### Code Generation
+
+Code generation is targeted, and always reviewed by a human.  I intentionally ask for very targeted features; exceptionally few of my edits
+result in diffs larger than 100 lines.
+
+I am still very much aware of and in control of the codebase.  I am aware there are some rough edges (very rough edges indeed) in parts of
+the codebase.  Some of that is, as you may suspect, AI slop that was "good enough for an MVP" (see `runClient` in cmd/abyss/run_client.go).
+Some of it is normal human fallibility as I iterated and realized abstractions were leaky, things weren't passed around well, etc
+(see the horror that is how I make plugins work with the message-ID-based websocket RPC system in pkg/abyss/message_type.go).
+
+### Documentation
+
+If you're here, you're probably mad at me about using AI to generate documentation.
+
+I do use AI to generate documentation.  I do review it, and when I have time I do try to edit out the "AI tone" it tends to use.
+Some parts are human written, but at this point the docs are primarily AI.
+
+If you'll indulge me, I do it for 3 reasons:
+
+1. It writes better documentation than me.  I am terrible at writing documentation, because it's hard for me to "pretend" I don't know how this works and write for people who don't have my context.  The tone is annoying, but the information is far more complete than if I did it.
+2. I am a solo maintainer, so time spent on documentation is time not spent on bug fixes/features/etc.  That's not to devalue documentation; it is incredibly important.  Combined with the above, it doesn't make sense for me to spend time there.  I will spend a lot more time than the LLM writing much worse documentation.
+3. Things are still very much in flux, so there's a lot of documentation churn.  New features, reworked features, new or updated configs, etc.  Abyss isn't at the point where the docs are largely stable and we're just nit-picking about which phrasing is clearer.
+
+If you still disagree with me about using AI to generate the docs, feel free to open a ticket.  I am not the target audience for the docs,
+so my opinion doesn't mean a ton.  If you, the user, feel that the AI-written docs diminish your ability to use abyss, let me know and
+I can take the time to do a hand-editing pass over the docs.

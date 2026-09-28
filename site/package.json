@@ -21,6 +21,7 @@
     "@thulite/images": "^3.3.4",
     "@thulite/inline-svg": "^1.2.2",
     "@thulite/seo": "^2.4.3",
+    "asciinema-player": "^3.17.0",
     "thulite": "^2.6.5"
   },
   "overrides": {

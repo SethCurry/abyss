@@ -3,13 +3,16 @@ package wsrouter
 import (
 	"sync"
 
+	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/protobyss"
+	"github.com/rs/zerolog"
 )
 
 // NewResponseWatcher creates a new ResponseWatcher with an empty handler map.
 func NewResponseWatcher() *ResponseWatcher {
 	return &ResponseWatcher{
 		handlers: make(map[string]*Promise[*protobyss.ACPContainer]),
+		logger:   timber.ComponentLogger("ResponseWatcher"),
 	}
 }
 
@@ -19,6 +22,7 @@ func NewResponseWatcher() *ResponseWatcher {
 type ResponseWatcher struct {
 	handlers map[string]*Promise[*protobyss.ACPContainer]
 	mut      sync.Mutex
+	logger   zerolog.Logger
 }
 
 // Handle dispatches the message to the Promise that is waiting for it.
@@ -26,9 +30,19 @@ type ResponseWatcher struct {
 func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer) {
 	r.mut.Lock()
 	defer r.mut.Unlock()
+
+	r.logger.Debug().
+		Str("message_id", msg.GetMessageId()).
+		Msg("handling message")
+
+	// This will just drop messages that have no listening responder
 	if handler, ok := r.handlers[msg.GetResponseFor()]; ok {
 		handler.Resolve(msg)
 		delete(r.handlers, msg.GetResponseFor())
+	} else {
+		r.logger.Error().
+			Str("message_id", msg.GetMessageId()).
+			Msg("no handler registered for message")
 	}
 }
 
@@ -36,6 +50,10 @@ func (r *ResponseWatcher) Handle(router *ACPRouter, msg *protobyss.ACPContainer)
 func (r *ResponseWatcher) Register(requestID string) *Promise[*protobyss.ACPContainer] {
 	r.mut.Lock()
 	defer r.mut.Unlock()
+
+	r.logger.Debug().
+		Str("request_id", requestID).
+		Msg("registering handler for response")
 	prom := &Promise[*protobyss.ACPContainer]{
 		resolveChan: make(chan *protobyss.ACPContainer),
 	}

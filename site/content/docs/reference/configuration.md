@@ -82,6 +82,10 @@ copy_files:
 websocket:
   # Disables mutual TLS auth on the websocket
   disable_tls: true
+
+plugins:
+  client:
+    - path: path/to/my/plugin.wasm
 ```
 
 ## `docker`
@@ -202,3 +206,16 @@ the Abyss server inside the container and executed there.
 By default, `abyss` generates a new CA and set of certificates for securing connections to your agent.
 
 If you set this flag to `true`, abyss will use a plaintext connection.  You probably don't want this.
+
+## `plugins`
+
+`plugins` stores configuration for plugins to be loaded by the agent.
+
+Currently only `client` plugins are supported, but the goal is to
+support server (container-side) plugins in the near future.
+
+### `client`
+
+`plugins.client` is a list of paths to client plugins to be loaded by the agent.
+
+You can find more information about plugins [here](../guides/04-plugins.md).
