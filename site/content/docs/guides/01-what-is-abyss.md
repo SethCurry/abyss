@@ -31,6 +31,17 @@ instead of wrapping an application, it wraps your agent.
 The idea is simple. Run your agent in a Docker container, hand it the resources it needs, and walk
 away. All the configuration fits in a single YAML file that's shorter than your standup update.
 
+Before Abyss (yes, laptop is my real hostname):
+
+{{< asciinema url="/asciinema/basic-example-pi.cast" >}}
+
+
+After Abyss:
+
+{{< asciinema url="/asciinema/basic-example-abyss-pi.cast" >}}
+
+It has the container's hostname, but still has access to all of the files it needs!
+
 ## What makes it great
 
 - **Real isolation.** Your agent works in a container, not on your host. Edits and commands stay
