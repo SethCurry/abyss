@@ -1,0 +1,31 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  base:
+    cmds:
+      - ./scripts/build-push-docker.sh -i base
+  base-js:
+    deps:
+      - base
+    cmds:
+      - ./scripts/build-push-docker.sh -i base-js
+  pi:
+    deps:
+      - base-js
+    cmds:
+      - ./scripts/build-push-docker.sh -i pi
+  hermes:
+    cmds:
+      - ./scripts/build-push-docker.sh -i hermes
+  codex:
+    deps:
+      - base-js
+    cmds:
+      - ./scripts/build-push-docker.sh -i codex
+  claude-agent:
+    deps:
+      - base-js
+    cmds:
+      - ./scripts/build-push-docker.sh -i claude-agent
