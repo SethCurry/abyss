@@ -4,24 +4,42 @@ version: "3"
 
 tasks:
   test:
+    desc: Run unit tests
+    summary: |
+      Runs the unit tests for the entire project.
     cmds:
       - go test ./...
   coverage:
+    desc: Get test coverage
+    summary: |
+      Runs the test coverage script to generate a coverage report.
     cmds:
       - ./scripts/coverage.sh
   build:
+    desc: Build the binary
+    summary: |
+      Builds the binary for the project.
     deps:
       - proto
     cmds:
       - go build -ldflags="-X github.com/SethCurry/abyss/internal/constants.Version=$(./scripts/get-version.sh)" -o abyss ./cmd/abyss
   lint:
+    desc: Run linter
+    summary: |
+      Runs the linter to check for code style and errors.
     cmds:
       - golangci-lint run
   test-oneshot:
+    desc: Run test oneshot
+    summary: |
+      Calls "abyss oneshot" with a pre-set prompt so it can be cached.
     deps:
-      - build-binary
+      - build
     cmds:
       - ./abyss oneshot -f ./abyss-agent.yaml "What is the capital of France?"
   proto:
+    desc: Generate protobuf
+    summary: |
+      Generates the protobuf files for the project.
     cmds:
       - protoc -I=./schema/proto --go-plugin_opt=disable_pb_gen=true --go-plugin_out=./pkg --go_out=./pkg ./schema/proto/abyss.proto

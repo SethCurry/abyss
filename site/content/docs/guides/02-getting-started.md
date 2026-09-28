@@ -16,6 +16,8 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
+{{< asciinema url="/asciinema/basic-example.cast" >}}
+
 This guide walks you through everything you need to go from "just heard about abyss" to "running
 your agent inside a sandbox." By the end, you'll have abyss installed, a working configuration file,
 and your agent connected to your editor.

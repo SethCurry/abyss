@@ -21,3 +21,4 @@ params:
 
 - Added Docker images for hermes, codex and Claude Agent
 - Experimental WASM plugin support
+- Parallelized TLS cert installation

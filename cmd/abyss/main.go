@@ -361,22 +361,24 @@ your computer is left completely alone.`,
 // server key, and CA certificate into the container so the server can serve
 // mutual TLS.
 func installTLSCerts(certs *pacific.Certificates) runenv.ContainerBuildStep {
-	return func(ctx context.Context, container *runenv.Container) error {
-		files := []struct {
-			path    string
-			content []byte
-		}{
-			{path: agentconfig.DefaultTLSServerCertPath, content: certs.ServerCertPEM},
-			{path: agentconfig.DefaultTLSServerKeyPath, content: certs.ServerKeyPEM},
-			{path: agentconfig.DefaultTLSCACertPath, content: certs.CACertPEM},
-		}
+	files := []struct {
+		path    string
+		content []byte
+	}{
+		{path: agentconfig.DefaultTLSServerCertPath, content: certs.ServerCertPEM},
+		{path: agentconfig.DefaultTLSServerKeyPath, content: certs.ServerKeyPEM},
+		{path: agentconfig.DefaultTLSCACertPath, content: certs.CACertPEM},
+	}
 
-		for _, f := range files {
+	steps := make([]runenv.ContainerBuildStep, 0, len(files))
+	for _, f := range files {
+		steps = append(steps, func(ctx context.Context, container *runenv.Container) error {
 			if err := container.CopyFileFromHost(ctx, f.content, f.path, 0o600); err != nil {
 				return fmt.Errorf("copy %q into container: %w", f.path, err)
 			}
-		}
-
-		return nil
+			return nil
+		})
 	}
+
+	return runenv.NewParallelStep(steps...)
 }

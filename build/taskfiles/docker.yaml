@@ -4,28 +4,49 @@ version: "3"
 
 tasks:
   base:
+    summary: Build ghcr.io/sethcurry/abyss-base:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-base:[latest,dev]
     cmds:
       - ./scripts/build-push-docker.sh -i base
   base-js:
+    summary: Build ghcr.io/sethcurry/abyss-base-js:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-base-js:[latest,dev]
     deps:
       - base
     cmds:
       - ./scripts/build-push-docker.sh -i base-js
   pi:
+    summary: Build ghcr.io/sethcurry/abyss-pi:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-pi:[latest,dev]
     deps:
       - base-js
     cmds:
       - ./scripts/build-push-docker.sh -i pi
   hermes:
+    summary: Build ghcr.io/sethcurry/abyss-hermes:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-hermes:[latest,dev]
     cmds:
       - ./scripts/build-push-docker.sh -i hermes
   codex:
+    summary: Build ghcr.io/sethcurry/abyss-codex:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-codex:[latest,dev]
     deps:
       - base-js
     cmds:
       - ./scripts/build-push-docker.sh -i codex
   claude-agent:
+    summary: Build ghcr.io/sethcurry/abyss-claude-agent:[latest,dev]
+    desc: Build ghcr.io/sethcurry/abyss-claude-agent:[latest,dev]
     deps:
       - base-js
     cmds:
       - ./scripts/build-push-docker.sh -i claude-agent
+  clean:
+    desc: Remove all Docker images and buildx caches
+    summary: |
+      Removes all Docker images and buildx caches from the local machine.
+      Useful for debugging when you think Docker is caching something
+      you don't want it to.
+    cmds:
+      - docker image prune -a
+      - docker buildx prune -a
