@@ -19,6 +19,8 @@ Abyss also supports WASM-based plugins that are given full control over messages
 flowing back and forth.  You can reject messages containing secrets, implement
 tools at the ACP layer so they work with any agent and more.
 
+![Abyss Architecture](./site/content/reference/architecture.png)
+
 ## Your agent, sandboxed in seconds.
 
 Writing Docker Compose files to isolate your agent is a pain, and trying to
