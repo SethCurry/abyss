@@ -18,4 +18,4 @@ docker:
 
 plugins:
   client:
-    - path: ./example/plugins/prompt_filter/plugin.wasm
+    - path: ./plugins/secrets_filter/secrets_filter.wasm

@@ -1,6 +1,8 @@
 package abyss
 
 import (
+	"context"
+
 	"github.com/SethCurry/abyss/pkg/protobyss"
 	"github.com/coder/acp-go-sdk"
 )
@@ -365,11 +367,19 @@ type OnUnstableDeleteSessionResponseHandler interface {
 	OnUnstableDeleteSessionResponse(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
 }
 
+// Initializer handles ACP plugin initialization callbacks.
+type Initializer interface {
+	Initialize(ctx context.Context,
+		req *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeResponse, error)
+}
+
 // NewACPPluginRouter builds an ACPPluginRouter from an object that
 // implements any subset of the *Handler interfaces. Unmatched callbacks
 // are left nil.
-func NewACPPluginRouter(v any) *ACPPluginRouter {
+func NewACPPluginRouter(v Initializer) *ACPPluginRouter {
 	r := &ACPPluginRouter{}
+
+	r.initialize = v.Initialize
 
 	if h, ok := v.(OnRequestPermissionRequestHandler); ok {
 		r.OnRequestPermissionRequest = h.OnRequestPermissionRequest

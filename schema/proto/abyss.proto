@@ -17,9 +17,19 @@ message ACPContainerList {
   repeated ACPContainer containers = 1;
 }
 
+message ACPPluginInitializeRequest {
+    bool on_host = 1;
+    bytes config = 2;
+}
+
+message ACPPluginInitializeResponse {
+    string name = 1;
+}
+
 // go:plugin type=plugin
 service ACPPlugin {
   rpc HandleMessage(ACPContainer) returns (ACPContainerList);
+  rpc Initialize(ACPPluginInitializeRequest) returns (ACPPluginInitializeResponse);
 }
 
 message LogMessage {

@@ -3,6 +3,7 @@ package abyss
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/SethCurry/abyss/internal/timber"
@@ -18,6 +19,7 @@ var _ protobyss.ACPPlugin = (*ACPPluginRouter)(nil)
 // acp structs, then dispatching ACP messages to the appropriate handler
 // if configured.
 type ACPPluginRouter struct {
+	initialize func(context.Context, *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeResponse, error)
 	// Client capability requests (agent -> client).
 	OnRequestPermissionRequest    func(acp.RequestPermissionRequest) ([]*protobyss.ACPContainer, error)
 	OnRequestPermissionResponse   func(acp.RequestPermissionResponse) ([]*protobyss.ACPContainer, error)
@@ -89,6 +91,17 @@ type ACPPluginRouter struct {
 	OnUnstableListProvidersResponse       func(acp.UnstableListProvidersResponse) ([]*protobyss.ACPContainer, error)
 	OnUnstableSetProviderResponse         func(acp.UnstableSetProviderResponse) ([]*protobyss.ACPContainer, error)
 	OnUnstableDeleteSessionResponse       func(acp.UnstableDeleteSessionResponse) ([]*protobyss.ACPContainer, error)
+}
+
+// Initialize implements protobyss.ACPPluginPlugin
+func (r *ACPPluginRouter) Initialize(
+	ctx context.Context,
+	req *protobyss.ACPPluginInitializeRequest,
+) (*protobyss.ACPPluginInitializeResponse, error) {
+	if r.initialize != nil {
+		return r.initialize(ctx, req)
+	}
+	return nil, errors.New("initialize not implemented")
 }
 
 // HandleMessage dispatches an ACPContainer message to the registered handler

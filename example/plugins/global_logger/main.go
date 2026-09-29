@@ -26,6 +26,12 @@ var _ protobyss.ACPPlugin = (*ACPLoggerPlugin)(nil)
 
 type ACPLoggerPlugin struct{}
 
+func (p *ACPLoggerPlugin) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeRespone, error) {
+	return &protobyss.ACPPluginInitializeResponse{
+		Name: "global_logger",
+	}, nil
+}
+
 // We get all messages.  This is easier than ACPPluginRouter here since we need to log all messages and don't care what type they are.
 func (p *ACPLoggerPlugin) HandleMessage(ctx context.Context, message *protobyss.ACPContainer) (*protobyss.ACPContainerList, error) {
 	fmt.Printf("%s\n", string(message.Content))

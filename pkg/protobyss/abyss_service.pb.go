@@ -22,6 +22,7 @@ const (
 // go:plugin type=plugin
 type ACPPlugin interface {
 	HandleMessage(context.Context, *ACPContainer) (*ACPContainerList, error)
+	Initialize(context.Context, *ACPPluginInitializeRequest) (*ACPPluginInitializeResponse, error)
 }
 
 // go:plugin type=host

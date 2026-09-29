@@ -18,6 +18,12 @@ type promptRequestPlugin struct {
 	received acp.PromptRequest
 }
 
+func (p *promptRequestPlugin) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeResponse, error) {
+	return &protobyss.ACPPluginInitializeResponse{
+		Name: "prompt_request",
+	}, nil
+}
+
 func (p *promptRequestPlugin) OnPromptRequest(
 	req acp.PromptRequest,
 ) ([]*protobyss.ACPContainer, error) {

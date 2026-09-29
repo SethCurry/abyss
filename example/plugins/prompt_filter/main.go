@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -15,6 +16,12 @@ type PromptFilter struct {
 	bannedRegexes []*regexp.Regexp
 	logging       protobyss.Logging
 	initDone      bool
+}
+
+func (p *PromptFilter) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeRespone, error) {
+	return &protobyss.ACPPluginInitializeResponse{
+		Name: "prompt_filter",
+	}, nil
 }
 
 // We only need to implement OnPromptRequest since we don't care about the other types.
