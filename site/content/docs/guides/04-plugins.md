@@ -3,7 +3,7 @@ title: "Plugins"
 description: "Guides on installing, using and building plugins for abyss."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
-lastmod: 2026-09-22T16:04:48+02:00
+lastmod: 2026-09-29T16:04:48+02:00
 draft: false
 weight: 4
 toc: true
@@ -142,18 +142,46 @@ turn your Go code into a plugin, which we'll get to shortly.
 
 Abyss gives you two ways to write a plugin, and which one you pick is mostly a matter of taste:
 
-1. **The raw interface.** You implement one method that receives *every* message, no matter its
-   type, as a generic blob. You're responsible for figuring out what kind of message it is and
-   decoding it yourself. This is the right choice when you want to see all traffic — a logger, a
-   tracing tool, a generic middleware.
+1. **The raw interface.** You implement two methods: `Initialize`, which every plugin must have,
+   and `HandleMessage`, which receives *every* message, no matter its type, as a generic blob.
+   You're responsible for figuring out what kind of message it is and decoding it yourself. This is
+   the right choice when you want to see all traffic — a logger, a tracing tool, a generic
+   middleware.
 
 2. **The typed router.** You write a struct with a method for each message type you care about
-   (`OnPromptRequest`, `OnSessionNotification`, and so on). Abyss decodes each message for you and
-   only calls the methods that match. Message types you didn't implement simply pass through
-   untouched. This is the right choice when you only care about a handful of message types — a
-   prompt filter, a path rewriter, a permission policy.
+   (`OnPromptRequest`, `OnSessionNotification`, and so on), plus the required `Initialize` method.
+   Abyss decodes each message for you and only calls the methods that match. Message types you
+   didn't implement simply pass through untouched. This is the right choice when you only care
+   about a handful of message types — a prompt filter, a path rewriter, a permission policy.
 
 We'll build one of each in this guide so you can see the difference firsthand.
+
+### Saying hello: the `Initialize` handshake
+
+Whichever flavor you pick, there's one method every plugin must have: `Initialize`. The
+requirement comes from the shared contract that defines plugins (`schema/proto/abyss.proto` in the
+abyss source tree), and the compiler enforces it — a plugin without an `Initialize` method won't
+even build.
+
+The idea is simple. Before abyss lets your plugin see a single message, it knocks on the door and
+asks "who are you?" That knock is `Initialize`. Abyss calls it exactly once, right after loading
+your `.wasm` file and before any messages flow through the pipe.
+
+The request your `Initialize` method receives carries two pieces of information:
+
+- **`OnHost`** — a true/false flag telling your plugin whether it's running directly on the host
+  machine or somewhere else.
+- **`Config`** — a set of bytes containing a JSON-marshalled copy of the plugin's
+  options from the configuration file.
+
+In return, your plugin hands back a response with a single field:
+
+- **`Name`** — the name your plugin wants to be known by, like `"prompt_filter"` or
+  `"global_logger"`.
+
+Because `Initialize` runs before the first message arrives, it's also the natural home for any
+one-time setup your plugin needs — compiling regular expressions, creating a logger, preparing
+internal state, and so on.
 
 ## Building Your Own Plugin
 
@@ -229,13 +257,37 @@ type LoggerPlugin struct{}
 The interesting line is `protobyss.RegisterACPPlugin(...)`. That's how a plugin says "here I am,
 please send messages my way." You call it once, inside the `init` function, and pass it an instance
 of your plugin struct. The `var _ ...` line is a Go trick that makes the compiler verify we really
-have implemented everything abyss expects — if we haven't, we find out now rather than when the
-plugin loads.
+have implemented everything abyss expects — these days that's two methods, `Initialize` and
+`HandleMessage`. If we've missed either one, we find out now rather than when the plugin loads.
 
-### Step 2 — The handler
+### Step 2 — Say hello with `Initialize`
 
-The entire raw interface is a single method called `HandleMessage`. It receives one message and
-returns a list of messages. Add it to the bottom of your file:
+First up is the handshake we met earlier. Ours doesn't do anything fancy — our logger just
+introduces itself. Add this to the bottom of your file:
+
+```go
+// Initialize is called once when abyss loads the plugin, before
+// any messages are handled.
+func (p *LoggerPlugin) Initialize(
+	ctx context.Context,
+	req *protobyss.ACPPluginInitializeRequest,
+) (*protobyss.ACPPluginInitializeResponse, error) {
+	return &protobyss.ACPPluginInitializeResponse{
+		Name: "logger",
+	}, nil
+}
+```
+
+Abyss calls this once, right after loading your `.wasm` file and before handing over a single
+message. Our version ignores the `OnHost` flag and the `Config` bytes and simply replies with the
+name `"logger"`. If we'd forgotten this method entirely, the build would have failed back at the
+`var _ protobyss.ACPPlugin = (*LoggerPlugin)(nil)` line in Step 1 — that check covers both methods
+of the interface.
+
+### Step 3 — The handler
+
+The other half of the interface is `HandleMessage`, the method that gets to see every message. It
+receives one message and returns a list of messages. Add it to the bottom of your file:
 
 ```go
 // HandleMessage is called for every ACP message, in either direction.
@@ -274,7 +326,7 @@ abyss does *not* fill in message IDs for you. If you invent brand-new messages, 
 for setting `MessageId` and `ResponseFor` yourself. For pass-through and drop cases like this logger,
 you don't have to think about it.
 
-### Step 3 — Build it
+### Step 4 — Build it
 
 Compile your plugin with this command, run from inside the plugin's folder:
 
@@ -311,8 +363,9 @@ contains a banned word.
 
 ### Step 1 — Imports and the struct
 
-Start the file the same way, but this time we also pull in the `abyss` package (for the router) and
-the `acp-go-sdk` package (which holds the typed message structs):
+Start the file the same way, but this time we also pull in the `abyss` package (for the router),
+the `acp-go-sdk` package (which holds the typed message structs), and `context`, which our
+`Initialize` method will need:
 
 ```go
 //go:build wasip1
@@ -320,6 +373,7 @@ the `acp-go-sdk` package (which holds the typed message structs):
 package main
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -337,11 +391,36 @@ type PromptFilter struct {
 }
 ```
 
-### Step 2 — Register it in `init`
+### Step 2 — Say hello with `Initialize`
+
+Just like the raw interface, the typed router starts with the handshake: every plugin needs an
+`Initialize` method, and `abyss.NewACPPluginRouter` won't accept a struct that's missing one — the
+compiler will tell you so in no uncertain terms. Add this to the bottom of your file:
+
+```go
+// Initialize is called once when abyss loads the plugin, before
+// any messages are handled.
+func (p *PromptFilter) Initialize(
+	ctx context.Context,
+	req *protobyss.ACPPluginInitializeRequest,
+) (*protobyss.ACPPluginInitializeResponse, error) {
+	return &protobyss.ACPPluginInitializeResponse{
+		Name: "prompt_filter",
+	}, nil
+}
+```
+
+The request carries the same `OnHost` flag and `Config` bytes we met earlier; our filter has no use
+for either, so it simply replies with its name, `"prompt_filter"`. When abyss loads the plugin and
+comes knocking, the router passes the handshake straight through to this method — no extra wiring
+on your part.
+
+### Step 3 — Register it in `init`
 
 As before, we create an instance and hand it to abyss. The difference is that we wrap our struct in
-`abyss.NewACPPluginRouter(...)` first. That wrapper is what scans our struct for `On...` methods and
-wires them up to the right message types.
+`abyss.NewACPPluginRouter(...)` first. That wrapper is what scans our struct for `On...` methods
+and wires them up to the right message types, and it carries our `Initialize` method along too, so
+the handshake "just works."
 
 ```go
 func init() {
@@ -359,10 +438,10 @@ func init() {
 Here we've hardcoded the banned patterns as `".*SECRET.*"`, but you could read them from the message
 itself, load them another way, or swap the regexes for a plain string check — it's all just Go.
 
-### Step 3 — Implement the methods you care about
+### Step 4 — Implement the methods you care about
 
-We only care about prompts, so we implement a single method, `OnPromptRequest`. The router figures
-out the rest on its own.
+We only care about prompts, so the only `On...` method we implement is `OnPromptRequest`. The
+router figures out the rest on its own.
 
 ```go
 // OnPromptRequest is called whenever the user sends a prompt to the agent.
@@ -427,10 +506,11 @@ A few things to notice:
 - Unlike the raw interface, the router fills in `MessageId` and `ResponseFor` for you on new
   messages you synthesize, so you don't have to set them yourself.
 
-### Step 4 — Which methods can I implement?
+### Step 5 — Which methods can I implement?
 
 `NewACPPluginRouter` looks at your struct and connects any of a long list of `On...` methods it
-finds. A handful of the common ones:
+finds. (`Initialize` isn't one of these — it isn't a message handler, it's the required handshake
+from Step 2.) A handful of the common ones:
 
 | Method | Fires when… |
 | --- | --- |
@@ -453,7 +533,7 @@ The handler signature is always the same shape:
 func (p *MyPlugin) OnSomething(req acp.Something) ([]*protobyss.ACPContainer, error)
 ```
 
-### Step 5 — Build it
+### Step 6 — Build it
 
 Same command as before, from inside the plugin's folder:
 
@@ -474,10 +554,13 @@ goes wrong — use the host logging functions abyss provides.
 Grab a logger once with `protobyss.NewLogging()`, then call `Debug`, `Info`, `Warn`, or
 `Error` on it. Each takes a `protobyss.LogMessage` with two fields: `Message` (the text) and
 `Fields` (an optional map of string keys to string values, which show up as structured fields in
-the log line).
+the log line). One-time setup like this also fits nicely inside your `Initialize` method, since it
+runs before the first message arrives — the example below does it in `init` instead, which works
+just as well.
 
 Here's the `PromptFilter` from above, updated to stash a logger on its struct and announce itself
-when it loads. Add `"context"` to your import list for the `context.Background()` call:
+when it loads. The `"context"` import we added back in Step 1 covers the `context.Background()`
+call:
 
 ```go
 type PromptFilter struct {
@@ -525,6 +608,9 @@ edit the handler methods, rebuild, and you're done.
   a normal program instead of a WASM module and abyss won't be able to load it.
 - **Keep the empty `main` function.** The plugin loader needs the file to be a `main` package even
   though `main` itself does nothing; all the real startup happens in `init`.
+- **Every plugin must implement `Initialize`.** Abyss calls it once, as soon as it loads your
+  plugin, and your plugin answers with its name. Both flavors check for the method at build time,
+  so a plugin without it won't compile — let alone load.
 - **Plugins run on the client side**, before messages enter the container. That means they can see
   and shape what your agent is allowed to do, but they can't see anything happening *inside* the
   container that doesn't come back out as an ACP message.

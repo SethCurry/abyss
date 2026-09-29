@@ -246,7 +246,6 @@ func (p *SecretsFilter) OnReadTextFileResponse(resp acp.ReadTextFileResponse) ([
 	return abyss.ACPContainers(resp)
 }
 
-// We only need to implement OnPromptRequest since we don't care about the other types.
 func (p *SecretsFilter) OnPromptRequest(req acp.PromptRequest) ([]*protobyss.ACPContainer, error) {
 	p.handleSessionID(req.SessionId)
 	allStringContents := strings.Builder{}

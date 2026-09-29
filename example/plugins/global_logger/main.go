@@ -26,7 +26,7 @@ var _ protobyss.ACPPlugin = (*ACPLoggerPlugin)(nil)
 
 type ACPLoggerPlugin struct{}
 
-func (p *ACPLoggerPlugin) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeRespone, error) {
+func (p *ACPLoggerPlugin) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeResponse, error) {
 	return &protobyss.ACPPluginInitializeResponse{
 		Name: "global_logger",
 	}, nil

@@ -18,7 +18,7 @@ type PromptFilter struct {
 	initDone      bool
 }
 
-func (p *PromptFilter) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeRespone, error) {
+func (p *PromptFilter) Initialize(ctx context.Context, request *protobyss.ACPPluginInitializeRequest) (*protobyss.ACPPluginInitializeResponse, error) {
 	return &protobyss.ACPPluginInitializeResponse{
 		Name: "prompt_filter",
 	}, nil

@@ -3,6 +3,7 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/SethCurry/abyss/internal/timber"
 	"github.com/SethCurry/abyss/pkg/abyss"
@@ -63,14 +64,14 @@ func NewACPManager(ctx context.Context) (*ACPManager, error) {
 	return &ACPManager{
 		loader:  loader,
 		logger:  timber.ComponentLogger("plugin.ACPManager"),
-		plugins: []protobyss.ACPPlugin{},
+		plugins: map[string]protobyss.ACPPlugin{},
 	}, nil
 }
 
 // ACPManager manages access control policy plugins and their lifecycle.
 type ACPManager struct {
 	loader  *protobyss.ACPPluginPlugin
-	plugins []protobyss.ACPPlugin
+	plugins map[string]protobyss.ACPPlugin
 	logger  zerolog.Logger
 }
 
@@ -81,7 +82,17 @@ func (a *ACPManager) Load(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
-	a.plugins = append(a.plugins, plugin)
+
+	resp, err := plugin.Initialize(ctx, &protobyss.ACPPluginInitializeRequest{
+		// TODO set this to a real value
+		OnHost: false,
+		Config: []byte(""),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to initialize plugin: %w", err)
+	}
+
+	a.plugins[resp.GetName()] = plugin
 	return nil
 }
 
@@ -92,7 +103,7 @@ func (a *ACPManager) HandleMessage(
 ) ([]*protobyss.ACPContainer, error) {
 	allMessages := []*protobyss.ACPContainer{req}
 	for i, v := range a.plugins {
-		logger := a.logger.With().Int("plugin_index", i).Logger()
+		logger := a.logger.With().Str("plugin", i).Logger()
 		logger.Debug().Msg("executing plugin")
 		var newMsgs []*protobyss.ACPContainer
 		for _, msg := range allMessages {
