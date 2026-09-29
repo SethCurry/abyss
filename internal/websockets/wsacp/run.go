@@ -71,11 +71,7 @@ func closeConn(conn *websocket.Conn, logger zerolog.Logger) {
 }
 
 // Oneshot runs a single prompt via a disposable agent container.
-func Oneshot(ctx context.Context, prompt string, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
-	plugMgr, err := plugin.NewACPManager(ctx)
-	if err != nil {
-		return err
-	}
+func Oneshot(ctx context.Context, prompt string, plugMgr *plugin.ACPManager, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
 	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
 	if err != nil {
 		return err
@@ -128,13 +124,14 @@ func RunClient(
 	wsURL string,
 	tlsConfig *tls.Config,
 	logger zerolog.Logger) error {
-	if prompt != "" {
-		return Oneshot(ctx, prompt, wsURL, tlsConfig, logger)
-	}
 
 	plugMgr, err := plugin.NewACPManager(ctx)
 	if err != nil {
 		return err
+	}
+
+	if prompt != "" {
+		return Oneshot(ctx, prompt, plugMgr, wsURL, tlsConfig, logger)
 	}
 
 	for _, v := range agentConfig.Plugins.Client {

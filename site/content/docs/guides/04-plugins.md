@@ -25,8 +25,8 @@ in the future.
 
 
 Plugins are little add-on programs that sit between your editor and your agent and get to look at
-— and even change — every message that passes between the two. Want to block prompts that contain a
-secret word? Log everything your agent says to a file? Rewrite a file path before the agent ever
+and even change every message that passes between the two. Want to block prompts that contain a
+secret word? Rewrite a file path before the agent ever
 sees it? A plugin can do all of that.
 
 This guide has three parts:
@@ -35,12 +35,12 @@ This guide has three parts:
 2. **How plugins work**, so the rest of the guide makes sense.
 3. **Building your own plugin**, with two complete walk-throughs.
 
-Don't worry if you've never written a line of Go or heard the word "WASM" before — we'll go step by
+Don't worry if you've never written a line of Go or heard the word "WASM" before. We'll go step by
 step and explain everything as we meet it.
 
 ## Using an Existing Plugin
 
-Plugins are tiny standalone files (they end in `.wasm`). To use one, you only need to tell abyss
+Plugins are tiny standalone files (they end in `.wasm`). To use one, you only need to tell Abyss
 where the file lives. You do that in the same config file you created in
 [Getting Started](02-getting-started.md), in a section called `plugins`.
 
