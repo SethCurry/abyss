@@ -15,7 +15,7 @@ It creates a Docker container running your agent and proxies your editor's
 connection into that container while creating easy, reusable facilities
 for copying files, bind-mounting directories, running setup scripts and more!
 
-Abyss also supports WASM-based plugins that are given full control over messages
+Abyss also supports [WASM-based plugins](https://abyss.scurry.io/docs/guides/04-plugins/using-plugins/) that are given full control over messages
 flowing back and forth.  You can reject messages containing secrets, implement
 tools at the ACP layer so they work with any agent and more.
 
@@ -40,7 +40,7 @@ so you don't need to memorize a weird path scheme.
 - **Sandboxed by default.** Each agent runs in its own container — your machine is
   never exposed to whatever the agent decides to run. Optionally copy files in
   instead of bind-mounting, so agent edits never touch your working copy.
-- **No Docker configs to write.** A few lines of YAML describe the image, mounts,
+- **No Docker configs to write.** [A few lines of YAML](https://abyss.scurry.io/docs/reference/configuration/) describe the image, mounts,
   and the command that launches your agent. `abyss` handles the rest.
 - **File and terminal interception.** ACP read/write file and terminal APIs are
   intercepted and executed *inside* the container, so the agent and the client
@@ -51,7 +51,7 @@ so you don't need to memorize a weird path scheme.
   an ACP endpoint, so any ACP client — Zed included — can drive the agent.
 - **Reproducible environments.** Run setup scripts before the agent starts to
   install dependencies or seed state, and every session begins from a known place.
-- **WASM-based Plugins.** Use existing plugins or write your own, plugins have
+- **WASM-based Plugins.** [Use existing plugins](https://abyss.scurry.io/docs/guides/04-plugins/using-plugins/) or [write your own](https://abyss.scurry.io/docs/guides/04-plugins/02-developing-a-plugin/how-plugins-work/), plugins have
   full access to the stream of ACP messages. See [the examples](./example/plugins).
 
 ## Sleep easier. Ship faster.
@@ -72,13 +72,13 @@ and Docker images are under Packages on the right of the project home.
 
 ## Features
 
-- Starting a Docker container with your agent
-- Proxying the agent's stdio over websocket to your ACP client
-- Running setup scripts before starting the agent
-- Bind-mounting directories from the host into the container
-- Copying files into the container (so agent edits don't impact your copy)
-- Intercepting ACP read/write file and terminal APIs so they run inside the container
-- Ephemeral mutual-TLS authentication; certificates are used for a single connection and then destroyed.
+- ACP Proxying
+    - ACP connections are proxied via network, so your agent can run somewhere else
+- Docker Management
+    - Copy files from the host into the container on connect
+    - Bind-mount directories from the host
+- Plugins
+    - Use existing plugins or write your own
 
 ## AI Policy
 

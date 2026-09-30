@@ -11,6 +11,24 @@ toc: true
 
 ## The 30,000 Foot Overview
 
+{{< mermaid >}}
+
+architecture-beta
+    group host(pixel:computer-old-electronics)[Host]
+
+    group container(pixel:logo-social-media-dropbox)[Container] in host
+    
+    service acpclient(pixel:content-files-notepad)[ACP Client like Zed] in host
+    service hostproxy(pixel:internet-network-computer-upload)[Abyss Host Proxy] in host
+    service containerproxy(pixel:internet-network-computer-download)[Abyss Container Proxy] in container
+    service agent(pixel:business-products-network-user)[Agent] in container
+
+    acpclient:R -- L:hostproxy
+    hostproxy:R -- L:containerproxy
+    containerproxy:R -- L:agent
+
+{{< /mermaid >}}
+
 Abyss runs your agent in a Docker container, and proxies messages between your
 editor and your agent.
 
