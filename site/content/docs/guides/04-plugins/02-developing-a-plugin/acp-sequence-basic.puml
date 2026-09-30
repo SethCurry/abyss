@@ -1,0 +1,33 @@
+@startuml
+
+participant ACPClient [
+    =ACP Client
+    ----
+    Zed, OpenClaw, etc.
+]
+participant AbyssHostProxy [
+    =Abyss Host Proxy
+    ----
+    The Abyss process on your machine.
+]
+participant AbyssContainerProxy [
+    =Abyss Container Proxy
+    ----
+    The Abyss process inside Docker.
+]
+participant Agent [
+    =Agent
+    ----
+    Pi, Codex, Claude, etc.
+]
+
+
+ACPClient --> AbyssHostProxy : InitializeRequest over stdio
+AbyssHostProxy --> AbyssContainerProxy : InitializeRequest over websocket
+AbyssContainerProxy --> Agent : InitializeRequest over stdio
+
+Agent --> AbyssContainerProxy : InitializeResponse over stdio
+AbyssContainerProxy --> AbyssHostProxy : InitializeResponse over websocket
+AbyssHostProxy --> ACPClient : InitializeResponse over stdio
+
+@enduml

@@ -16,22 +16,16 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
-## Set your agent free
+## The 30,000 Foot Overview
 
-Your agent shouldn't need a babysitter. But the moment you start approving its every command, you
-become one. Abyss gives your agent the freedom to experiment — and fail — safely, so you can stay
-focused on the work that actually needs you.
+Abyss runs your agent in a Docker container, and proxies messages between your
+editor and your agent.
 
-## Run agents without the risk
+The container provides you with peace of mind that the agent is isolated
+in a box.
 
-Abyss is an _Agent Runtime Environment_: a dedicated, isolated space where your agent can think,
-build, and break things without touching your machine. It's like Docker for your workflow — except
-instead of wrapping an application, it wraps your agent.
-
-The idea is simple. Run your agent in a Docker container, hand it the resources it needs, and walk
-away. All the configuration fits in a single YAML file that's shorter than your standup update.
-
-Before Abyss (yes, laptop is my real hostname):
+The proxy enables middleware so you don't even have to fully trust your
+agent.
 
 {{< asciinema url="/asciinema/basic-example-pi.cast" >}}
 
@@ -53,6 +47,7 @@ It has the container's hostname, but still has access to all of the files it nee
 - **Ready-to-run environments.** Execute startup scripts to install tools, pull dependencies, and
   clone repos before your agent even starts.
 - **Automatic cleanup.** Containers stop and remove themselves when you disconnect.
+- **WASM plugins.**  Download plugins or build your own that have full access to all ACP messages.
 
 Your agent gets a safe playground. You get your focus back.
 

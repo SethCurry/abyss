@@ -1,11 +1,11 @@
 ---
-title: "Plugins"
-description: "Guides on installing, using and building plugins for abyss."
+title: "Developing A Plugin"
+description: "Step-by-step guide on developing a plugin for Abyss."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
 lastmod: 2026-09-29T16:04:48+02:00
 draft: false
-weight: 4
+weight: 2
 toc: true
 params:
   math: false # enable mathematical rendering
@@ -16,92 +16,13 @@ params:
     robots: "" # custom robot tags (optional)
 ---
 
+This section is broken down into two parts:
 
-{{< admonition type="warning" title="Warning: Experimental" >}}
-Plugins are an experimental feature and are liable to change.
-I will try to keep the public APIs stable, but it is possible they will change
-in the future.
-{{< /admonition >}}
-
-
-Plugins are little add-on programs that sit between your editor and your agent and get to look at
-and even change every message that passes between the two. Want to block prompts that contain a
-secret word? Rewrite a file path before the agent ever
-sees it? A plugin can do all of that.
-
-This guide has three parts:
-
-1. **Using a plugin** someone else has already built — just a few lines of config.
-2. **How plugins work**, so the rest of the guide makes sense.
-3. **Building your own plugin**, with two complete walk-throughs.
+1. **How plugins work**, so the rest of the guide makes sense.
+2. **Building your own plugin**, with two complete walk-throughs.
 
 Don't worry if you've never written a line of Go or heard the word "WASM" before. We'll go step by
 step and explain everything as we meet it.
-
-## Using an Existing Plugin
-
-Plugins are tiny standalone files (they end in `.wasm`). To use one, you only need to tell Abyss
-where the file lives. You do that in the same config file you created in
-[Getting Started](02-getting-started.md), in a section called `plugins`.
-
-Open your config file and add a `plugins` block that looks like this:
-
-```yaml
-docker:
-  image: "ghcr.io/sethcurry/abyss-pi:latest"
-  agent_command:
-    - pi-acp
-  host_mounts:
-    - source: "./"
-    - source: "~/.pi"
-      destination: "/root/.pi"
-
-plugins:
-  client:
-    - path: ./my-plugins/prompt_filter.wasm
-```
-
-The new part is everything under `plugins:`. Let's unpack it:
-
-- **`plugins`** is the top-level section that holds all of your plugin settings.
-- **`client`** is the list of plugins that run on *your* computer (the "client" side), before
-  messages are sent into the container. Today every plugin is a client plugin, so this is always
-  where they go.
-- **`path`** is the location of the `.wasm` file on your computer. It can be a relative path (like
-  the example above, relative to your config file) or an absolute one (like
-  `/home/you/plugins/prompt_filter.wasm`).
-
-### Loading More Than One
-
-You can list as many plugins as you like. They run one after the other, in the order you wrote them,
-like a bucket brigade: the first plugin hands its result to the second, the second to the third, and
-so on, until the last one hands the message off to the agent (or back to your editor).
-
-```yaml
-plugins:
-  client:
-    - path: ./my-plugins/prompt_filter.wasm
-    - path: ./my-plugins/global_logger.wasm
-    - path: /home/you/plugins/audit-trail.wasm
-```
-
-If a plugin *drops* a message (we'll see how in a moment), the message never makes it to the plugins
-after it. Order matters, so put the plugin you trust most first if you want it to have the final say
-on what gets through.
-
-### Checking That It Loaded
-
-The easiest way to confirm your plugin is being picked up is `abyss oneshot`, which we met in
-[Getting Started](02-getting-started.md). When abyss loads a plugin it writes a line to the logs
-that looks like `loading ACP plugin` with the path next to it. If you see that line, you're in
-business. If you instead see an error mentioning the plugin path, double-check the path is correct
-and that the file really exists there.
-
-```bash
-abyss oneshot -f ./abyss-agent.yaml "What is the capital of France?"
-```
-
-That's all there is to using one. The rest of this guide is about *building* your own.
 
 ## How Plugins Work
 
@@ -117,6 +38,10 @@ type a prompt, your editor sends a *prompt request* message. When the agent repl
 *create-terminal request* message. There are a few dozen message types in total, and every single
 one of them funnels through the same pipe.
 
+This is what one request/response pair looks like:
+
+![Example ACP Connection](./acp-sequence-basic.png)
+
 A plugin is a tap on that pipe. Every message that flows through abyss is handed to your plugin, and
 your plugin gets to decide what happens next:
 
@@ -126,14 +51,21 @@ your plugin gets to decide what happens next:
 - **Replace it** — throw away the original and send something else instead.
 - **Split it** — turn one message into several, each of which continues in order.
 
+Here's an example with a plugin that cancels sessions
+that mention a secret like an API key:
+
+![Example ACP Sequence with Plugin](./acp-sequence-plugin-example.png)
+
 ### WASM, in one paragraph
 
 A plugin is a small program compiled to a format called **WASM** (short for "WebAssembly", but it's
-useful far beyond the web). WASM is a neat choice here for two reasons. First, it's sandboxed: a
+useful far beyond the web). WASM is a neat choice here for three reasons. First, it's sandboxed: a
 plugin can't reach out and read your files or call the internet unless abyss explicitly lets it, so
 running someone else's plugin is much safer than running a random script. Second, plugins are
 written in [Go](https://go.dev/), which is the same language abyss itself is written in, so the
 whole experience stays in one comfortable place.
+Third, plugins aren't tied to using the exact version of everything Abyss does.
+That's an issue with Go's native plugins.
 
 You won't need to think about WASM day to day. The only place it shows up is the command you run to
 turn your Go code into a plugin, which we'll get to shortly.
@@ -618,10 +550,3 @@ edit the handler methods, rebuild, and you're done.
   Put the plugin you want to have the first or last word in the matching position.
 - **Plugins are sandboxed.** They can't read your filesystem, make network calls, or spawn
   processes unless abyss grants them the ability. Logging is the one host ability exposed today.
-
-## Where to Go Next
-
-- [Custom Docker Images](03-custom-docker-images.md) — pair your plugin with a custom agent image.
-- [Configuration](../reference/configuration.md) — the full reference for every config option,
-  including `plugins`.
-- [Troubleshooting](05-troubleshooting.md) — when your plugin loads but doesn't behave, start here.

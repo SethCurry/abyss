@@ -1,0 +1,51 @@
+@startuml
+
+participant Agent [
+    =Agent
+    ----
+    Pi, Codex, Claude, etc.
+]
+
+
+participant AbyssContainerProxy [
+    =Abyss Container Proxy
+    ----
+    The Abyss process inside Docker.
+]
+
+
+participant SecretsFilterPlugin [
+    =Secrets Filter Plugin
+    ----
+    Filters out secrets from the ACP stream.
+]
+
+participant AbyssHostProxy [
+    =Abyss Host Proxy
+    ----
+    The Abyss process on your machine.
+]
+
+
+participant ACPClient [
+    =ACP Client
+    ----
+    Zed, OpenClaw, etc.
+]
+
+
+
+Agent --> AbyssContainerProxy : SessionNotification containing secrets
+AbyssContainerProxy --> AbyssHostProxy : SessionNotification containing secrets
+AbyssHostProxy --> SecretsFilterPlugin : SessionNotification containing secrets
+note left: There's a secret, so we cancel the session and let the user know
+
+SecretsFilterPlugin --> AbyssHostProxy : SessionNotification with error message to user
+
+SecretsFilterPlugin --> AbyssHostProxy : CancelSessionNotification to cancel processing
+note right: Abyss knows which message types go which way,\nso it sorts out which way messages go
+AbyssHostProxy --> ACPClient : SessionNotification with error message to user
+AbyssHostProxy --> AbyssContainerProxy : CancelSessionNotification to cancel the session
+AbyssContainerProxy --> Agent : CancelSessionNotification
+
+@enduml

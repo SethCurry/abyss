@@ -26,7 +26,7 @@ func dialAndServe(
 	wsURL string,
 	tlsConfig *tls.Config,
 	plugins *plugin.ACPManager,
-	logger zerolog.Logger) (*websocket.Conn, *wsrouter.ProtoRouter, *ProxiedACPAgent, error) {
+) (*websocket.Conn, *ProxiedACPAgent, error) {
 	dialer := websocket.DefaultDialer
 	if tlsConfig != nil {
 		dialer = &websocket.Dialer{TLSClientConfig: tlsConfig}
@@ -34,14 +34,13 @@ func dialAndServe(
 
 	conn, _, err := dialer.DialContext(ctx, wsURL, nil)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to dial Docker websocket: %w", err)
+		return nil, nil, fmt.Errorf("failed to dial Docker websocket: %w", err)
 	}
 
 	socket := wsrouter.NewProtoRouter(true)
 	router := wsrouter.NewACPRouter()
 	acpConn := wsrouter.NewACPConn(socket, plugins, abyss.LocationHost, router.ServeMessage)
 	router.SetConn(acpConn)
-	// socket.Handle(1, acpConn.Handle)
 	socket.Handle(1, func(msg wsrouter.ProtoMessage) {
 		acpConn.Handle(wsrouter.ProtoMessage{
 			TypeID:  1,
@@ -60,7 +59,7 @@ func dialAndServe(
 		socket.Serve(conn)
 	}()
 
-	return conn, socket, proxiedAgent, nil
+	return conn, proxiedAgent, nil
 }
 
 // closeConn closes the websocket connection, logging any error.
@@ -71,8 +70,13 @@ func closeConn(conn *websocket.Conn, logger zerolog.Logger) {
 }
 
 // Oneshot runs a single prompt via a disposable agent container.
-func Oneshot(ctx context.Context, prompt string, plugMgr *plugin.ACPManager, wsURL string, tlsConfig *tls.Config, logger zerolog.Logger) error {
-	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
+func Oneshot(
+	ctx context.Context,
+	prompt string,
+	plugMgr *plugin.ACPManager,
+	wsURL string, tlsConfig *tls.Config,
+	logger zerolog.Logger) error {
+	conn, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr)
 	if err != nil {
 		return err
 	}
@@ -83,8 +87,7 @@ func Oneshot(ctx context.Context, prompt string, plugMgr *plugin.ACPManager, wsU
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to get current working directory")
-		return err
+		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
 
 	newSession, err := proxiedAgent.NewSession(ctx, acp.NewSessionRequest{
@@ -93,7 +96,7 @@ func Oneshot(ctx context.Context, prompt string, plugMgr *plugin.ACPManager, wsU
 		Cwd:                   cwd,
 	})
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to create new session")
+		return fmt.Errorf("failed to create new session: %w", err)
 	}
 
 	_, err = proxiedAgent.Prompt(ctx, acp.PromptRequest{
@@ -103,10 +106,8 @@ func Oneshot(ctx context.Context, prompt string, plugMgr *plugin.ACPManager, wsU
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to prompt: %w", err)
 	}
-
-	// TODO close this cleanly so it doesn't spray errors
 
 	return nil
 }
@@ -141,7 +142,7 @@ func RunClient(
 		}
 	}
 
-	conn, _, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr, logger)
+	conn, proxiedAgent, err := dialAndServe(ctx, wsURL, tlsConfig, plugMgr)
 	if err != nil {
 		return err
 	}
