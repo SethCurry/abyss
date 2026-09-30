@@ -7,13 +7,6 @@ lastmod: 2026-09-29T16:04:48+02:00
 draft: false
 weight: 1
 toc: true
-params:
-  math: false # enable mathematical rendering
-  seo:
-    title: "" # custom title (optional)
-    description: "" # custom description (recommended)
-    canonical: "" # custom canonical URL (optional)
-    robots: "" # custom robot tags (optional)
 ---
 
 This section is broken down into two parts:

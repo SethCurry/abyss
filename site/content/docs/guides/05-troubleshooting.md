@@ -7,13 +7,6 @@ lastmod: 2023-09-07T16:04:48+02:00
 draft: false
 weight: 5
 toc: true
-params:
-  math: false # enable mathematical rendering
-  seo:
-    title: "" # custom title (optional)
-    description: "" # custom description (recommended)
-    canonical: "" # custom canonical URL (optional)
-    robots: "" # custom robot tags (optional)
 ---
 
 Abyss has a lot of moving parts — it talks to Docker, starts a container, wires up an encrypted
