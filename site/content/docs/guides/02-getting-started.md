@@ -131,6 +131,14 @@ copy your own agent's configuration and meet us at [Where to Put the File](#wher
 
 ### Using Pi
 
+
+{{< admonition type="warning" title="A Note About pi-acp" >}}
+If you're coming from using Pi in a terminal, `pi-acp` (the mode abyss uses) has a few limitations
+compared to the full terminal experience. Those are limitations of `pi-acp` itself rather than
+something abyss can work around — worth keeping in mind if a feature you relied on seems missing.
+{{< /admonition >}}
+
+
 Here's a complete, working configuration for Pi:
 
 ```yaml
@@ -355,12 +363,6 @@ lists every option abyss supports.
 ## Where to Go Next
 
 - [What is abyss?](01-what-is-abyss.md) — the big picture of why abyss exists and how it works.
-- [Custom Docker Images](03-custom-docker-images.md) — run a different agent or build your own image.
+- [Custom Docker Images](./03-docker-images/02-custom-docker-images.md) — run a different agent or build your own image.
 - [Configuration](../reference/configuration.md) — the full reference for every config option.
 - [Troubleshooting](04-troubleshooting.md) — what to do when something doesn't work.
-
-{{< admonition type="warning" title="A Note About pi-acp" >}}
-If you're coming from using Pi in a terminal, `pi-acp` (the mode abyss uses) has a few limitations
-compared to the full terminal experience. Those are limitations of `pi-acp` itself rather than
-something abyss can work around — worth keeping in mind if a feature you relied on seems missing.
-{{< /admonition >}}
