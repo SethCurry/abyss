@@ -3,7 +3,6 @@ package wsacp
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/SethCurry/abyss/internal/websockets/wsrouter"
 	"github.com/coder/acp-go-sdk"
@@ -325,11 +324,6 @@ func (w *HostProxy) NewSession(ctx context.Context, params acp.NewSessionRequest
 		return acp.NewSessionResponse{}, err
 	}
 
-	go func() {
-		time.Sleep(time.Second * 1)
-
-		_ = w.UserMessage(context.Background(), string(newSession.SessionId), "Welcome to abyss!")
-	}()
 	return newSession, nil
 }
 

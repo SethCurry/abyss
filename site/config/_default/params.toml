@@ -1,6 +1,6 @@
 # Hugo
 title = "Abyss"
-description = "Congrats on setting up a new Doks project!"
+description = "The easy way to containerize your AI."
 images = ["cover.png"]
 
 # mainSections
@@ -11,21 +11,21 @@ math = false # false (default) or true
 mathEngine = "KaTeX" # "KaTeX" (default) or "MathJax"
 
 [social]
-  twitter = "getdoks"
+  twitter = ""
 
 # Doks (@thulite/doks-core)
 [doks]
   # Color mode
-  colorMode = "auto" # auto (default), light or dark
-  colorModeToggler = true # true (default) or false (this setting is only relevant when colorMode = auto)
+  colorMode = "dark" # auto (default), light or dark
+  colorModeToggler = false # true (default) or false (this setting is only relevant when colorMode = auto)
 
   # Navbar
   navbarSticky = true # true (default) or false
   containerBreakpoint = "fluid" # "", "sm", "md", "lg", "xl", "xxl", or "fluid" (default)
 
   ## Button
-  navBarButton = false # false (default) or true
-  navBarButtonUrl = "/docs/prologue/introduction/"
+  navBarButton = true # false (default) or true
+  navBarButtonUrl = "/docs/guides/getting-started/"
   navBarButtonText = "Get started"
 
   # FlexSearch
@@ -48,10 +48,10 @@ mathEngine = "KaTeX" # "KaTeX" (default) or "MathJax"
   bootstrapJavascript = false # false (default) or true
 
   # Nav
-  sectionSwitcher = false # true or false (default)
+  sectionSwitcher = true # true or false (default)
   sectionNav = ["docs"] # ["docs"] (default) or list of sections (e.g. ["docs", "guides"])
-  toTopButton = false # false (default) or true
-  breadcrumbTrail = false # false (default) or true
+  toTopButton = true # false (default) or true
+  breadcrumbTrail = true # false (default) or true
   headlineHash = true # true (default) or false
   scrollSpy = true # true (default) or false
 
@@ -78,7 +78,7 @@ mathEngine = "KaTeX" # "KaTeX" (default) or "MathJax"
 
   # Repository
   editPage = false # false (default) or true
-  lastMod = false # false (default) or true
+  lastMod = true # false (default) or true
   repoHost = "GitHub" # GitHub (default), Gitea, GitLab, Bitbucket, or BitbucketServer
   docsRepo = "https://github.com/SethCurry/abyss"
   docsRepoBranch = "main" # main (default), master, or <branch name>
@@ -127,20 +127,19 @@ mathEngine = "KaTeX" # "KaTeX" (default) or "MathJax"
 # SEO (@thulite/seo)
 [seo]
   [seo.title]
-    separator = "" # "|" (default)
+    separator = "|" # "|" (default)
     suffix = "" # title hugo.toml (default)
   [seo.description]
     summaryFallback = "" # "" (default)
   [seo.favicons]
-    icon = "favicon.png" # favicon.png (default)
-    svgIcon = "favicon.svg" # favicon.svg (default)
+    icon = "favicon.ico" # favicon.png (default)
   [seo.schemas]
     type = "Person" # Organization (default) or Person
     logo = "/android-chrome-512x512.png" # Logo of Organization — favicon-512x512.png (default)
     name = "Seth Curry" # Name of Organization or Person
     sameAs = ["https://github.com/SethCurry/abyss"] # E.g. ["https://github.com/thuliteio/thulite", "https://fosstodon.org/@thulite"]
     images = ["/android-chrome-512x512.png"] # ["cover.png"] (default)
-    article = [] # Article sections
+    article = ["docs"] # Article sections
     newsArticle = [] # NewsArticle sections
     blogPosting = ["blog"] # BlogPosting sections
     product = [] # Product sections

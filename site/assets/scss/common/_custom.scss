@@ -10,7 +10,7 @@
 }
 
 .bg-img {
-  background-image: url("/img/deep-sea-fish-banner.png");
+  background-image: url("/img/aigen/deep-sea-fish-banner.jpg");
   background-position: 0vh -20vh;
   width: 100%;
   height: 30vh;
@@ -157,4 +157,13 @@ div.homepage-example span.line {
 .comparison-table tbody tr:last-child th,
 .comparison-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+
+.container-fw {
+    max-width: 70%;
+
+    .docs-toc {
+        margin-left: 3rem;
+    }
 }

@@ -23,11 +23,9 @@
   <section class="section section-md section-features">
     <div class="container">
       <div class="text-box">
-        <p>Set your agents free without worrying about leaking secrets or wrecking your operating system.</p>
-        <p>Abyss is a system for running ACP agents inside Docker without manually managing Docker configs, containers, etc.</p>
-        <p>Every agent gets a clean, disposable workspace. When you disconnect, Abyss tears it down automatically &mdash; nothing lingers, nothing leaks.</p>
-        <p>It's still Docker underneath.  Abyss won't stop you from using Docker commands to copy files, look at logs, whatever you'd like.</p>
-        <p>One config file and you have bind-mounts, copied files, setup scripts, and more.</p>
+        <p>Abyss is an orchestrator for running agents in containers.</p>
+        <p>You configure your editor like a normal ACP agent, and Abyss handles everything Docker for you.</p>
+        <img src="/img/abyss-zed-example-screenshot.jpg" alt="Sample screenshot showing Zed connecting to Abyss" />
         <div class="expressive-code homepage-example">
           <figure class="frame not-content">
           <figcaption class="header">
@@ -60,10 +58,6 @@
           </figure>
         </div>
         <p>Works with any ACP client you want!</p>
-        <div class="asciinema-video" src="/asciinema/basic-example-abyss-pi.cast" />
-      </div>
-
-
   <div>
 
 
@@ -156,21 +150,21 @@
       <div class="row justify-content-center text-center g-4">
         <div class="col-lg-5">
           <div class="feature-card">
-            <img src="/img/ragebait/see-no-evil.png" />
+            <img src="/img/aigen/see-no-evil.jpg" />
             <h2 class="h4">See No Evil</h2>
             <p>Your secrets stay secret. Abyss keeps your agent in the dark until you explicitly shine a light on something &mdash; nothing is visible by default.</p>
           </div>
         </div>
         <div class="col-lg-5">
           <div class="feature-card">
-            <img src="/img/ragebait/hear-no-evil.png" />
+            <img src="/img/aigen/hear-no-evil.jpg" />
             <h2 class="h4">Hear No Evil</h2>
             <p>Every filesystem and shell request your agent makes is intercepted and executed inside the container &mdash; never on your real machine.</p>
           </div>
         </div>
         <div class="col-lg-5">
           <div class="feature-card">
-            <img src="/img/ragebait/fish-need-fingers-too.png" />
+            <img src="/img/aigen/fish-need-fingers-too.jpg" />
             <h2 class="h4">Speak No Evil</h2>
             <p>Declare your environment once: files to copy, mounts to create, scripts to run. Abyss provisions the whole thing for you, every time.</p>
           </div>

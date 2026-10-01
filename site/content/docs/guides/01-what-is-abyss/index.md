@@ -29,23 +29,62 @@ architecture-beta
 
 {{< /mermaid >}}
 
-Abyss runs your agent in a Docker container, and proxies messages between your
-editor and your agent.
+Abyss is 2 things at heart:
 
-The container provides you with peace of mind that the agent is isolated
-in a box.
+- A system for creating Docker containers running agents, like DevContainers for agents
+- A stdio to WebSocket proxy with a plugin system, like nginx for agent traffic
 
-The proxy enables middleware so you don't even have to fully trust your
-agent.
+The goal of those and Abyss generally is to provide:
+
+- A secure environment to run agents in
+- An easy way to manage those environments
+- Agent and client agnostic features via ACP middleware
+
+Those goals come out of my own experiences and pains.
+
+### I Am Not A Babysitter
+
+I'm unwilling to babysit my agents enough to manage
+dozens of permission prompts, but I can't accept
+them having unfettered access to my desktop.
+I want to give them a walled garden that they
+can play in and destroy.
+
+I want something secure enough to hit "Accept All"
+on my permission prompts.
+
+Here's Abyss ending the agent's session and informing
+the user after the agent started regurgitating
+an API key.  This works with _any_ agent:
+
+![Abyss ending a session after the agent starts reproducing an API Key](./abyss-secrets-refusal-example.jpg)
+
+### I Am Impatient
+
+I don't want a tool that is always in my way.
+I don't want to update a Dockerfile 4 times a day,
+or realize that copies of my agent image are taking
+up 100GB of space on my machine.
+
+I want a tool that I forget I'm using.
+
+
+See how long it takes you to notice which one
+is Abyss (if you don't look at the agent name).
 
 {{< asciinema url="/asciinema/basic-example-pi.cast" >}}
 
-
-After Abyss:
-
 {{< asciinema url="/asciinema/basic-example-abyss-pi.cast" >}}
 
-It has the container's hostname, but still has access to all of the files it needs!
+
+### I Want To Pick My Own Tools
+
+A lot of what Abyss does could be implemented as
+plugins in the agents themselves.  I thought about
+that, but I don't want to be eternally tied to
+a particular editor or agent.  I want something
+agnostic to both.
+
 
 ## What makes it great
 

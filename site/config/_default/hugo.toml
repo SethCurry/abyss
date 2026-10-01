@@ -98,6 +98,13 @@ copyRight = "Copyright (c) 2026 Seth Curry"
 [imaging]
   anchor = "Center"
   bgColor = "#ffffff"
-  hint = "photo"
-  quality = 85
-  resampleFilter = "Lanczos"
+  hint = "drawing"
+  quality = 100
+  resampleFilter = "box"
+  [imaging.jpeg]
+    quality = 100
+  [imaging.webp]
+    compression = "lossless"
+    method = 6
+    quality = 100
+    hint = "drawing"

@@ -92,7 +92,7 @@ func (p *SecretsFilter) getCancelMessages(matchedDetector SecretDetector) ([]*pr
 		SessionId: p.currentSession,
 		Update: acp.SessionUpdate{
 			AgentMessageChunk: &acp.SessionUpdateAgentMessageChunk{
-				Content: acp.TextBlock("This session has been cancelled due to a security filter match.\n" +
+				Content: acp.TextBlock("\n\nThis session has been cancelled due to a security filter match.\n" +
 					"Matched detector: " + matchedDetector.Name() + "\n"),
 			},
 		},
@@ -328,7 +328,7 @@ func init() {
 	detectors := []SecretDetector{
 		&BannedRegex{
 			// test string sk-or-v1-abcd-efg-hiklkmno-p-qrs-tuv-wxyz
-			name:      "openrouter",
+			name:      "openrouter API token",
 			Regex:     regexp.MustCompile(".*sk-or-v1-[A-Za-z0-9_-]{32,128}.*"),
 			maxLength: 140,
 		},

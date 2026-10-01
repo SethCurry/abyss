@@ -313,7 +313,7 @@ A few notes on this block:
 
 For reference, here's what a finished Zed config looks like:
 
-![Sample Zed Config](/images/zed-config.png)
+![Sample Zed Config](/images/zed-config.jpg)
 
 Once you've saved your settings, Zed should now list abyss as one of its available agents. Select it
 and start chatting — abyss will spin up a container in the background, start your agent inside it,

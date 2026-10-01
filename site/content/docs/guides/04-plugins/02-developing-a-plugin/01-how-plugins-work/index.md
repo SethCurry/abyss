@@ -33,7 +33,24 @@ one of them funnels through the same pipe.
 
 This is what one request/response pair looks like:
 
-![Example ACP Connection](./acp-sequence-basic.png)
+```mermaid
+sequenceDiagram
+  autonumber
+  participant ACPClient as ACP Client (Zed)
+  participant HostProxy as Abyss Host Proxy
+  participant ContainerProxy as Container Proxy
+  participant Agent as Agent (Pi, Claude, Codex, etc)
+
+  ACPClient->>HostProxy: InitializeRequest over stdio
+  HostProxy->>ContainerProxy: InitializeRequest over websocket
+  ContainerProxy->>Agent: InitializeRequest over stdio
+
+  Agent->>ContainerProxy: InitializeResponse over stdio
+  ContainerProxy->>HostProxy: InitializeResponse over websocket
+  HostProxy->>ACPClient: InitializeResponse over stdio
+
+  Note over HostProxy,ContainerProxy: This is where plugins happen
+```
 
 A plugin is a tap on that pipe. Every message that flows through abyss is handed to your plugin, and
 your plugin gets to decide what happens next:
@@ -47,7 +64,42 @@ your plugin gets to decide what happens next:
 Here's an example with a plugin that cancels sessions
 that mention a secret like an API key:
 
-![Example ACP Sequence with Plugin](./acp-sequence-plugin-example.png)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant ACPClient as ACP Client (Zed)
+  participant HostProxy as Abyss Host Proxy
+  participant Plugin@{ "type" : "control" } as Secrets Plugin
+  participant ContainerProxy as Container Proxy
+  participant Agent as Agent (Pi, Claude, Codex, etc)
+
+  ACPClient->>HostProxy: PromptRequest over stdio
+  HostProxy->>Plugin: PromptRequest via WASM
+  Plugin->>HostProxy: PromptRequest via WASM
+  Note over Plugin: No secrets in prompt, pass it on
+  HostProxy->>ContainerProxy: PromptRequest over websocket
+  Note over HostProxy: Forward the message the plugin returned
+  ContainerProxy->>Agent: PromptRequest over stdio
+
+  Note over ContainerProxy,Agent: Normal so far
+
+  Agent->>ContainerProxy: SessionNotification with secrets
+  Note over Agent: Uh oh, the agent found<br/>secrets it shouldn't have
+
+  ContainerProxy->>HostProxy: SessionNotification with secrets
+  Note over ContainerProxy: Plugins happen host-side currently
+
+  HostProxy->>Plugin: SessionNotification with secrets
+  Note over Plugin: Plugin matches the text with<br/>a regex for a secret
+
+  Plugin->>HostProxy: SessionNotification with a <br/> "permission denied" message,<br/>no secrets
+  Plugin->>HostProxy: CancelSessionNotification
+  HostProxy->>ACPClient: Permission denied notification
+  Note over HostProxy: Abyss knows which direction<br/>messages flow
+  HostProxy->>ContainerProxy: CancelSessionNotification
+  ContainerProxy->>Agent: CancelSessionNotification
+```
 
 ### WASM, in one paragraph
 
