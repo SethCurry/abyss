@@ -17,7 +17,7 @@ All images are based on the [ubuntu](https://hub.docker.com/_/ubuntu) Docker ima
 This is the base image with Abyss installed, but nothing else.
 
 You would mostly use this when you want to build your own custom image,
-as [the next section](./02-custom-docker-images) talks about.
+as [the next section]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}) talks about.
 
 ## ghcr.io/sethcurry/abyss-pi
 

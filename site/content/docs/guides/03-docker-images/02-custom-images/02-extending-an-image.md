@@ -14,7 +14,7 @@ This is the easy path. You start from an image that already has `abyss` and `bas
 place, and you add whatever *extra* things your agent needs on top. Because you're building on a
 known-good foundation, there's very little that can go wrong.
 
-You can find the list of images to build on at [Docker Images](../reference/docker-images.md). The
+You can find the list of images to build on at [Docker Images]({{% ref "/docs/guides/03-docker-images/01-prebuilt-docker-images.md" %}}). The
 two most common starting points are:
 
 - `ghcr.io/sethcurry/abyss-base:latest` — abyss and bash, nothing else. Great when you want to
@@ -130,7 +130,7 @@ docker:
 > **Heads up:** because this image only exists on *your* computer, you need to tell abyss not to try
 > pulling it from the internet. Set `image_pull_policy: "Never"` (or `"IfNotPresent"`) in your
 > config, otherwise Docker will look for it online and fail. See the
-> [Configuration reference](../reference/configuration.md) for the full details.
+> [Configuration reference]({{% ref "/docs/reference/configuration/" %}}) for the full details.
 
 That's it — you now have a custom image running your agent. Start abyss the same way you normally
 would and it'll use your image instead of the published one.

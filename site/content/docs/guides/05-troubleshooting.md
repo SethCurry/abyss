@@ -174,7 +174,7 @@ always one of two things:
 This means abyss couldn't get the image named in your `docker.image` field. A few common causes:
 
 - **The image name is wrong.** Double-check the spelling and the registry path. The ready-made
-  images are listed in [Docker Images](../reference/docker-images.md).
+  images are listed in [Docker Images]({{% ref "/docs/guides/03-docker-images/01-prebuilt-docker-images.md" %}}).
 - **You don't have access to the registry.** If you're pulling from a private registry, run
   `docker login` first so your credentials are saved.
 - **You're offline, or the registry is down.** Try `docker pull <image>` by hand — if that fails,
@@ -196,7 +196,7 @@ the agent is being launched. Things to check:
   comes back empty, the image doesn't have it installed where abyss expects.
 - **Are your agent's credentials mounted in?** Most agents need their config directory to talk to
   an LLM. For Pi that's `~/.pi`, and because the container runs as `root` you usually mount it to
-  `/root/.pi` (see [Getting Started](02-getting-started.md)). If the mount is missing or pointed at
+  `/root/.pi` (see [Getting Started]({{% ref "/docs/guides/02-getting-started.md" %}})). If the mount is missing or pointed at
   the wrong place, the agent starts but can't reach your LLM, which looks a lot like "it's just
   hanging."
 - **Does the agent work on its own?** Try running your `agent_command` directly inside the
@@ -248,7 +248,7 @@ To narrow it down:
   first failure. The output shows up in the container logs.
 - **Remember startup is serial.** Each script adds to your startup time. If things feel slow but
   still work, consider moving static work into your image instead. See
-  [Custom Docker Images](03-custom-docker-images.md).
+  [Custom Docker Images]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}).
 
 ### TLS / Connection Errors
 
@@ -306,7 +306,7 @@ run on your host.
 If reads or writes or shell commands seem to happen in the "wrong" filesystem, check those settings.
 Running on the host is a deliberate escape hatch — it's powerful, but it does mean the agent can
 affect your real machine, so make sure that's actually what you meant to do. The full details are in
-the [Configuration reference](../reference/configuration.md).
+the [Configuration reference]({{% ref "/docs/reference/configuration.md" %}}).
 
 ## Still Stuck? Filing a Good Bug Report
 
@@ -329,9 +329,9 @@ to me if not. I'll take a look and either help you fix it or push a fix to abyss
 
 ## Where to Go Next
 
-- [Getting Started](02-getting-started.md) — a clean walkthrough of a working setup, useful as a
+- [Getting Started]({{% ref "/docs/guides/02-getting-started.md" %}}) — a clean walkthrough of a working setup, useful as a
   known-good baseline to compare a broken config against.
-- [Configuration](../reference/configuration.md) — the full reference for every config option, in
+- [Configuration]({{% ref "/docs/reference/configuration.md" %}}) — the full reference for every config option, in
   case a field isn't doing what you expect.
-- [Custom Docker Images](03-custom-docker-images.md) — if your troubles trace back to the image
+- [Custom Docker Images]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}) — if your troubles trace back to the image
   itself, this covers how to build or extend one.

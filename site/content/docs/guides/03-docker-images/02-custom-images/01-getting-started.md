@@ -9,7 +9,7 @@ weight: 1
 toc: true
 ---
 
-The ready-made images on the [Docker Images](../reference/docker-images.md) list are great for
+The ready-made images on the [Docker Images]({{% ref "/docs/guides/03-docker-images/01-prebuilt-docker-images.md" %}}) list are great for
 getting started, but eventually you might want something they don't ship. Maybe your agent needs a
 language runtime they don't include, a specific version of a tool, or a private config file baked
 in. The good news is that abyss is completely happy running inside an image *you* build yourself.
@@ -31,9 +31,7 @@ You'll need a couple of things ready before we start.
 
 ### 1. Docker
 
-You're going to be building Docker images, so you need Docker installed and running. If you already
-followed the [Getting Started](02-getting-started.md) guide, you have this. If not, the quickest
-check is to run:
+You're going to be building Docker images, so you need Docker installed and running. The quickest check is to run:
 
 ```bash
 docker run hello-world
@@ -68,44 +66,6 @@ No matter which path you take, abyss only asks two things of the image it runs i
 That's it. Everything else — the operating system, the architecture, the extra tools — is entirely
 up to you. Keep those two rules in mind and you can't go far wrong.
 
-## Pushing Your Image Somewhere (Optional)
-
-So far your image lives only on *your* computer. That's perfectly fine for personal use. But if you
-want to use the same image on another machine, or share it with your team, you need to publish it to
-a *registry*. A registry is just a place that stores images, the same way a code repository stores
-source code.
-
-Common choices are [Docker Hub](https://hub.docker.com/), the
-[GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry),
-or a self-hosted registry. The exact steps vary by registry, but the overall flow is always:
-
-1. **Log in to the registry** from your terminal:
-   ```bash
-   docker login ghcr.io
-   ```
-   (Use `docker login` by itself for Docker Hub.) You'll be asked for your username and a token.
-
-2. **Tag your image with the registry's address.** The name has to include where it's going. For
-   example, to push to the GitHub Container Registry under the username `alice`:
-   ```bash
-   docker tag my-abyss-pi ghcr.io/alice/my-abyss-pi:latest
-   ```
-
-3. **Push it up:**
-   ```bash
-   docker push ghcr.io/alice/my-abyss-pi:latest
-   ```
-
-Once it's published, anyone (or just you, depending on the visibility you set) can pull it by name.
-Point abyss at the full name and set `image_pull_policy: "Always"` (or `"IfNotPresent"`) so abyss
-fetches it from the registry:
-
-```yaml
-docker:
-  image: "ghcr.io/alice/my-abyss-pi:latest"
-  image_pull_policy: "Always"
-```
-
 ## Which Option Should I Pick?
 
 Still not sure which path to take? Here's a quick rule of thumb:
@@ -121,8 +81,7 @@ always switch to Option 2 later.
 
 ## Where to Go Next
 
-- [Docker Images](../reference/docker-images.md) — the full list of images you can build on.
-- [Configuration](../reference/configuration.md) — every config option, including `image_pull_policy`
+- [Configuration]({{% ref "/docs/reference/configuration/" %}}) — every config option, including `image_pull_policy`
   and `setup_scripts` for run-time customization.
-- [Troubleshooting](04-troubleshooting.md) — what to do when your image won't build or abyss can't
+- [Troubleshooting]({{% ref "/docs/guides/05-troubleshooting.md" %}}) — what to do when your image won't build or abyss can't
   start it.

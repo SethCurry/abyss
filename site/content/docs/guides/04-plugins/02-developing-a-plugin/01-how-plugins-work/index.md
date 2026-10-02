@@ -162,5 +162,5 @@ internal state, and so on.
 
 ## Up Next
 
-The next page depends on whether you're writing a raw or typed plugin.  If you're writing a raw plugin, go see [Raw Plugins](./03-raw-plugins).
-If you're writing a typed plugin, go see [Typed Plugins](./02-typed-plugins)
+The next page depends on whether you're writing a raw or typed plugin.  If you're writing a raw plugin, go see [Raw Plugins]({{% ref "/docs/guides/04-plugins/02-developing-a-plugin/03-raw-plugins/" %}}).
+If you're writing a typed plugin, go see [Typed Plugins]({{% ref "/docs/guides/04-plugins/02-developing-a-plugin/02-typed-plugins/" %}})

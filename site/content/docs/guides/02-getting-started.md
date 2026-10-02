@@ -68,7 +68,7 @@ same three pieces — once you've seen one, the others look very familiar. If yo
 other three, you'll find a section with your exact configuration in
 [Create Your Configuration](#create-your-configuration) below. And if you use a different agent
 entirely, the setup is the same idea — you'll just point at your own image and command. (We cover
-that in [Custom Docker Images](03-custom-docker-images.md).)
+that in [Custom Docker Images]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}).)
 
 Whatever agent you pick, make sure it's already set up and can talk to your LLM on its own before
 you put it in a sandbox. In practice that means the folder where it keeps your API keys and
@@ -163,7 +163,7 @@ Let's unpack the important bits.
 - **`image`** is the Docker image that provides the environment your agent runs in. We're using
   `ghcr.io/sethcurry/abyss-pi:latest`, which comes with both abyss and Pi already installed, so
   there's nothing extra to set up. You can find the full list of ready-made images in
-  [Docker Images](../reference/docker-images.md).
+  [Docker Images]({{% ref "/docs/guides/03-docker-images/01-prebuilt-docker-images.md" %}}).
 
 - **`agent_command`** is the command that starts your agent once the container is up. For Pi, that's
   simply `pi-acp`.
@@ -332,7 +332,7 @@ abyss oneshot -f /path/to/your/config/file.yaml "What is the capital of France?"
 If you get a sensible answer (it's Paris, in case you're wondering), your configuration is solid and
 you're ready to go. `oneshot` also prints its logs directly to the terminal, which makes it the
 easiest way to see what's going wrong if something isn't working. We lean on it heavily in the
-[Troubleshooting](04-troubleshooting.md) guide.
+[Troubleshooting]({{% ref "/docs/guides/05-troubleshooting.md" %}}) guide.
 
 ## Using It Day to Day
 
@@ -350,12 +350,12 @@ A couple of tips as you settle in:
 - **Prefer the agent *not* to touch your files directly?** Swap `host_mounts` for `copy_files` to
   hand the agent a fresh copy instead of a live mount.
 
-Both of these are covered in the [Configuration reference](../reference/configuration.md), which
+Both of these are covered in the [Configuration reference]({{% ref "/docs/reference/configuration.md" %}}), which
 lists every option abyss supports.
 
 ## Where to Go Next
 
-- [What is abyss?](01-what-is-abyss.md) — the big picture of why abyss exists and how it works.
-- [Custom Docker Images](./03-docker-images/02-custom-docker-images.md) — run a different agent or build your own image.
-- [Configuration](../reference/configuration.md) — the full reference for every config option.
-- [Troubleshooting](04-troubleshooting.md) — what to do when something doesn't work.
+- [What is abyss?]({{% ref "/docs/guides/01-what-is-abyss.md" %}}) — the big picture of why abyss exists and how it works.
+- [Custom Docker Images]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}) — run a different agent or build your own image.
+- [Configuration]({{% ref "/docs/reference/configuration.md" %}}) — the full reference for every config option.
+- [Troubleshooting]({{% ref "/docs/guides/05-troubleshooting.md" %}}) — what to do when something doesn't work.

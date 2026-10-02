@@ -26,7 +26,7 @@ sees it? A plugin can do all of that.
 
 Plugins are tiny standalone files (they end in `.wasm`). To use one, you only need to tell Abyss
 where the file lives. You do that in the same config file you created in
-[Getting Started](02-getting-started.md), in a section called `plugins`.
+[Getting Started]({{% ref "/docs/guides/02-getting-started.md" %}}), in a section called `plugins`.
 
 Open your config file and add a `plugins` block that looks like this:
 
@@ -76,7 +76,7 @@ on what gets through.
 ### Checking That It Loaded
 
 The easiest way to confirm your plugin is being picked up is `abyss oneshot`, which we met in
-[Getting Started](02-getting-started.md). When abyss loads a plugin it writes a line to the logs
+[Getting Started]({{% ref "/docs/guides/02-getting-started.md" %}}). When abyss loads a plugin it writes a line to the logs
 that looks like `loading ACP plugin` with the path next to it. If you see that line, you're in
 business. If you instead see an error mentioning the plugin path, double-check the path is correct
 and that the file really exists there.
@@ -89,7 +89,7 @@ That's all there is to using one. The rest of this guide is about *building* you
 
 ## Where to Go Next
 
-- [Custom Docker Images](03-custom-docker-images.md) — pair your plugin with a custom agent image.
-- [Configuration](../reference/configuration.md) — the full reference for every config option,
+- [Custom Docker Images]({{% ref "/docs/guides/03-docker-images/02-custom-images/01-getting-started.md" %}}) — pair your plugin with a custom agent image.
+- [Configuration]({{% ref "/docs/reference/configuration.md" %}}) — the full reference for every config option,
   including `plugins`.
-- [Troubleshooting](05-troubleshooting.md) — when your plugin loads but doesn't behave, start here.
+- [Troubleshooting]({{% ref "/docs/guides/05-troubleshooting.md" %}}) — when your plugin loads but doesn't behave, start here.
