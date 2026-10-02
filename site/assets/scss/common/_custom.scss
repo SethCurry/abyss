@@ -167,3 +167,18 @@ div.homepage-example span.line {
         margin-left: 3rem;
     }
 }
+
+.mermaid-dialog {
+    height: 95vh;
+    width: 90vw;
+    position: fixed;
+    top: 3vh;
+}
+
+.mermaid-shortcode svg {
+    height: 100%;
+}
+
+svg {
+    cursor: grab;
+}

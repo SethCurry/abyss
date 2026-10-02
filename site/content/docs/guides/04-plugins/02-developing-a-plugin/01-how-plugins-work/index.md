@@ -65,7 +65,7 @@ Here's an example with a plugin that cancels sessions
 that mention a secret like an API key:
 
 
-```mermaid
+{{< mermaid >}}
 sequenceDiagram
   autonumber
   participant ACPClient as ACP Client (Zed)
@@ -99,7 +99,8 @@ sequenceDiagram
   Note over HostProxy: Abyss knows which direction<br/>messages flow
   HostProxy->>ContainerProxy: CancelSessionNotification
   ContainerProxy->>Agent: CancelSessionNotification
-```
+
+{{< /mermaid >}}
 
 ### WASM, in one paragraph
 

@@ -23,6 +23,7 @@
     "@thulite/seo": "^2.4.3",
     "asciinema-player": "^3.17.0",
     "mermaid": "^12.0.0",
+    "svg-pan-zoom": "^3.6.2",
     "thulite": "^2.6.5"
   },
   "overrides": {
