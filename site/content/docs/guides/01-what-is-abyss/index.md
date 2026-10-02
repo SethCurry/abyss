@@ -1,6 +1,6 @@
 ---
 title: "What is abyss?"
-description: "Learn what abyss is, what problems it solves, and why you would want to use it."
+description: "Learn what abyss is, what it does, what problems it solves, and why you would want to use it."
 summary: ""
 date: 2026-08-01T16:04:48+02:00
 lastmod: 2026-08-01T16:04:48+02:00

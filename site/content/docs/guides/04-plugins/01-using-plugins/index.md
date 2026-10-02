@@ -1,6 +1,6 @@
 ---
 title: "Using Plugins"
-description: "Guides on installing, using and building plugins for abyss."
+description: "Guides on installing, configuring and using ACP plugins for abyss."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
 lastmod: 2026-09-29T16:04:48+02:00

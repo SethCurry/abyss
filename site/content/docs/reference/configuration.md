@@ -1,7 +1,6 @@
 ---
 title: "Configuration"
-description: "Learn how to configure Ares agents using the agent configuration file."
-summary: ""
+description: "An overview of all of the configuration options available for Abyss agents."
 date: 2023-09-07T16:13:18+02:00
 lastmod: 2023-09-07T16:13:18+02:00
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Guides on how to find issues with abyss, diagnose configurations and more."
+description: "Guides on how to find issues with abyss, diagnose configurations, find log files and more."
 summary: ""
 date: 2023-09-07T16:04:48+02:00
 lastmod: 2023-09-07T16:04:48+02:00

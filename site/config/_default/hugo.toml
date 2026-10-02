@@ -6,10 +6,9 @@ disableHugoGeneratorInject = true
 enableEmoji = true
 enableGitInfo = false
 enableRobotsTXT = true
-languageCode = "en-US"
 rssLimit = 10
 summarylength = 20 # 70 (default)
-
+locale = "en-US"
 # Multilingual
 defaultContentLanguage = "en"
 disableLanguages = ["de", "nl"]
@@ -98,8 +97,6 @@ copyRight = "Copyright (c) 2026 Seth Curry"
 [imaging]
   anchor = "Center"
   bgColor = "#ffffff"
-  hint = "drawing"
-  quality = 100
   resampleFilter = "box"
   [imaging.jpeg]
     quality = 100
