@@ -1,6 +1,7 @@
 package runenv
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"fmt"
@@ -36,6 +37,60 @@ type Container struct {
 // ID returns the Docker ID for the container.
 func (c *Container) ID() string {
 	return c.containerID
+}
+
+// Start starts the container. Docker treats starting an already-running
+// container as a no-op, so this is safe to call unconditionally.
+func (c *Container) Start(ctx context.Context) error {
+	c.logger.Info().Msg("starting container")
+
+	if _, err := c.client.Client.ContainerStart(ctx, c.containerID, client.ContainerStartOptions{}); err != nil {
+		c.logger.Error().Err(err).Msg("failed to start container")
+		return fmt.Errorf("start container: %w", err)
+	}
+
+	return nil
+}
+
+// ReadFile returns the contents of the file at containerPath. It also works
+// on stopped containers, since the Docker daemon reads the container's
+// filesystem directly.
+func (c *Container) ReadFile(ctx context.Context, containerPath string) ([]byte, error) {
+	c.logger.Debug().Str("path", containerPath).Msg("reading file from container")
+
+	result, err := c.client.Client.CopyFromContainer(ctx, c.containerID, client.CopyFromContainerOptions{
+		SourcePath: containerPath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("copy %q from container: %w", containerPath, err)
+	}
+	defer func() {
+		_ = result.Content.Close()
+	}()
+
+	// The Docker archive API returns a tar archive with a single entry named
+	// after the file's basename.
+	tr := tar.NewReader(result.Content)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			return nil, fmt.Errorf("file %q not found in container", containerPath)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read archive for %q: %w", containerPath, err)
+		}
+
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		content, err := io.ReadAll(tr)
+		if err != nil {
+			return nil, fmt.Errorf("read %q from archive: %w", containerPath, err)
+		}
+
+		return content, nil
+	}
 }
 
 // Stop stops and removes the container identified by containerID.

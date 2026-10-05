@@ -359,7 +359,8 @@ your computer is left completely alone.`,
 
 // installTLSCerts returns a build step that copies the server certificate,
 // server key, and CA certificate into the container so the server can serve
-// mutual TLS.
+// mutual TLS, along with the client certificate pair so persistent
+// containers can be reconnected to in later sessions.
 func installTLSCerts(certs *pacific.Certificates) runenv.ContainerBuildStep {
 	files := []struct {
 		path    string
@@ -368,6 +369,8 @@ func installTLSCerts(certs *pacific.Certificates) runenv.ContainerBuildStep {
 		{path: agentconfig.DefaultTLSServerCertPath, content: certs.ServerCertPEM},
 		{path: agentconfig.DefaultTLSServerKeyPath, content: certs.ServerKeyPEM},
 		{path: agentconfig.DefaultTLSCACertPath, content: certs.CACertPEM},
+		{path: agentconfig.DefaultTLSClientCertPath, content: certs.ClientCertPEM},
+		{path: agentconfig.DefaultTLSClientKeyPath, content: certs.ClientKeyPEM},
 	}
 
 	steps := make([]runenv.ContainerBuildStep, 0, len(files))
