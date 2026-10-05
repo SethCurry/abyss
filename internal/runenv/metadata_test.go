@@ -58,7 +58,7 @@ func TestGetLabelMetadata(t *testing.T) {
 			wantErr: "container has no abyss_agent_config_hash label",
 		},
 		{
-			name: "all labels present",
+			name: "missing persistent label",
 			summary: &container.Summary{Labels: map[string]string{
 				"abyss_version":           "v1",
 				"abyss_agent_config_path": "/path",
@@ -68,7 +68,48 @@ func TestGetLabelMetadata(t *testing.T) {
 				AbyssVersion:    "v1",
 				AgentConfigPath: "/path",
 				AgentConfigHash: "hash",
+				Persistent:      false,
 			},
+		},
+		{
+			name: "persistent label true",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+				"abyss_persistent":        "true",
+			}},
+			want: &LabelMetadata{
+				AbyssVersion:    "v1",
+				AgentConfigPath: "/path",
+				AgentConfigHash: "hash",
+				Persistent:      true,
+			},
+		},
+		{
+			name: "persistent label false",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+				"abyss_persistent":        "false",
+			}},
+			want: &LabelMetadata{
+				AbyssVersion:    "v1",
+				AgentConfigPath: "/path",
+				AgentConfigHash: "hash",
+				Persistent:      false,
+			},
+		},
+		{
+			name: "invalid persistent label",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+				"abyss_persistent":        "not-a-bool",
+			}},
+			wantErr: "abyss_persistent label is not a valid boolean",
 		},
 	}
 
@@ -94,16 +135,76 @@ func TestGetLabelMetadata(t *testing.T) {
 	}
 }
 
+func TestIsPersistent(t *testing.T) {
+	tests := []struct {
+		name    string
+		summary *container.Summary
+		want    bool
+	}{
+		{
+			name:    "nil labels",
+			summary: &container.Summary{Labels: nil},
+			want:    false,
+		},
+		{
+			name: "persistent",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+				"abyss_persistent":        "true",
+			}},
+			want: true,
+		},
+		{
+			name: "not persistent",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+				"abyss_persistent":        "false",
+			}},
+			want: false,
+		},
+		{
+			name: "missing persistent label",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version":           "v1",
+				"abyss_agent_config_path": "/path",
+				"abyss_agent_config_hash": "hash",
+			}},
+			want: false,
+		},
+		{
+			name: "malformed metadata",
+			summary: &container.Summary{Labels: map[string]string{
+				"abyss_version": "v1",
+			}},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsPersistent(tt.summary); got != tt.want {
+				t.Errorf("IsPersistent() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLabelMetadata_ToMap(t *testing.T) {
 	meta := &LabelMetadata{
 		AbyssVersion:    "v1",
 		AgentConfigPath: "/path",
 		AgentConfigHash: "hash",
+		Persistent:      true,
 	}
 	want := map[string]string{
 		"abyss_version":           "v1",
 		"abyss_agent_config_path": "/path",
 		"abyss_agent_config_hash": "hash",
+		"abyss_persistent":        "true",
 	}
 
 	got := meta.ToMap()
@@ -122,6 +223,7 @@ func TestLabelMetadata_AddToMap(t *testing.T) {
 		AbyssVersion:    "v1",
 		AgentConfigPath: "/path",
 		AgentConfigHash: "hash",
+		Persistent:      true,
 	}
 
 	t.Run("into empty map", func(t *testing.T) {
@@ -131,6 +233,7 @@ func TestLabelMetadata_AddToMap(t *testing.T) {
 			"abyss_version":           "v1",
 			"abyss_agent_config_path": "/path",
 			"abyss_agent_config_hash": "hash",
+			"abyss_persistent":        "true",
 		}
 		for k, v := range want {
 			if m[k] != v {
@@ -144,12 +247,16 @@ func TestLabelMetadata_AddToMap(t *testing.T) {
 
 	t.Run("overwrites existing keys and keeps others", func(t *testing.T) {
 		m := map[string]string{
-			"abyss_version": "old",
-			"other":         "keep",
+			"abyss_version":    "old",
+			"abyss_persistent": "false",
+			"other":            "keep",
 		}
 		meta.AddToMap(m)
 		if m["abyss_version"] != "v1" {
 			t.Errorf("abyss_version = %q, want %q", m["abyss_version"], "v1")
+		}
+		if m["abyss_persistent"] != "true" {
+			t.Errorf("abyss_persistent = %q, want %q", m["abyss_persistent"], "true")
 		}
 		if m["other"] != "keep" {
 			t.Errorf("other = %q, want %q", m["other"], "keep")
@@ -162,6 +269,7 @@ func TestLabelMetadata_ToMapAddToMapConsistent(t *testing.T) {
 		AbyssVersion:    "v1",
 		AgentConfigPath: "/path",
 		AgentConfigHash: "hash",
+		Persistent:      true,
 	}
 	m := map[string]string{"existing": "value"}
 	meta.AddToMap(m)

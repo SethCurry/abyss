@@ -129,9 +129,15 @@ get back the container ID and its name, which is everything you need to inspect 
 abyss docker gc
 ```
 
-This stops *every* running abyss container. It's the "reset button" when things have gotten into a
-weird state — for example, if a leftover container is holding onto a port or a bind mount and a new
-session won't start because of it. Run it, then try your session again.
+This stops *every* running abyss container that isn't meant to stick around. It's the "reset
+button" when things have gotten into a weird state — for example, if a leftover container is
+holding onto a port or a bind mount and a new session won't start because of it. Run it, then try
+your session again.
+
+The one exception is containers with a `persistent_name` in your configuration. Those are your
+agent's long-lived home — abyss skips them so their state survives between sessions. If you really
+do want one gone, `abyss docker ps` will show you its ID, and `docker rm -f <container-id>` will
+take it from there.
 
 > **These two are safe to run any time.** They only touch containers that abyss itself created, and
 > they stop containers rather than removing your files. If you're ever unsure what state things are

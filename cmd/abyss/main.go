@@ -310,12 +310,14 @@ container's ID — Docker's own commands (like docker logs) will ask for it.`,
 					},
 					{
 						Name:  "gc",
-						Usage: "Stop every container that abyss is running.",
+						Usage: "Stop every container that abyss is running, except persistent ones.",
 						Description: `Tells Docker to stop and remove all containers
 Abyss has created (including those currently running).
 
 Only containers that abyss itself created are stopped; everything else on
-your computer is left completely alone.`,
+your computer is left completely alone. Containers configured with a
+persistent name are skipped too, since they keep their state between
+sessions and will be re-used the next time you connect.`,
 						Action: func(ctx context.Context, cmd *cli.Command) error {
 							docker, err := runenv.NewDockerClient()
 							if err != nil {
@@ -328,6 +330,16 @@ your computer is left completely alone.`,
 							}
 
 							for _, v := range containers {
+								// Persistent containers are re-used across sessions, so
+								// they are left running.
+								if runenv.IsPersistent(&v) {
+									log.Logger.Info().
+										Str("container_id", v.ID).
+										Strs("container_names", v.Names).
+										Msg("skipping persistent container")
+									continue
+								}
+
 								log.Logger.Info().
 									Str("container_id", v.ID).
 									Strs("container_names", v.Names).

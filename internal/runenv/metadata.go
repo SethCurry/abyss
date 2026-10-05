@@ -1,6 +1,8 @@
 package runenv
 
 import (
+	"strconv"
+
 	"github.com/moby/moby/api/types/container"
 )
 
@@ -44,11 +46,32 @@ func GetLabelMetadata(summary *container.Summary) (*LabelMetadata, error) {
 		return nil, NewErrInvalidContainerMetadata("container has no abyss_agent_config_hash label")
 	}
 
+	// The persistent label was added after the other labels, so containers
+	// created by older versions of abyss won't have it; treat those as
+	// non-persistent rather than failing.
+	persistent := false
+	if persistentStr, ok := labels["abyss_persistent"]; ok {
+		var err error
+		persistent, err = strconv.ParseBool(persistentStr)
+		if err != nil {
+			return nil, NewErrInvalidContainerMetadata("abyss_persistent label is not a valid boolean: " + persistentStr)
+		}
+	}
+
 	return &LabelMetadata{
 		AbyssVersion:    abyssVersion,
 		AgentConfigPath: agentConfigPath,
 		AgentConfigHash: agentConfigHash,
+		Persistent:      persistent,
 	}, nil
+}
+
+// IsPersistent reports whether the container is marked as persistent in its
+// abyss labels. Containers with missing or malformed metadata are treated
+// as non-persistent.
+func IsPersistent(summary *container.Summary) bool {
+	md, err := GetLabelMetadata(summary)
+	return err == nil && md.Persistent
 }
 
 // LabelMetadata holds the abyss metadata stored in container labels.
@@ -56,6 +79,10 @@ type LabelMetadata struct {
 	AbyssVersion    string
 	AgentConfigPath string
 	AgentConfigHash string
+	// Persistent marks containers created from a config with a
+	// persistent_name, so they are re-used across sessions rather than being
+	// removed by "abyss docker gc".
+	Persistent bool
 }
 
 // ToMap returns the metadata as a map of container labels.
@@ -64,6 +91,7 @@ func (l *LabelMetadata) ToMap() map[string]string {
 		"abyss_version":           l.AbyssVersion,
 		"abyss_agent_config_path": l.AgentConfigPath,
 		"abyss_agent_config_hash": l.AgentConfigHash,
+		"abyss_persistent":        strconv.FormatBool(l.Persistent),
 	}
 }
 
@@ -72,4 +100,5 @@ func (l *LabelMetadata) AddToMap(underlying map[string]string) {
 	underlying["abyss_version"] = l.AbyssVersion
 	underlying["abyss_agent_config_path"] = l.AgentConfigPath
 	underlying["abyss_agent_config_hash"] = l.AgentConfigHash
+	underlying["abyss_persistent"] = strconv.FormatBool(l.Persistent)
 }

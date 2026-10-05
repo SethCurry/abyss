@@ -283,6 +283,7 @@ func startAgentContainer(
 	// A persistent name keeps the same container across sessions; without
 	// one, Docker generates a throwaway name.
 	config.Name = cfg.Docker.PersistentName
+	config.Persistent = cfg.Docker.PersistentName != ""
 
 	builder, err := runenv.NewContainerBuilder(
 		configPath,

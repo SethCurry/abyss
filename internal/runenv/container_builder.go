@@ -28,6 +28,10 @@ type ContainerConfig struct {
 	// generate one.
 	Name string
 
+	// Persistent marks the container as persistent, so it is re-used across
+	// sessions and left alone by "abyss docker gc".
+	Persistent bool
+
 	// ContainerPort is the port the container exposes to the host.
 	ContainerPort uint16
 
@@ -223,6 +227,7 @@ func (b *ContainerBuilder) Build(ctx context.Context, cli *DockerClient) (*Conta
 		AbyssVersion:    constants.Version,
 		AgentConfigPath: b.ConfigPath,
 		AgentConfigHash: stringHash,
+		Persistent:      b.config.Persistent,
 	}
 	container, endpoint, err := cli.StartContainer(
 		ctx,
