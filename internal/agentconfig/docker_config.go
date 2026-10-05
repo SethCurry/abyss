@@ -63,6 +63,11 @@ type DockerConfig struct {
 	ImagePullPolicy ImagePullPolicy `yaml:"image_pull_policy"`
 	HostMounts      []HostMount     `yaml:"host_mounts"`
 	AgentCommand    []string        `yaml:"agent_command"`
+
+	// PersistentName controls whether a new container is created for each
+	// connection, or if the same container is left running and re-used.
+	// If empty, a new container is created for each connection.
+	PersistentName string `yaml:"persistent_name"`
 }
 
 // Validate implements types.Validator by checking the image and each host

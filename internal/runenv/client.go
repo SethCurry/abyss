@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/moby/moby/client"
@@ -95,6 +96,50 @@ func (d *DockerClient) AbyssContainers(ctx context.Context) ([]container.Summary
 // containerID actually exists.
 func (d *DockerClient) GetContainer(containerID string) *Container {
 	return NewContainer(d, containerID)
+}
+
+// FindContainerByName returns the container with the given name, or nil if
+// no container with that name exists.
+func (d *DockerClient) FindContainerByName(ctx context.Context, name string) (*container.InspectResponse, error) {
+	result, err := d.Client.ContainerInspect(ctx, name, client.ContainerInspectOptions{})
+	if err != nil {
+		if cerrdefs.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("inspect container %q: %w", name, err)
+	}
+
+	return &result.Container, nil
+}
+
+// EndpointFor returns how the host reaches containerPort on an existing
+// container, based on the port bindings assigned when it was created.
+func (d *DockerClient) EndpointFor(c *container.InspectResponse, containerPort uint16) (ContainerEndpoint, error) {
+	port, ok := network.PortFrom(containerPort, network.TCP)
+	if !ok {
+		return ContainerEndpoint{}, fmt.Errorf("invalid container port: %d", containerPort)
+	}
+
+	if c.HostConfig == nil {
+		return ContainerEndpoint{}, fmt.Errorf("container %q has no host config", c.ID)
+	}
+
+	bindings := c.HostConfig.PortBindings[port]
+	if len(bindings) == 0 || bindings[0].HostPort == "" {
+		return ContainerEndpoint{}, fmt.Errorf(
+			"container %q has no host port bound to container port %d", c.ID, containerPort)
+	}
+
+	hostPort, err := strconv.ParseUint(bindings[0].HostPort, 10, 16)
+	if err != nil {
+		return ContainerEndpoint{}, fmt.Errorf("parse host port %q for container %q: %w", bindings[0].HostPort, c.ID, err)
+	}
+
+	return ContainerEndpoint{
+		ContainerID: c.ID,
+		IP:          d.hostIP(),
+		Port:        uint16(hostPort),
+	}, nil
 }
 
 // StartContainer creates and starts a Docker container with the provided
