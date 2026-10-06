@@ -125,6 +125,13 @@ Tildes (~) are _only_ expanded on the host.  If you use a `~` as part of the `de
 
 {{< /admonition >}}
 
+### `persistent_name`
+
+If a `persistent_name` is specified, the container will be reused across runs, rather than being destroyed and re-created each time.
+
+This behavior is internally controlled by a label named `abyss_persistent`,
+which contains a bool marshalled as a string.
+
 ## `setup_scripts`
 
 `setup_scripts` are files that are copied into the container and executed before the Abyss server and your agent are started.

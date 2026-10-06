@@ -265,6 +265,11 @@ docker:
 Just like with Codex, this assumes you've already signed in to Claude on your computer, so your
 `~/.claude` folder exists and holds your credentials.
 
+### Persistence
+
+Abyss containers are ephemeral by default, and re-created each time you run the agent.
+To persist data across runs, you can set the `docker.persistent_name` field in your config to a name, and it will be re-used across runs.
+
 ### Where to Put the File
 
 Save the file anywhere you like. A few common spots:
